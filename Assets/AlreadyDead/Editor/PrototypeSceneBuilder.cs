@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -14,6 +15,12 @@ namespace AlreadyDead.Editor
         private static Sprite square;
         private static Sprite circle;
         private static Sprite ring;
+        private static Sprite[] sand;
+        private static Sprite[] rocks;
+        private static Sprite[] dryBushes;
+        private static Sprite dryGrass;
+        private static Sprite rockWall;
+        private static Dictionary<Sprite, Material> pixelMaterials;
         private static Material material;
         private static PhysicsMaterial2D wallMaterial;
         private static PhysicsMaterial2D gunMaterial;
@@ -45,6 +52,11 @@ namespace AlreadyDead.Editor
             square = CreateSprite("Square", 0);
             circle = CreateSprite("Circle", 1);
             ring = CreateSprite("Ring", 2);
+            sand = new[] { DesertPixelArt.Sand(0), DesertPixelArt.Sand(1), DesertPixelArt.Sand(2) };
+            rocks = new[] { DesertPixelArt.Rock(0), DesertPixelArt.Rock(1) };
+            dryBushes = new[] { DesertPixelArt.Bush(0), DesertPixelArt.Bush(1) };
+            dryGrass = DesertPixelArt.Grass();
+            rockWall = DesertPixelArt.RockWall();
             material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
             if (material == null)
             {
@@ -53,6 +65,7 @@ namespace AlreadyDead.Editor
                 material = new Material(shader);
                 AssetDatabase.CreateAsset(material, ArtPath + "/Primitive.mat");
             }
+            pixelMaterials = new Dictionary<Sprite, Material>();
             wallMaterial = GetPhysicsMaterial("Walls", 0f, 0f);
             gunMaterial = GetPhysicsMaterial("ThrownPistol", 0.35f, tuning.throwBounce);
 
@@ -66,7 +79,7 @@ namespace AlreadyDead.Editor
             camera.orthographic = true;
             camera.orthographicSize = tuning.cameraSize;
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Hex(0x10171e);
+            camera.backgroundColor = Hex(0x342b20);
             camera.nearClipPlane = 0.1f;
             camera.farClipPlane = 50f;
             cameraObject.AddComponent<AudioListener>();
@@ -130,11 +143,18 @@ namespace AlreadyDead.Editor
 
         private static void BuildArena(Transform parent)
         {
-            Draw("Floor", parent, Vector2.zero, new Vector2(28, 18), Hex(0x242f39), -20);
-            for (int x = 0; x < 14; x++)
-                for (int y = 0; y < 9; y++)
-                    Draw("Tile", parent, new Vector2(-13 + x * 2, -8 + y * 2), new Vector2(1.98f, 1.98f),
-                        (x + y) % 2 == 0 ? Hex(0x2c3842) : Hex(0x29353f), -19);
+            Draw("Sand base", parent, Vector2.zero, new Vector2(28, 18), Hex(0xbe9c64), -20);
+            Transform ground = new GameObject("Sand / 20px tiles").transform;
+            ground.SetParent(parent, false);
+            for (int x = 0; x < 28; x++)
+                for (int y = 0; y < 18; y++)
+                {
+                    int variant = ((x * 73856093) ^ (y * 19349663)) & 0x7fffffff;
+                    Draw("Sand tile", ground, new Vector2(x - 13.5f, y - 8.5f), Vector2.one,
+                        Color.white, -19, sand[variant % sand.Length]);
+                }
+
+            BuildDesertDetails(parent);
 
             Wall(parent, "North wall", new Vector2(0, 9.3f), new Vector2(29.2f, 0.6f));
             Wall(parent, "South wall", new Vector2(0, -9.3f), new Vector2(29.2f, 0.6f));
@@ -150,7 +170,7 @@ namespace AlreadyDead.Editor
             // Painted starting bay and weapon pad are flat, non-colliding primitives.
             for (int i = 0; i < 8; i++)
                 Draw("Spawn bay stripe", parent, new Vector2(-10f + i * 0.7f, -6.1f),
-                    new Vector2(0.34f, 0.07f), Hex(0x5fa292), -15);
+                    new Vector2(0.34f, 0.07f), Hex(0x9b8159), -15);
             Draw("Pistol pad", parent, new Vector2(-6.5f, -3.8f), new Vector2(1.3f, 1.3f),
                 new Color(1f, 0.76f, 0.34f, 0.3f), -12, ring);
             for (int i = 0; i < 3; i++)
@@ -164,20 +184,71 @@ namespace AlreadyDead.Editor
         private static void Pillar(Transform parent, Vector2 position)
         {
             Wall(parent, "Pillar", position, new Vector2(1.5f, 1.5f));
-            Draw("Pillar inset", parent, position, new Vector2(0.85f, 0.85f), Hex(0x78838b), 6);
-            Draw("Pillar bolt", parent, position, new Vector2(0.15f, 0.15f), Hex(0xaac2c8), 7, circle);
+            Draw("Pillar inset", parent, position, new Vector2(0.85f, 0.85f), Hex(0x9d815c), 6);
+            Draw("Pillar highlight", parent, position, new Vector2(0.15f, 0.15f), Hex(0xd5bd89), 7, circle);
         }
 
         private static void Wall(Transform parent, string name, Vector2 position, Vector2 size)
         {
             Draw(name + " shadow", parent, position + new Vector2(0.13f, -0.19f), size + Vector2.one * 0.13f,
-                new Color(0.025f, 0.04f, 0.05f, 0.55f), -10);
-            SpriteRenderer wall = Draw(name, parent, position, size, Hex(0x526471), 5);
+                new Color(0.16f, 0.11f, 0.07f, 0.55f), -10);
+            SpriteRenderer wall = Draw(name, parent, position, Vector2.one, Color.white, 5, rockWall);
+            wall.drawMode = SpriteDrawMode.Tiled;
+            wall.size = size;
             wall.gameObject.layer = 8;
             BoxCollider2D collider = wall.gameObject.AddComponent<BoxCollider2D>();
+            collider.size = size;
             collider.sharedMaterial = wallMaterial;
             Draw(name + " top edge", parent, position + Vector2.up * (size.y * 0.5f - 0.055f),
-                new Vector2(size.x, 0.11f), Hex(0x80929a), 6);
+                new Vector2(size.x, 0.11f), Hex(0xb89a6e), 6);
+        }
+
+        private static void BuildDesertDetails(Transform parent)
+        {
+            Transform details = new GameObject("Desert details / stones and dry shrubs").transform;
+            details.SetParent(parent, false);
+            Vector2[] stonePositions =
+            {
+                new Vector2(-12.3f, 6.4f), new Vector2(-10.8f, 4.5f),
+                new Vector2(-9.9f, 0.8f), new Vector2(-12f, -1.4f),
+                new Vector2(-10.2f, -6.9f), new Vector2(-5.5f, 7.2f),
+                new Vector2(-3.8f, 5.9f), new Vector2(-1.2f, 7.2f),
+                new Vector2(2.4f, 7.3f), new Vector2(6.8f, 6.8f),
+                new Vector2(11.4f, 7f), new Vector2(12.1f, 5f),
+                new Vector2(10f, 0.1f), new Vector2(6.5f, 0.3f),
+                new Vector2(1.2f, -2.2f), new Vector2(-3f, -4.6f),
+                new Vector2(-11.5f, -7f), new Vector2(-4f, -7.3f),
+                new Vector2(1f, -7f), new Vector2(9f, -6.7f),
+                new Vector2(12f, -6f)
+            };
+            for (int i = 0; i < stonePositions.Length; i++)
+                Draw("Stone", details, stonePositions[i], Vector2.one, Color.white, 1,
+                    rocks[i % rocks.Length]);
+
+            Vector2[] bushPositions =
+            {
+                new Vector2(-12f, 5.4f), new Vector2(-11f, 2.3f),
+                new Vector2(-8.5f, 6.6f), new Vector2(-4.2f, 4f),
+                new Vector2(-1.5f, 5.8f), new Vector2(2.2f, 6f),
+                new Vector2(5.4f, 7f), new Vector2(11.2f, 3.8f),
+                new Vector2(8.7f, 0.8f), new Vector2(5.4f, -1.3f),
+                new Vector2(1.6f, -0.3f), new Vector2(-3.2f, -0.6f),
+                new Vector2(-6.8f, -1.7f), new Vector2(-11.2f, -2.3f),
+                new Vector2(-11.2f, -5.2f), new Vector2(-5.1f, -5.5f),
+                new Vector2(0.1f, -5.8f), new Vector2(4f, -7.3f),
+                new Vector2(11f, -4.5f)
+            };
+            for (int i = 0; i < bushPositions.Length; i++)
+                Draw("Dry bush", details, bushPositions[i], Vector2.one, Color.white, 2,
+                    dryBushes[i % dryBushes.Length]);
+
+            for (int i = 0; i < 22; i++)
+            {
+                float x = -12f + ((i * 59) % 25);
+                float y = -7.5f + ((i * 37) % 16);
+                if (Vector2.Distance(new Vector2(x, y), new Vector2(-8f, -4f)) < 2f) continue;
+                Draw("Dry grass", details, new Vector2(x, y), Vector2.one, Color.white, 0, dryGrass);
+            }
         }
 
         private static TopDownPlayer BuildPlayer(AimCamera camera)
@@ -293,10 +364,27 @@ namespace AlreadyDead.Editor
             go.transform.localScale = new Vector3(size.x, size.y, 1);
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite != null ? sprite : square;
-            renderer.sharedMaterial = material;
+            renderer.sharedMaterial = sprite == null || sprite == square || sprite == circle || sprite == ring
+                ? material : PixelMaterial(sprite);
             renderer.color = color;
             renderer.sortingOrder = order;
             return renderer;
+        }
+
+        private static Material PixelMaterial(Sprite sprite)
+        {
+            if (pixelMaterials.TryGetValue(sprite, out Material result)) return result;
+            string path = ArtPath + "/Desert/" + sprite.name + ".mat";
+            result = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (result == null)
+            {
+                result = new Material(material) { name = sprite.name + " Pixel" };
+                AssetDatabase.CreateAsset(result, path);
+            }
+            result.SetTexture("_MainTex", sprite.texture);
+            EditorUtility.SetDirty(result);
+            pixelMaterials.Add(sprite, result);
+            return result;
         }
 
         private static Sprite CreateSprite(string name, int shape)
