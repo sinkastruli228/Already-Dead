@@ -40,6 +40,16 @@ MonoBehaviour:
   throwLinearDamping: 1.9
   throwAngularDamping: 2.4
   throwBounce: 0.55
+  spearStabInterval: 0.42
+  spearStabDuration: 0.24
+  spearStabReach: 2.1
+  spearStabRadius: 0.16
+  spearStabForce: 9
+  spearMaxChargeTime: 1.25
+  spearMinThrowSpeed: 9
+  spearMaxThrowSpeed: 27
+  spearMinThrowRange: 4
+  spearMaxThrowRange: 13
   wallMask:
     serializedVersion: 2
     m_Bits: 256

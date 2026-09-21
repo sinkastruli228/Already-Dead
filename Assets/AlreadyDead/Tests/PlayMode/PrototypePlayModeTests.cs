@@ -13,6 +13,7 @@ namespace AlreadyDead.Tests
     {
         private TopDownPlayer player;
         private PistolWeapon pistol;
+        private SpearWeapon spear;
         private Keyboard keyboard;
         private Mouse mouse;
         private InputTestFixture input;
@@ -44,8 +45,10 @@ namespace AlreadyDead.Tests
             mouse = InputSystem.AddDevice<Mouse>();
             player = Object.FindAnyObjectByType<TopDownPlayer>();
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
+            spear = Object.FindAnyObjectByType<SpearWeapon>();
             Assert.That(player, Is.Not.Null);
             Assert.That(pistol, Is.Not.Null);
+            Assert.That(spear, Is.Not.Null);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(Screen.width / 2f, Screen.height / 2f) });
             yield return null;
             yield return new WaitForFixedUpdate();
@@ -187,6 +190,89 @@ namespace AlreadyDead.Tests
             yield return new WaitForSeconds(player.Tuning.punchInterval + 0.02f);
             Assert.That(player.TryPrimaryAttack(), Is.True);
             Assert.That(player.Unarmed.PunchCount, Is.EqualTo(punchesBeforeShot + 1));
+        }
+
+        [UnityTest]
+        public IEnumerator SpearCanBePickedUpAndStabsInFront()
+        {
+            player.enabled = false;
+            Assert.That(player.FindSpearPickup(spear.transform.position), Is.SameAs(spear));
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            Assert.That(player.HeldSpear, Is.SameAs(spear));
+            Assert.That(player.Unarmed.Available, Is.False);
+            player.Body.position = new Vector2(3.2f, 3f);
+            player.transform.position = new Vector3(3.2f, 3f, 0f);
+            player.AimAt(new Vector2(8f, 3f));
+            Physics2D.SyncTransforms();
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(player.TryPrimaryAttack(), Is.False, "Stab cooldown");
+            yield return new WaitForSeconds(player.Tuning.spearStabDuration * 0.6f);
+            Assert.That(spear.StabsMade, Is.EqualTo(1));
+            Assert.That(spear.ImpactsMade, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator WasdStillMovesWhenPointerLeavesGameView()
+        {
+            Vector2 start = player.transform.position;
+            InputSystem.QueueStateEvent(mouse, new MouseState
+            {
+                position = new Vector2(Screen.width + 100f, Screen.height + 100f)
+            });
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.D));
+            yield return new WaitForSeconds(0.15f);
+            Assert.That(player.InputActive, Is.False);
+            Assert.That(player.MovementActive, Is.True);
+            Assert.That(player.Body.linearVelocity.x, Is.EqualTo(player.Tuning.moveSpeed).Within(0.05f));
+            Assert.That(player.transform.position.x, Is.GreaterThan(start.x + 0.35f));
+        }
+
+        [UnityTest]
+        public IEnumerator HoldingSpearThrowLongerIncreasesSpeedAndRange()
+        {
+            player.enabled = false;
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            player.AimAt((Vector2)player.transform.position + Vector2.right * 10f);
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(player.ReleaseSpearThrow(), Is.True);
+            float shortSpeed = spear.LastThrowSpeed;
+            float shortRange = spear.LastThrowRange;
+            Assert.That(spear.IsFlying, Is.True);
+            Assert.That(player.FindSpearPickup(spear.transform.position), Is.Null,
+                "A flying spear cannot be picked up");
+            yield return new WaitForSeconds(0.7f);
+            Assert.That(spear.IsFlying, Is.False);
+            player.Body.position = spear.transform.position;
+            player.transform.position = spear.transform.position;
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            yield return new WaitForSeconds(player.Tuning.spearMaxChargeTime + 0.05f);
+            Assert.That(spear.Charge01, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(player.ReleaseSpearThrow(), Is.True);
+            Assert.That(spear.LastThrowSpeed, Is.GreaterThan(shortSpeed));
+            Assert.That(spear.LastThrowRange, Is.GreaterThan(shortRange));
+            Assert.That(spear.LastThrowSpeed, Is.EqualTo(player.Tuning.spearMaxThrowSpeed).Within(0.01f));
+            Assert.That(spear.LastThrowRange, Is.EqualTo(player.Tuning.spearMaxThrowRange).Within(0.01f));
+            Assert.That(player.Unarmed.Available, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ThrownSpearStopsAtCover()
+        {
+            player.enabled = false;
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            player.Body.position = new Vector2(3.2f, 3f);
+            player.transform.position = new Vector3(3.2f, 3f, 0f);
+            player.AimAt(new Vector2(8f, 3f));
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            Assert.That(player.ReleaseSpearThrow(), Is.True);
+            yield return new WaitForFixedUpdate();
+            Assert.That(spear.IsFlying, Is.False);
+            Assert.That(spear.transform.position.x, Is.LessThan(3.675f));
+            Assert.That(spear.Hitbox.enabled, Is.True);
         }
 
         [UnityTest]

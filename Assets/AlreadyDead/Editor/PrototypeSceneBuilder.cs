@@ -76,6 +76,7 @@ namespace AlreadyDead.Editor
             view.Configure(tuning, player);
             camera.transform.position = player.transform.position + Vector3.back * 10f;
             BuildPistol(new Vector2(-6.5f, -3.8f));
+            BuildSpear(new Vector2(-9.5f, -4f));
             var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
@@ -248,6 +249,39 @@ namespace AlreadyDead.Editor
             flash.enabled = false;
             PistolWeapon pistol = go.AddComponent<PistolWeapon>();
             pistol.Configure(tuning, visual, muzzle, halo, flash, square, material);
+        }
+
+        private static void BuildSpear(Vector2 position)
+        {
+            var go = new GameObject("Spear / hold RMB to throw");
+            go.layer = 9;
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, -20f);
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
+            body.linearDamping = 4f;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(1.55f, 0.17f);
+            collider.sharedMaterial = gunMaterial;
+            SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
+                new Vector2(1.9f, 0.75f), Hex(0xffcf71), 9, ring);
+            halo.enabled = false;
+            Transform visual = new GameObject("Visual / stab and charge").transform;
+            visual.SetParent(go.transform, false);
+            Draw("Shaft", visual, new Vector2(-0.08f, 0f), new Vector2(1.32f, 0.12f),
+                Hex(0x8c674a), 13);
+            Draw("Shaft highlight", visual, new Vector2(-0.08f, 0.035f), new Vector2(1.28f, 0.035f),
+                Hex(0xc49a66), 14);
+            Draw("Binding", visual, new Vector2(0.52f, 0f), new Vector2(0.15f, 0.19f),
+                Hex(0x36464d), 15);
+            Draw("Spearhead", visual, new Vector2(0.77f, 0f), new Vector2(0.4f, 0.23f),
+                Hex(0xd6e0d8), 16);
+            Draw("Spear tip", visual, new Vector2(0.99f, 0f), new Vector2(0.17f, 0.11f),
+                Hex(0xf7e5b2), 17);
+            SpearWeapon spear = go.AddComponent<SpearWeapon>();
+            spear.Configure(tuning, visual, halo, square, material);
         }
 
         private static SpriteRenderer Draw(string name, Transform parent, Vector2 position, Vector2 size,

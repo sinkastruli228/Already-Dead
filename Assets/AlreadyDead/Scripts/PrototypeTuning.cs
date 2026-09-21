@@ -43,6 +43,18 @@ namespace AlreadyDead
         [Min(0f)] public float throwAngularDamping = 2.4f;
         [Range(0f, 1f)] public float throwBounce = 0.55f;
 
+        [Header("Spear")]
+        [Min(0.05f)] public float spearStabInterval = 0.42f;
+        [Min(0.05f)] public float spearStabDuration = 0.24f;
+        [Min(0.1f)] public float spearStabReach = 2.1f;
+        [Min(0.01f)] public float spearStabRadius = 0.16f;
+        [Min(0f)] public float spearStabForce = 9f;
+        [Min(0.1f)] public float spearMaxChargeTime = 1.25f;
+        [Min(0.1f)] public float spearMinThrowSpeed = 9f;
+        [Min(0.1f)] public float spearMaxThrowSpeed = 27f;
+        [Min(0.1f)] public float spearMinThrowRange = 4f;
+        [Min(0.1f)] public float spearMaxThrowRange = 13f;
+
         [Header("Collision layers")]
         public LayerMask wallMask = 1 << 8;
         public LayerMask weaponMask = 1 << 9;

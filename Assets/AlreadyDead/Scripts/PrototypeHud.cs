@@ -36,27 +36,37 @@ namespace AlreadyDead
 
             Fill(new Rect(width - 220, 20, 200, 77), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(width - 204, 29, 180, 20), "СНАРЯЖЕНИЕ", small, accent);
-            Label(new Rect(width - 204, 52, 180, 27), player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" : "КУЛАКИ", text, Color.white);
+            string equipment = player.HeldSpear != null ? "КОПЬЁ" :
+                player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" : "КУЛАКИ";
+            Label(new Rect(width - 204, 52, 180, 27), equipment, text, Color.white);
+            if (player.HeldSpear != null && player.HeldSpear.IsCharging)
+            {
+                Fill(new Rect(width - 204, 83, 176, 5), new Color(0.12f, 0.16f, 0.19f));
+                Fill(new Rect(width - 204, 83, 176 * player.HeldSpear.Charge01, 5), amber);
+            }
 
             Fill(new Rect(20, height - 57, width - 40, 37), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(34, height - 49, width - 65, 26),
-                "WASD  движение     МЫШЬ  прицел     ЛКМ  удар / выстрел     ПКМ  взять / бросить     R  сброс     ESC  курсор", small, Color.white);
+                "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
 
-            string hint = !player.InputActive ? "Щёлкни по Game; ESC возвращает управление"
+            string hint = !player.MovementActive ? "Щёлкни по Game; ESC возвращает управление"
+                : !player.InputActive ? "Верни курсор в окно Game для прицеливания"
                 : player.HoveredWeapon != null ? "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ"
-                : player.HeldWeapon == null ? "Подойди к пистолету и наведи на него курсор" : "";
+                : player.HoveredSpear != null ? "ПКМ — ПОДНЯТЬ КОПЬЁ"
+                : player.HeldSpear != null ? "ЛКМ — УКОЛ   •   УДЕРЖИВАЙ ПКМ И ОТПУСТИ ДЛЯ БРОСКА"
+                : !player.HasWeapon ? "Подойди к оружию и наведи на него курсор" : "";
             if (hint.Length > 0)
             {
                 var centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
                 Label(new Rect(0, height - 96, width, 30), hint, centered,
-                    player.HoveredWeapon != null ? amber : Color.white);
+                    player.HoveredWeapon != null || player.HoveredSpear != null ? amber : Color.white);
             }
 
             GUI.matrix = oldMatrix;
             if (!player.InputActive || Mouse.current == null) return;
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 point = new Vector2(mouse.x, Screen.height - mouse.y);
-            Color crossColor = player.HoveredWeapon != null ? amber : Color.white;
+            Color crossColor = player.HoveredWeapon != null || player.HoveredSpear != null ? amber : Color.white;
             Cross(point, 3f, 13f, 4f, new Color(0.02f, 0.03f, 0.04f, 0.9f));
             Cross(point, 4f, 12f, 2f, crossColor);
             Fill(new Rect(point.x - 1, point.y - 1, 2, 2), crossColor);

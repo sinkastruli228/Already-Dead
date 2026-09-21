@@ -19,15 +19,20 @@ namespace AlreadyDead
         private Vector2 moveInput;
         private bool fireRequested;
         private bool interactRequested;
+        private bool interactReleased;
         private bool cursorReleased;
         private bool previousCursorVisible;
         private CursorLockMode previousCursorLock;
 
         public PistolWeapon HeldWeapon { get; private set; }
         public PistolWeapon HoveredWeapon { get; private set; }
+        public SpearWeapon HeldSpear { get; private set; }
+        public SpearWeapon HoveredSpear { get; private set; }
+        public bool HasWeapon => HeldWeapon != null || HeldSpear != null;
         public Vector2 AimDirection { get; private set; } = Vector2.right;
         public Vector2 AimWorld { get; private set; }
-        public bool InputActive => !cursorReleased && (Application.isFocused || Application.isBatchMode) && PointerInsideGame;
+        public bool MovementActive => !cursorReleased && (Application.isFocused || Application.isBatchMode);
+        public bool InputActive => MovementActive && PointerInsideGame;
         public PrototypeTuning Tuning => tuning;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public Transform Facing => facing;
@@ -67,7 +72,8 @@ namespace AlreadyDead
         {
             Cursor.visible = previousCursorVisible;
             Cursor.lockState = previousCursorLock;
-            SetHovered(null);
+            HeldSpear?.CancelCharge();
+            SetHovered(null, null);
         }
 
         private void Update()
@@ -80,7 +86,8 @@ namespace AlreadyDead
             moveInput = Vector2.zero;
             fireRequested = false;
             interactRequested = false;
-            if (!InputActive) return;
+            interactReleased = false;
+            if (!MovementActive) return;
 
             if (keyboard != null)
             {
@@ -94,8 +101,10 @@ namespace AlreadyDead
                 }
             }
 
+            if (!InputActive || Mouse.current == null) return;
             fireRequested = Mouse.current.leftButton.wasPressedThisFrame;
             interactRequested = Mouse.current.rightButton.wasPressedThisFrame;
+            interactReleased = Mouse.current.rightButton.wasReleasedThisFrame;
         }
 
         private void FixedUpdate()
@@ -109,13 +118,24 @@ namespace AlreadyDead
             // Runs after AimCamera.LateUpdate: aim and crosshair use this frame's camera.
             if (!InputActive)
             {
-                SetHovered(null);
+                HeldSpear?.CancelCharge();
+                SetHovered(null, null);
                 return;
             }
 
             AimAt(aimCamera.ScreenToWorld(Mouse.current.position.ReadValue()));
-            SetHovered(HeldWeapon == null ? FindPickup(AimWorld) : null);
+            PistolWeapon pistol = HasWeapon ? null : FindPickup(AimWorld);
+            SpearWeapon spear = HasWeapon ? null : FindSpearPickup(AimWorld);
+            if (pistol != null && spear != null)
+            {
+                float pistolDistance = ((Vector2)pistol.transform.position - AimWorld).sqrMagnitude;
+                float spearDistance = ((Vector2)spear.transform.position - AimWorld).sqrMagnitude;
+                if (pistolDistance <= spearDistance) spear = null;
+                else pistol = null;
+            }
+            SetHovered(pistol, spear);
             if (interactRequested) Interact(AimWorld);
+            if (interactReleased) ReleaseSpearThrow();
             if (fireRequested) TryPrimaryAttack();
         }
 
@@ -150,8 +170,32 @@ namespace AlreadyDead
 
         public bool CanReach(PistolWeapon weapon)
         {
+            return CanReach(weapon.transform.position);
+        }
+
+        public SpearWeapon FindSpearPickup(Vector2 cursorWorld)
+        {
+            var filter = new ContactFilter2D();
+            filter.SetLayerMask(tuning.weaponMask);
+            filter.useTriggers = false;
+            int count = Physics2D.OverlapCircle(cursorWorld, tuning.cursorPickupRadius, filter, hoverResults);
+            SpearWeapon nearest = null;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                SpearWeapon spear = hoverResults[i].GetComponentInParent<SpearWeapon>();
+                if (spear == null || spear.IsHeld || spear.IsFlying || !CanReach(spear.transform.position)) continue;
+                float distance = ((Vector2)spear.transform.position - cursorWorld).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                nearest = spear;
+            }
+            return nearest;
+        }
+
+        private bool CanReach(Vector2 destination)
+        {
             Vector2 origin = transform.position;
-            Vector2 destination = weapon.transform.position;
             return (destination - origin).sqrMagnitude <= tuning.pickupDistance * tuning.pickupDistance
                 && !Physics2D.Linecast(origin, destination, tuning.wallMask);
         }
@@ -164,32 +208,66 @@ namespace AlreadyDead
                 HeldWeapon = null;
                 thrown.Throw(this, AimDirection);
                 unarmed.SetAvailable(true);
-                SetHovered(null);
+                SetHovered(null, null);
                 return true;
             }
 
+            if (HeldSpear != null) return HeldSpear.BeginCharge();
+
             PistolWeapon pickup = FindPickup(cursorWorld);
-            if (pickup == null) return false;
-            HeldWeapon = pickup;
-            pickup.Equip(weaponSocket, this);
+            SpearWeapon spearPickup = FindSpearPickup(cursorWorld);
+            if (pickup == null && spearPickup == null) return false;
+            if (pickup != null && spearPickup != null)
+            {
+                float pistolDistance = ((Vector2)pickup.transform.position - cursorWorld).sqrMagnitude;
+                float spearDistance = ((Vector2)spearPickup.transform.position - cursorWorld).sqrMagnitude;
+                if (pistolDistance <= spearDistance) spearPickup = null;
+                else pickup = null;
+            }
+            if (pickup != null)
+            {
+                HeldWeapon = pickup;
+                pickup.Equip(weaponSocket, this);
+            }
+            else
+            {
+                HeldSpear = spearPickup;
+                spearPickup.Equip(weaponSocket, this);
+            }
             unarmed.SetAvailable(false);
-            SetHovered(null);
+            SetHovered(null, null);
+            return true;
+        }
+
+        public bool ReleaseSpearThrow()
+        {
+            if (HeldSpear == null || !HeldSpear.ReleaseThrow(this, AimDirection)) return false;
+            HeldSpear = null;
+            unarmed.SetAvailable(true);
             return true;
         }
 
         public bool TryPrimaryAttack()
         {
-            return HeldWeapon != null
-                ? HeldWeapon.TryFire(AimDirection, aimCamera)
-                : unarmed.TryPunch(AimDirection);
+            if (HeldWeapon != null) return HeldWeapon.TryFire(AimDirection, aimCamera);
+            if (HeldSpear != null) return HeldSpear.TryStab(AimDirection);
+            return unarmed.TryPunch(AimDirection);
         }
 
-        private void SetHovered(PistolWeapon weapon)
+        private void SetHovered(PistolWeapon weapon, SpearWeapon spear)
         {
-            if (HoveredWeapon == weapon) return;
-            if (HoveredWeapon != null) HoveredWeapon.SetHighlighted(false);
-            HoveredWeapon = weapon;
-            if (HoveredWeapon != null) HoveredWeapon.SetHighlighted(true);
+            if (HoveredWeapon != weapon)
+            {
+                if (HoveredWeapon != null) HoveredWeapon.SetHighlighted(false);
+                HoveredWeapon = weapon;
+                if (HoveredWeapon != null) HoveredWeapon.SetHighlighted(true);
+            }
+            if (HoveredSpear != spear)
+            {
+                if (HoveredSpear != null) HoveredSpear.SetHighlighted(false);
+                HoveredSpear = spear;
+                if (HoveredSpear != null) HoveredSpear.SetHighlighted(true);
+            }
         }
     }
 }
