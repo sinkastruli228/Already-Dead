@@ -1,0 +1,600 @@
+fileFormatVersion: 2
+guid: ebfbb21a78102e841a640819d2e3319e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8505808626737797156
+    second: caveman_topdown_concept_sheet_0
+  - first:
+      213: 7454386347957807571
+    second: caveman_topdown_concept_sheet_1
+  - first:
+      213: 3363408809736029100
+    second: caveman_topdown_concept_sheet_2
+  - first:
+      213: -6439713146930325897
+    second: caveman_topdown_concept_sheet_3
+  - first:
+      213: -1815959623773383440
+    second: caveman_topdown_concept_sheet_4
+  - first:
+      213: -3646848327341933206
+    second: caveman_topdown_concept_sheet_5
+  - first:
+      213: -4561903010770103417
+    second: caveman_topdown_concept_sheet_6
+  - first:
+      213: -31771372934243687
+    second: caveman_topdown_concept_sheet_7
+  - first:
+      213: 6805252279296346389
+    second: caveman_topdown_concept_sheet_8
+  - first:
+      213: -28612495734846835
+    second: caveman_topdown_concept_sheet_9
+  - first:
+      213: 3517154882492698408
+    second: caveman_topdown_concept_sheet_10
+  - first:
+      213: -3160112126879916740
+    second: caveman_topdown_concept_sheet_11
+  - first:
+      213: 6708647723679224612
+    second: caveman_topdown_concept_sheet_12
+  - first:
+      213: 7987542263304526899
+    second: caveman_topdown_concept_sheet_13
+  - first:
+      213: 8702162728793980670
+    second: caveman_topdown_concept_sheet_14
+  - first:
+      213: -1861718985710929293
+    second: caveman_topdown_concept_sheet_15
+  - first:
+      213: -5681735224728993025
+    second: caveman_topdown_concept_sheet_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_0
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 401
+        width: 509
+        height: 537
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd727d3ae1c45f980800000000000000
+      internalID: -8505808626737797156
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_1
+      rect:
+        serializedVersion: 2
+        x: 574
+        y: 322
+        width: 453
+        height: 682
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d9eb8073ec437760800000000000000
+      internalID: 7454386347957807571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_2
+      rect:
+        serializedVersion: 2
+        x: 1304
+        y: 930
+        width: 53
+        height: 64
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca34cba0e7a3dae20800000000000000
+      internalID: 3363408809736029100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_3
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 823
+        width: 43
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7761ecd030b81a6a0800000000000000
+      internalID: -6439713146930325897
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_4
+      rect:
+        serializedVersion: 2
+        x: 1114
+        y: 415
+        width: 411
+        height: 473
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f41982f75a6cc6e0800000000000000
+      internalID: -1815959623773383440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_5
+      rect:
+        serializedVersion: 2
+        x: 1130
+        y: 443
+        width: 29
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a6d7e03a4cac36dc0800000000000000
+      internalID: -3646848327341933206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_6
+      rect:
+        serializedVersion: 2
+        x: 1298
+        y: 459
+        width: 63
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7835347b16dd0b0c0800000000000000
+      internalID: -4561903010770103417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_7
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 441
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99a5a3aca102f8ff0800000000000000
+      internalID: -31771372934243687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_8
+      rect:
+        serializedVersion: 2
+        x: 1154
+        y: 417
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 519406a64ec117e50800000000000000
+      internalID: 6805252279296346389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_9
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 55
+        width: 371
+        height: 316
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8a469336195a9ff0800000000000000
+      internalID: -28612495734846835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_10
+      rect:
+        serializedVersion: 2
+        x: 680
+        y: 23
+        width: 297
+        height: 357
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82f020f1bb17fc030800000000000000
+      internalID: 3517154882492698408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_11
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 225
+        width: 59
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3d1bea73c60524d0800000000000000
+      internalID: -3160112126879916740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_12
+      rect:
+        serializedVersion: 2
+        x: 1096
+        y: 39
+        width: 423
+        height: 291
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 423122d8f87e91d50800000000000000
+      internalID: 6708647723679224612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_13
+      rect:
+        serializedVersion: 2
+        x: 368
+        y: 71
+        width: 25
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33c9fa06e5379de60800000000000000
+      internalID: 7987542263304526899
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_14
+      rect:
+        serializedVersion: 2
+        x: 530
+        y: 63
+        width: 77
+        height: 75
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: efeb86355ea44c870800000000000000
+      internalID: 8702162728793980670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_15
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 73
+        width: 6
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37a79114278d926e0800000000000000
+      internalID: -1861718985710929293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: caveman_topdown_concept_sheet_16
+      rect:
+        serializedVersion: 2
+        x: 1064
+        y: 51
+        width: 39
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff2443e8aeb6621b0800000000000000
+      internalID: -5681735224728993025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      caveman_topdown_concept_sheet_0: -8505808626737797156
+      caveman_topdown_concept_sheet_1: 7454386347957807571
+      caveman_topdown_concept_sheet_10: 3517154882492698408
+      caveman_topdown_concept_sheet_11: -3160112126879916740
+      caveman_topdown_concept_sheet_12: 6708647723679224612
+      caveman_topdown_concept_sheet_13: 7987542263304526899
+      caveman_topdown_concept_sheet_14: 8702162728793980670
+      caveman_topdown_concept_sheet_15: -1861718985710929293
+      caveman_topdown_concept_sheet_16: -5681735224728993025
+      caveman_topdown_concept_sheet_2: 3363408809736029100
+      caveman_topdown_concept_sheet_3: -6439713146930325897
+      caveman_topdown_concept_sheet_4: -1815959623773383440
+      caveman_topdown_concept_sheet_5: -3646848327341933206
+      caveman_topdown_concept_sheet_6: -4561903010770103417
+      caveman_topdown_concept_sheet_7: -31771372934243687
+      caveman_topdown_concept_sheet_8: 6805252279296346389
+      caveman_topdown_concept_sheet_9: -28612495734846835
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
