@@ -14,6 +14,7 @@ namespace AlreadyDead.Tests
         private TopDownPlayer player;
         private PistolWeapon pistol;
         private SpearWeapon spear;
+        private RockWeapon rock;
         private Keyboard keyboard;
         private Mouse mouse;
         private InputTestFixture input;
@@ -46,9 +47,14 @@ namespace AlreadyDead.Tests
             player = Object.FindAnyObjectByType<TopDownPlayer>();
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
             spear = Object.FindAnyObjectByType<SpearWeapon>();
+            rock = Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None)[0];
+            foreach (RockWeapon candidate in Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None))
+                if (Vector2.Distance(candidate.transform.position, player.transform.position) <
+                    Vector2.Distance(rock.transform.position, player.transform.position)) rock = candidate;
             Assert.That(player, Is.Not.Null);
             Assert.That(pistol, Is.Not.Null);
             Assert.That(spear, Is.Not.Null);
+            Assert.That(rock, Is.Not.Null);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(Screen.width / 2f, Screen.height / 2f) });
             yield return null;
             yield return new WaitForFixedUpdate();
@@ -209,6 +215,47 @@ namespace AlreadyDead.Tests
             yield return new WaitForSeconds(player.Tuning.spearStabDuration * 0.6f);
             Assert.That(spear.StabsMade, Is.EqualTo(1));
             Assert.That(spear.ImpactsMade, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator RocksHaveNoPickupOutlineAndStrikeInFront()
+        {
+            player.enabled = false;
+            Assert.That(Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None).Length, Is.EqualTo(21));
+            Assert.That(rock.GetComponentsInChildren<SpriteRenderer>().Length, Is.EqualTo(1),
+                "The pickup rock has only its pixel-art sprite, with no highlight renderer");
+            Assert.That(player.FindRockPickup(rock.transform.position), Is.SameAs(rock));
+            Assert.That(player.Interact(rock.transform.position), Is.True);
+            Assert.That(player.HeldRock, Is.SameAs(rock));
+            Assert.That(player.Unarmed.Available, Is.False);
+            player.Body.position = new Vector2(3.2f, 3f);
+            player.transform.position = new Vector3(3.2f, 3f, 0f);
+            player.AimAt(new Vector2(8f, 3f));
+            Physics2D.SyncTransforms();
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(player.TryPrimaryAttack(), Is.False, "Rock strike cooldown");
+            yield return new WaitForSeconds(player.Tuning.rockStrikeDuration * 0.6f);
+            Assert.That(rock.StrikesMade, Is.EqualTo(1));
+            Assert.That(rock.ImpactsMade, Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        public IEnumerator RockSwapsAndThrowsImmediatelyOnRightClick()
+        {
+            player.enabled = false;
+            Assert.That(player.Interact(pistol.transform.position), Is.True);
+            Assert.That(player.Interact(rock.transform.position), Is.True);
+            Assert.That(player.HeldWeapon, Is.Null);
+            Assert.That(player.HeldRock, Is.SameAs(rock));
+            Assert.That(pistol.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            player.AimAt((Vector2)player.transform.position + Vector2.down * 5f);
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            Assert.That(player.HeldRock, Is.Null);
+            Assert.That(rock.IsHeld, Is.False);
+            Assert.That(rock.Body.linearVelocity.magnitude,
+                Is.EqualTo(player.Tuning.rockThrowSpeed).Within(0.01f));
+            Assert.That(player.Unarmed.Available, Is.True);
+            yield return new WaitForFixedUpdate();
         }
 
         [UnityTest]

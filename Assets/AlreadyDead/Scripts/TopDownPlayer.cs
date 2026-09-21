@@ -28,7 +28,9 @@ namespace AlreadyDead
         public PistolWeapon HoveredWeapon { get; private set; }
         public SpearWeapon HeldSpear { get; private set; }
         public SpearWeapon HoveredSpear { get; private set; }
-        public bool HasWeapon => HeldWeapon != null || HeldSpear != null;
+        public RockWeapon HeldRock { get; private set; }
+        public RockWeapon HoveredRock { get; private set; }
+        public bool HasWeapon => HeldWeapon != null || HeldSpear != null || HeldRock != null;
         public Vector2 AimDirection { get; private set; } = Vector2.right;
         public Vector2 AimWorld { get; private set; }
         public bool MovementActive => !cursorReleased && (Application.isFocused || Application.isBatchMode);
@@ -73,7 +75,7 @@ namespace AlreadyDead
             Cursor.visible = previousCursorVisible;
             Cursor.lockState = previousCursorLock;
             HeldSpear?.CancelCharge();
-            SetHovered(null, null);
+            SetHovered(null, null, null);
         }
 
         private void Update()
@@ -119,21 +121,16 @@ namespace AlreadyDead
             if (!InputActive)
             {
                 HeldSpear?.CancelCharge();
-                SetHovered(null, null);
+                SetHovered(null, null, null);
                 return;
             }
 
             AimAt(aimCamera.ScreenToWorld(Mouse.current.position.ReadValue()));
             PistolWeapon pistol = FindPickup(AimWorld);
             SpearWeapon spear = FindSpearPickup(AimWorld);
-            if (pistol != null && spear != null)
-            {
-                float pistolDistance = ((Vector2)pistol.transform.position - AimWorld).sqrMagnitude;
-                float spearDistance = ((Vector2)spear.transform.position - AimWorld).sqrMagnitude;
-                if (pistolDistance <= spearDistance) spear = null;
-                else pistol = null;
-            }
-            SetHovered(pistol, spear);
+            RockWeapon rock = FindRockPickup(AimWorld);
+            SelectNearest(AimWorld, ref pistol, ref spear, ref rock);
+            SetHovered(pistol, spear, rock);
             if (interactRequested) Interact(AimWorld);
             if (interactReleased) ReleaseSpearThrow();
             if (fireRequested) TryPrimaryAttack();
@@ -193,6 +190,48 @@ namespace AlreadyDead
             return nearest;
         }
 
+        public RockWeapon FindRockPickup(Vector2 cursorWorld)
+        {
+            var filter = new ContactFilter2D();
+            filter.SetLayerMask(tuning.weaponMask);
+            filter.useTriggers = false;
+            int count = Physics2D.OverlapCircle(cursorWorld, tuning.cursorPickupRadius, filter, hoverResults);
+            RockWeapon nearest = null;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                RockWeapon rock = hoverResults[i].GetComponentInParent<RockWeapon>();
+                if (rock == null || rock.IsHeld || !CanReach(rock.transform.position)) continue;
+                float distance = ((Vector2)rock.transform.position - cursorWorld).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                nearest = rock;
+            }
+            return nearest;
+        }
+
+        private static void SelectNearest(Vector2 cursorWorld, ref PistolWeapon pistol,
+            ref SpearWeapon spear, ref RockWeapon rock)
+        {
+            float best = float.PositiveInfinity;
+            Component selected = null;
+            if (pistol != null)
+            {
+                best = ((Vector2)pistol.transform.position - cursorWorld).sqrMagnitude;
+                selected = pistol;
+            }
+            if (spear != null)
+            {
+                float distance = ((Vector2)spear.transform.position - cursorWorld).sqrMagnitude;
+                if (distance < best) { best = distance; selected = spear; }
+            }
+            if (rock != null && ((Vector2)rock.transform.position - cursorWorld).sqrMagnitude < best)
+                selected = rock;
+            if (selected != pistol) pistol = null;
+            if (selected != spear) spear = null;
+            if (selected != rock) rock = null;
+        }
+
         private bool CanReach(Vector2 destination)
         {
             Vector2 origin = transform.position;
@@ -204,14 +243,9 @@ namespace AlreadyDead
         {
             PistolWeapon pickup = FindPickup(cursorWorld);
             SpearWeapon spearPickup = FindSpearPickup(cursorWorld);
-            if (pickup != null && spearPickup != null)
-            {
-                float pistolDistance = ((Vector2)pickup.transform.position - cursorWorld).sqrMagnitude;
-                float spearDistance = ((Vector2)spearPickup.transform.position - cursorWorld).sqrMagnitude;
-                if (pistolDistance <= spearDistance) spearPickup = null;
-                else pickup = null;
-            }
-            if (pickup != null || spearPickup != null)
+            RockWeapon rockPickup = FindRockPickup(cursorWorld);
+            SelectNearest(cursorWorld, ref pickup, ref spearPickup, ref rockPickup);
+            if (pickup != null || spearPickup != null || rockPickup != null)
             {
                 // Picking up another weapon replaces the current one in one click.
                 // The previous weapon is left at the player's feet, with no throw impulse.
@@ -225,18 +259,28 @@ namespace AlreadyDead
                     HeldSpear.Drop(this);
                     HeldSpear = null;
                 }
+                if (HeldRock != null)
+                {
+                    HeldRock.Drop(this);
+                    HeldRock = null;
+                }
                 if (pickup != null)
                 {
                     HeldWeapon = pickup;
                     pickup.Equip(weaponSocket, this);
                 }
-                else
+                else if (spearPickup != null)
                 {
                     HeldSpear = spearPickup;
                     spearPickup.Equip(weaponSocket, this);
                 }
+                else
+                {
+                    HeldRock = rockPickup;
+                    rockPickup.Equip(weaponSocket, this);
+                }
                 unarmed.SetAvailable(false);
-                SetHovered(null, null);
+                SetHovered(null, null, null);
                 return true;
             }
 
@@ -246,7 +290,17 @@ namespace AlreadyDead
                 HeldWeapon = null;
                 thrown.Throw(this, AimDirection);
                 unarmed.SetAvailable(true);
-                SetHovered(null, null);
+                SetHovered(null, null, null);
+                return true;
+            }
+
+            if (HeldRock != null)
+            {
+                RockWeapon thrown = HeldRock;
+                HeldRock = null;
+                thrown.Throw(this, AimDirection);
+                unarmed.SetAvailable(true);
+                SetHovered(null, null, null);
                 return true;
             }
 
@@ -265,10 +319,11 @@ namespace AlreadyDead
         {
             if (HeldWeapon != null) return HeldWeapon.TryFire(AimDirection, aimCamera);
             if (HeldSpear != null) return HeldSpear.TryStab(AimDirection);
+            if (HeldRock != null) return HeldRock.TryStrike(AimDirection);
             return unarmed.TryPunch(AimDirection);
         }
 
-        private void SetHovered(PistolWeapon weapon, SpearWeapon spear)
+        private void SetHovered(PistolWeapon weapon, SpearWeapon spear, RockWeapon rock)
         {
             if (HoveredWeapon != weapon)
             {
@@ -282,6 +337,7 @@ namespace AlreadyDead
                 HoveredSpear = spear;
                 if (HoveredSpear != null) HoveredSpear.SetHighlighted(true);
             }
+            HoveredRock = rock;
         }
     }
 }

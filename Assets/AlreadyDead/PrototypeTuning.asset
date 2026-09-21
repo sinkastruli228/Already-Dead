@@ -50,6 +50,12 @@ MonoBehaviour:
   spearMaxThrowSpeed: 27
   spearMinThrowRange: 4
   spearMaxThrowRange: 13
+  rockStrikeInterval: 0.38
+  rockStrikeDuration: 0.22
+  rockStrikeReach: 1.05
+  rockStrikeRadius: 0.24
+  rockStrikeForce: 7
+  rockThrowSpeed: 15
   wallMask:
     serializedVersion: 2
     m_Bits: 256

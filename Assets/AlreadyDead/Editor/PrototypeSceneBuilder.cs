@@ -211,7 +211,7 @@ namespace AlreadyDead.Editor
             {
                 new Vector2(-12.3f, 6.4f), new Vector2(-10.8f, 4.5f),
                 new Vector2(-9.9f, 0.8f), new Vector2(-12f, -1.4f),
-                new Vector2(-10.2f, -6.9f), new Vector2(-5.5f, 7.2f),
+                new Vector2(-8.2f, -5.3f), new Vector2(-5.5f, 7.2f),
                 new Vector2(-3.8f, 5.9f), new Vector2(-1.2f, 7.2f),
                 new Vector2(2.4f, 7.3f), new Vector2(6.8f, 6.8f),
                 new Vector2(11.4f, 7f), new Vector2(12.1f, 5f),
@@ -222,8 +222,7 @@ namespace AlreadyDead.Editor
                 new Vector2(12f, -6f)
             };
             for (int i = 0; i < stonePositions.Length; i++)
-                Draw("Stone", details, stonePositions[i], Vector2.one, Color.white, 1,
-                    rocks[i % rocks.Length]);
+                BuildRock(details, stonePositions[i], rocks[i % rocks.Length]);
 
             Vector2[] bushPositions =
             {
@@ -249,6 +248,28 @@ namespace AlreadyDead.Editor
                 if (Vector2.Distance(new Vector2(x, y), new Vector2(-8f, -4f)) < 2f) continue;
                 Draw("Dry grass", details, new Vector2(x, y), Vector2.one, Color.white, 0, dryGrass);
             }
+        }
+
+        private static void BuildRock(Transform parent, Vector2 position, Sprite sprite)
+        {
+            var go = new GameObject("Stone / RMB pickup + instant throw");
+            go.layer = 9;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = position;
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.mass = 0.55f;
+            body.linearDamping = tuning.throwLinearDamping;
+            body.angularDamping = tuning.throwAngularDamping;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            CircleCollider2D collider = go.AddComponent<CircleCollider2D>();
+            collider.radius = 0.31f;
+            collider.sharedMaterial = gunMaterial;
+            Transform visual = new GameObject("Rock pixel art").transform;
+            visual.SetParent(go.transform, false);
+            Draw("Rock", visual, Vector2.zero, Vector2.one, Color.white, 1, sprite);
+            RockWeapon rock = go.AddComponent<RockWeapon>();
+            rock.Configure(tuning, visual, square, material);
         }
 
         private static TopDownPlayer BuildPlayer(AimCamera camera)

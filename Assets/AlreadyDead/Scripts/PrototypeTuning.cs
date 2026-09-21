@@ -55,6 +55,14 @@ namespace AlreadyDead
         [Min(0.1f)] public float spearMinThrowRange = 4f;
         [Min(0.1f)] public float spearMaxThrowRange = 13f;
 
+        [Header("Rock")]
+        [Min(0.05f)] public float rockStrikeInterval = 0.38f;
+        [Min(0.05f)] public float rockStrikeDuration = 0.22f;
+        [Min(0.1f)] public float rockStrikeReach = 1.05f;
+        [Min(0.01f)] public float rockStrikeRadius = 0.24f;
+        [Min(0f)] public float rockStrikeForce = 7f;
+        [Min(0.1f)] public float rockThrowSpeed = 15f;
+
         [Header("Collision layers")]
         public LayerMask wallMask = 1 << 8;
         public LayerMask weaponMask = 1 << 9;

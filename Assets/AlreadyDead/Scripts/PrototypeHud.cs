@@ -37,7 +37,8 @@ namespace AlreadyDead
             Fill(new Rect(width - 220, 20, 200, 77), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(width - 204, 29, 180, 20), "СНАРЯЖЕНИЕ", small, accent);
             string equipment = player.HeldSpear != null ? "КОПЬЁ" :
-                player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" : "КУЛАКИ";
+                player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" :
+                player.HeldRock != null ? "КАМЕНЬ" : "КУЛАКИ";
             Label(new Rect(width - 204, 52, 180, 27), equipment, text, Color.white);
             if (player.HeldSpear != null && player.HeldSpear.IsCharging)
             {
@@ -53,7 +54,9 @@ namespace AlreadyDead
                 : !player.InputActive ? "Верни курсор в окно Game для прицеливания"
                 : player.HoveredWeapon != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА ПИСТОЛЕТ" : "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ")
                 : player.HoveredSpear != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КОПЬЁ" : "ПКМ — ПОДНЯТЬ КОПЬЁ")
+                : player.HoveredRock != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КАМЕНЬ" : "ПКМ — ПОДНЯТЬ КАМЕНЬ")
                 : player.HeldSpear != null ? "ЛКМ — УКОЛ   •   УДЕРЖИВАЙ ПКМ И ОТПУСТИ ДЛЯ БРОСКА"
+                : player.HeldRock != null ? "ЛКМ — УДАР КАМНЕМ   •   ПКМ — БРОСИТЬ СРАЗУ"
                 : !player.HasWeapon ? "Подойди к оружию и наведи на него курсор" : "";
             if (hint.Length > 0)
             {
