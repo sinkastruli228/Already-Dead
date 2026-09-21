@@ -15,9 +15,13 @@ namespace AlreadyDead
         [SerializeField] private AimCamera aimCamera;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
+        [SerializeField] private Vector3 weaponArmLocalPosition = new Vector3(0.21f, -0.22f, 0f);
+        [SerializeField] private float weaponArmAngle = -90f;
 
         private Vector3 leftRest;
         private Vector3 rightRest;
+        private Quaternion leftRestRotation;
+        private Quaternion rightRestRotation;
         private float punchStartedAt = float.NegativeInfinity;
         private float nextPunchTime;
         private bool useLeft = true;
@@ -29,6 +33,11 @@ namespace AlreadyDead
         public int PunchCount { get; private set; }
         public int ImpactCount { get; private set; }
         public bool LastPunchUsedLeft { get; private set; }
+        public int VisibleArmCount => (leftFist.gameObject.activeSelf ? 1 : 0) +
+            (rightFist.gameObject.activeSelf ? 1 : 0);
+        public bool WeaponArmRaised => !Available && rightFist.gameObject.activeSelf;
+        public Transform LeftArm => leftFist;
+        public Transform RightArm => rightFist;
 
         public void Configure(PrototypeTuning settings, Transform left, Transform right, AimCamera view,
             Sprite sprite, Material material)
@@ -41,12 +50,18 @@ namespace AlreadyDead
             primitiveMaterial = material;
             leftRest = left.localPosition;
             rightRest = right.localPosition;
+            leftRestRotation = left.localRotation;
+            rightRestRotation = right.localRotation;
+            ApplyModePose();
         }
 
         private void Awake()
         {
             leftRest = leftFist.localPosition;
             rightRest = rightFist.localPosition;
+            leftRestRotation = leftFist.localRotation;
+            rightRestRotation = rightFist.localRotation;
+            ApplyModePose();
         }
 
         private void Update()
@@ -59,8 +74,10 @@ namespace AlreadyDead
             extension = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(extension));
             Transform active = LastPunchUsedLeft ? leftFist : rightFist;
             Vector3 rest = LastPunchUsedLeft ? leftRest : rightRest;
+            Quaternion restRotation = LastPunchUsedLeft ? leftRestRotation : rightRestRotation;
             active.localPosition = rest + Vector3.right * (tuning.punchReach * 0.62f * extension);
-            active.localRotation = Quaternion.Euler(0, 0, (LastPunchUsedLeft ? -12f : 12f) * extension);
+            active.localRotation = restRotation *
+                Quaternion.Euler(0f, 0f, (LastPunchUsedLeft ? -12f : 12f) * extension);
 
             if (!impactApplied && progress >= 0.32f)
             {
@@ -88,9 +105,7 @@ namespace AlreadyDead
         public void SetAvailable(bool value)
         {
             Available = value;
-            leftFist.gameObject.SetActive(value);
-            rightFist.gameObject.SetActive(value);
-            if (!value) ResetPose();
+            ResetPose();
         }
 
         private void ApplyImpact()
@@ -109,10 +124,26 @@ namespace AlreadyDead
 
         private void ResetPose()
         {
+            ApplyModePose();
+        }
+
+        private void ApplyModePose()
+        {
+            if (leftFist == null || rightFist == null) return;
+            leftFist.gameObject.SetActive(Available);
+            rightFist.gameObject.SetActive(true);
             leftFist.localPosition = leftRest;
-            rightFist.localPosition = rightRest;
-            leftFist.localRotation = Quaternion.identity;
-            rightFist.localRotation = Quaternion.identity;
+            leftFist.localRotation = leftRestRotation;
+            if (Available)
+            {
+                rightFist.localPosition = rightRest;
+                rightFist.localRotation = rightRestRotation;
+            }
+            else
+            {
+                rightFist.localPosition = weaponArmLocalPosition;
+                rightFist.localRotation = Quaternion.Euler(0f, 0f, weaponArmAngle);
+            }
         }
     }
 }

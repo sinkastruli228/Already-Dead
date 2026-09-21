@@ -15,6 +15,7 @@ namespace AlreadyDead.Tests
         private PistolWeapon pistol;
         private SpearWeapon spear;
         private RockWeapon rock;
+        private PlayerLimbAnimator limbs;
         private Keyboard keyboard;
         private Mouse mouse;
         private InputTestFixture input;
@@ -47,14 +48,16 @@ namespace AlreadyDead.Tests
             player = Object.FindAnyObjectByType<TopDownPlayer>();
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
             spear = Object.FindAnyObjectByType<SpearWeapon>();
-            rock = Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None)[0];
-            foreach (RockWeapon candidate in Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None))
+            limbs = Object.FindAnyObjectByType<PlayerLimbAnimator>();
+            rock = Object.FindObjectsByType<RockWeapon>()[0];
+            foreach (RockWeapon candidate in Object.FindObjectsByType<RockWeapon>())
                 if (Vector2.Distance(candidate.transform.position, player.transform.position) <
                     Vector2.Distance(rock.transform.position, player.transform.position)) rock = candidate;
             Assert.That(player, Is.Not.Null);
             Assert.That(pistol, Is.Not.Null);
             Assert.That(spear, Is.Not.Null);
             Assert.That(rock, Is.Not.Null);
+            Assert.That(limbs, Is.Not.Null);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(Screen.width / 2f, Screen.height / 2f) });
             yield return null;
             yield return new WaitForFixedUpdate();
@@ -221,9 +224,11 @@ namespace AlreadyDead.Tests
         public IEnumerator RocksHaveNoPickupOutlineAndStrikeInFront()
         {
             player.enabled = false;
-            Assert.That(Object.FindObjectsByType<RockWeapon>(FindObjectsSortMode.None).Length, Is.EqualTo(21));
-            Assert.That(rock.GetComponentsInChildren<SpriteRenderer>().Length, Is.EqualTo(1),
-                "The pickup rock has only its pixel-art sprite, with no highlight renderer");
+            Assert.That(Object.FindObjectsByType<RockWeapon>().Length, Is.EqualTo(21));
+            Assert.That(rock.transform.Find("Pickup highlight"), Is.Null,
+                "Rocks do not use the weapon pickup outline");
+            Assert.That(rock.Shadow, Is.Not.Null);
+            Assert.That(rock.BuriedMark, Is.Not.Null);
             Assert.That(player.FindRockPickup(rock.transform.position), Is.SameAs(rock));
             Assert.That(player.Interact(rock.transform.position), Is.True);
             Assert.That(player.HeldRock, Is.SameAs(rock));
@@ -248,14 +253,67 @@ namespace AlreadyDead.Tests
             Assert.That(player.HeldWeapon, Is.Null);
             Assert.That(player.HeldRock, Is.SameAs(rock));
             Assert.That(pistol.Body.linearVelocity, Is.EqualTo(Vector2.zero));
-            player.AimAt((Vector2)player.transform.position + Vector2.down * 5f);
+            player.AimAt((Vector2)player.transform.position + Vector2.right * 5f);
             Assert.That(player.Interact(Vector2.zero), Is.True);
             Assert.That(player.HeldRock, Is.Null);
             Assert.That(rock.IsHeld, Is.False);
+            Assert.That(rock.IsFlying, Is.True);
+            Assert.That(player.FindRockPickup(rock.transform.position), Is.Null,
+                "A flying rock cannot be picked back up");
             Assert.That(rock.Body.linearVelocity.magnitude,
                 Is.EqualTo(player.Tuning.rockThrowSpeed).Within(0.01f));
+            Assert.That(rock.Body.angularVelocity, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(rock.transform.eulerAngles.z, Is.EqualTo(0f).Within(0.001f));
             Assert.That(player.Unarmed.Available, Is.True);
-            yield return new WaitForFixedUpdate();
+            yield return new WaitForSeconds(player.Tuning.rockFlightDuration * 0.48f);
+            Assert.That(rock.IsFlying, Is.True);
+            Assert.That(rock.FlightHeight, Is.GreaterThan(player.Tuning.rockThrowHeight * 0.75f));
+            Assert.That(rock.Visual.localPosition.y, Is.GreaterThan(0.2f));
+            Assert.That(rock.Shadow.gameObject.activeSelf, Is.True);
+            Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.False);
+            Assert.That(rock.transform.eulerAngles.z, Is.EqualTo(0f).Within(0.001f));
+            yield return new WaitForSeconds(player.Tuning.rockFlightDuration * 0.65f);
+            Assert.That(rock.IsFlying, Is.False);
+            Assert.That(rock.IsBuried, Is.True);
+            Assert.That(rock.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            Assert.That(rock.Shadow.gameObject.activeSelf, Is.False);
+            Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator CharacterUsesPixelLimbsAndSwitchesArmPoseWithWeapons()
+        {
+            player.enabled = false;
+            Assert.That(player.Unarmed.VisibleArmCount, Is.EqualTo(2));
+            Assert.That(player.Unarmed.WeaponArmRaised, Is.False);
+            Assert.That(limbs.LeftLeg.GetComponent<SpriteRenderer>().sprite.name, Does.Contain("CaveMan_Leg"));
+            Assert.That(limbs.RightLeg.GetComponent<SpriteRenderer>().sprite.name, Does.Contain("CaveMan_Leg"));
+            Transform cavemanBody = null;
+            foreach (SpriteRenderer spriteRenderer in player.GetComponentsInChildren<SpriteRenderer>(true))
+                if (spriteRenderer.sprite != null && spriteRenderer.sprite.name.Contains("CaveMan_Idle"))
+                    cavemanBody = spriteRenderer.transform;
+            Assert.That(cavemanBody, Is.Not.Null);
+            Assert.That(Mathf.DeltaAngle(cavemanBody.localEulerAngles.z, -90f), Is.EqualTo(0f).Within(0.01f));
+            Assert.That(Mathf.DeltaAngle(player.Unarmed.LeftArm.localEulerAngles.z, -90f),
+                Is.EqualTo(0f).Within(0.01f));
+
+            Vector2 startingPosition = player.Body.position;
+            player.Body.linearVelocity = Vector2.right * player.Tuning.moveSpeed;
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(limbs.LeftExtension, Is.GreaterThan(limbs.RightExtension));
+            yield return new WaitForSeconds(0.45f);
+            Assert.That(limbs.RightExtension, Is.GreaterThan(limbs.LeftExtension));
+            player.Body.linearVelocity = Vector2.zero;
+            player.Body.position = startingPosition;
+            player.transform.position = startingPosition;
+            Physics2D.SyncTransforms();
+
+            Assert.That(player.Interact(pistol.transform.position), Is.True);
+            Assert.That(player.Unarmed.Available, Is.False);
+            Assert.That(player.Unarmed.VisibleArmCount, Is.EqualTo(1));
+            Assert.That(player.Unarmed.WeaponArmRaised, Is.True);
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            Assert.That(player.Unarmed.VisibleArmCount, Is.EqualTo(2));
         }
 
         [UnityTest]
@@ -331,7 +389,9 @@ namespace AlreadyDead.Tests
         public IEnumerator HoldingSpearThrowLongerIncreasesSpeedAndRange()
         {
             player.enabled = false;
+            Vector3 defaultShadowScale = spear.Shadow.localScale;
             Assert.That(player.Interact(spear.transform.position), Is.True);
+            Assert.That(spear.Shadow.localScale, Is.EqualTo(defaultShadowScale));
             player.AimAt((Vector2)player.transform.position + Vector2.right * 10f);
             Assert.That(player.Interact(Vector2.zero), Is.True);
             yield return new WaitForSeconds(0.12f);
@@ -341,12 +401,16 @@ namespace AlreadyDead.Tests
             Assert.That(spear.IsFlying, Is.True);
             Assert.That(player.FindSpearPickup(spear.transform.position), Is.Null,
                 "A flying spear cannot be picked up");
-            yield return new WaitForSeconds(0.7f);
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(spear.FlightHeight, Is.GreaterThan(0f));
+            Assert.That(spear.Shadow.localScale.x, Is.LessThan(defaultShadowScale.x));
+            yield return new WaitForSeconds(0.58f);
             Assert.That(spear.IsFlying, Is.False);
             player.Body.position = spear.transform.position;
             player.transform.position = spear.transform.position;
             Physics2D.SyncTransforms();
             Assert.That(player.Interact(spear.transform.position), Is.True);
+            Assert.That(spear.Shadow.localScale, Is.EqualTo(defaultShadowScale));
             Assert.That(player.Interact(Vector2.zero), Is.True);
             yield return new WaitForSeconds(player.Tuning.spearMaxChargeTime + 0.05f);
             Assert.That(spear.Charge01, Is.EqualTo(1f).Within(0.001f));
@@ -373,6 +437,8 @@ namespace AlreadyDead.Tests
             Assert.That(spear.IsFlying, Is.False);
             Assert.That(spear.transform.position.x, Is.LessThan(3.675f));
             Assert.That(spear.Hitbox.enabled, Is.True);
+            Assert.That(spear.VibrationAmount, Is.GreaterThan(0f));
+            Assert.That(spear.Shadow.localScale.x, Is.LessThan(1f));
         }
 
         [UnityTest]

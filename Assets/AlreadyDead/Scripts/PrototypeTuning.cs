@@ -54,6 +54,10 @@ namespace AlreadyDead
         [Min(0.1f)] public float spearMaxThrowSpeed = 27f;
         [Min(0.1f)] public float spearMinThrowRange = 4f;
         [Min(0.1f)] public float spearMaxThrowRange = 13f;
+        [Min(0f)] public float spearThrowHeight = 0.7f;
+        [Min(0.05f)] public float spearVibrationDuration = 0.42f;
+        [Range(0f, 25f)] public float spearVibrationAngle = 9f;
+        [Min(1f)] public float spearVibrationFrequency = 28f;
 
         [Header("Rock")]
         [Min(0.05f)] public float rockStrikeInterval = 0.38f;
@@ -62,6 +66,13 @@ namespace AlreadyDead
         [Min(0.01f)] public float rockStrikeRadius = 0.24f;
         [Min(0f)] public float rockStrikeForce = 7f;
         [Min(0.1f)] public float rockThrowSpeed = 15f;
+        [Min(0.1f)] public float rockFlightDuration = 0.58f;
+        [Min(0f)] public float rockThrowHeight = 0.9f;
+        [Range(0.1f, 1f)] public float rockShadowApexScale = 0.52f;
+
+        [Header("Character pixel animation")]
+        [Min(0.01f)] public float legStepDistance = 0.16f;
+        [Min(0.1f)] public float legStepRate = 7.5f;
 
         [Header("Collision layers")]
         public LayerMask wallMask = 1 << 8;

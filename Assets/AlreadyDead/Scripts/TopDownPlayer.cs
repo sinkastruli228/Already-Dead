@@ -201,7 +201,7 @@ namespace AlreadyDead
             for (int i = 0; i < count; i++)
             {
                 RockWeapon rock = hoverResults[i].GetComponentInParent<RockWeapon>();
-                if (rock == null || rock.IsHeld || !CanReach(rock.transform.position)) continue;
+                if (rock == null || rock.IsHeld || rock.IsFlying || !CanReach(rock.transform.position)) continue;
                 float distance = ((Vector2)rock.transform.position - cursorWorld).sqrMagnitude;
                 if (distance >= bestDistance) continue;
                 bestDistance = distance;

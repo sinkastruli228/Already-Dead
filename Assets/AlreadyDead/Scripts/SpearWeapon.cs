@@ -12,6 +12,7 @@ namespace AlreadyDead
     {
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private Transform visual;
+        [SerializeField] private Transform shadow;
         [SerializeField] private SpriteRenderer highlight;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
@@ -20,6 +21,9 @@ namespace AlreadyDead
         private BoxCollider2D hitbox;
         private TopDownPlayer owner;
         private Vector3 visualRest;
+        private Vector3 shadowRestScale;
+        private SpriteRenderer[] shadowRenderers;
+        private Color[] shadowRestColors;
         private Vector2 stabDirection = Vector2.right;
         private Vector2 flightDirection = Vector2.right;
         private float stabStartedAt = float.NegativeInfinity;
@@ -27,6 +31,7 @@ namespace AlreadyDead
         private float chargeStartedAt;
         private float travelledDistance;
         private float flightRange;
+        private float vibrationStartedAt = float.NegativeInfinity;
         private bool stabImpactApplied;
         private bool isCharging;
         private bool isFlying;
@@ -42,6 +47,9 @@ namespace AlreadyDead
         public int ImpactsMade { get; private set; }
         public float LastThrowSpeed { get; private set; }
         public float LastThrowRange { get; private set; }
+        public float FlightHeight { get; private set; }
+        public float VibrationAmount { get; private set; }
+        public Transform Shadow => shadow;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public BoxCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<BoxCollider2D>();
 
@@ -54,15 +62,18 @@ namespace AlreadyDead
             }
         }
 
-        public void Configure(PrototypeTuning settings, Transform model, SpriteRenderer halo,
+        public void Configure(PrototypeTuning settings, Transform model, Transform groundShadow, SpriteRenderer halo,
             Sprite sprite, Material material)
         {
             tuning = settings;
             visual = model;
+            shadow = groundShadow;
             highlight = halo;
             primitiveSprite = sprite;
             primitiveMaterial = material;
             visualRest = visual.localPosition;
+            CacheShadow();
+            ResetShadow();
         }
 
         private void Awake()
@@ -73,11 +84,27 @@ namespace AlreadyDead
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             visualRest = visual.localPosition;
+            CacheShadow();
+            ResetShadow();
             SetHighlighted(false);
         }
 
         private void Update()
         {
+            if (isFlying)
+            {
+                UpdateFlightVisual();
+                return;
+            }
+
+            if (Time.time - vibrationStartedAt < tuning.spearVibrationDuration)
+            {
+                UpdateVibration();
+                return;
+            }
+
+            VibrationAmount = 0f;
+            visual.localRotation = Quaternion.identity;
             if (IsStabbing)
             {
                 float progress = Mathf.Clamp01((Time.time - stabStartedAt) / tuning.spearStabDuration);
@@ -110,7 +137,7 @@ namespace AlreadyDead
             {
                 Body.position += flightDirection * Mathf.Max(0f, remaining);
                 travelledDistance = flightRange;
-                StopFlight();
+                StopFlight(true);
                 return;
             }
 
@@ -120,7 +147,7 @@ namespace AlreadyDead
             {
                 PlaceBefore(obstruction);
                 ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
-                StopFlight();
+                StopFlight(true);
                 return;
             }
 
@@ -136,7 +163,7 @@ namespace AlreadyDead
                 ContactPoint2D contact = collision.GetContact(0);
                 ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
             }
-            StopFlight();
+            StopFlight(true);
         }
 
         public void SetHighlighted(bool value)
@@ -146,9 +173,11 @@ namespace AlreadyDead
 
         public void Equip(Transform socket, TopDownPlayer player)
         {
-            StopFlight();
+            StopFlight(false);
             owner = player;
             isCharging = false;
+            vibrationStartedAt = float.NegativeInfinity;
+            VibrationAmount = 0f;
             Body.linearVelocity = Vector2.zero;
             Body.angularVelocity = 0f;
             Body.simulated = false;
@@ -157,6 +186,8 @@ namespace AlreadyDead
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
             visual.localPosition = visualRest;
+            visual.localRotation = Quaternion.identity;
+            ResetShadow();
             SetHighlighted(false);
         }
 
@@ -203,6 +234,7 @@ namespace AlreadyDead
             transform.SetPositionAndRotation(origin,
                 Quaternion.Euler(0f, 0f, Mathf.Atan2(flightDirection.y, flightDirection.x) * Mathf.Rad2Deg));
             visual.localPosition = visualRest;
+            visual.localRotation = Quaternion.identity;
             owner = null;
             Hitbox.enabled = true;
             Body.simulated = true;
@@ -211,6 +243,10 @@ namespace AlreadyDead
             Body.angularVelocity = 0f;
             Body.linearVelocity = flightDirection * LastThrowSpeed;
             isFlying = true;
+            FlightHeight = 0f;
+            vibrationStartedAt = float.NegativeInfinity;
+            VibrationAmount = 0f;
+            ResetShadow();
             SetHighlighted(false);
 
             // The spear's tip is well ahead of its centre. Resolve nearby cover now,
@@ -221,7 +257,7 @@ namespace AlreadyDead
             {
                 PlaceBefore(obstruction);
                 ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
-                StopFlight();
+                StopFlight(true);
             }
             return true;
         }
@@ -229,13 +265,17 @@ namespace AlreadyDead
         public void Drop(TopDownPlayer player)
         {
             CancelCharge();
-            StopFlight();
+            StopFlight(false);
             stabStartedAt = float.NegativeInfinity;
             stabImpactApplied = true;
             transform.SetParent(null, true);
             transform.position = player.transform.position;
             owner = null;
             visual.localPosition = visualRest;
+            visual.localRotation = Quaternion.identity;
+            vibrationStartedAt = float.NegativeInfinity;
+            VibrationAmount = 0f;
+            ResetShadow();
             Hitbox.enabled = true;
             Body.simulated = true;
             Body.position = transform.position;
@@ -267,12 +307,83 @@ namespace AlreadyDead
             transform.position = Body.position;
         }
 
-        private void StopFlight()
+        private void UpdateFlightVisual()
         {
+            float progress = flightRange > 0.001f ? Mathf.Clamp01(travelledDistance / flightRange) : 1f;
+            float arc = 4f * progress * (1f - progress);
+            FlightHeight = arc * tuning.spearThrowHeight;
+            Vector3 localLift = transform.InverseTransformVector(Vector3.up * FlightHeight);
+            visual.localPosition = visualRest + localLift;
+            visual.localRotation = Quaternion.identity;
+            ApplyShadow(progress);
+        }
+
+        private void UpdateVibration()
+        {
+            float elapsed = Time.time - vibrationStartedAt;
+            float progress = Mathf.Clamp01(elapsed / tuning.spearVibrationDuration);
+            float envelope = (1f - progress) * (1f - progress);
+            float angle = Mathf.Sin(elapsed * tuning.spearVibrationFrequency * Mathf.PI * 2f) *
+                tuning.spearVibrationAngle * envelope;
+            // Expose the decaying strength rather than the instantaneous sine sample.
+            // This also makes the effect stable for gameplay/UI checks at each zero crossing.
+            VibrationAmount = tuning.spearVibrationAngle * envelope;
+            Quaternion rotation = Quaternion.Euler(0f, 0f, angle);
+            Vector3 tipPivot = Vector3.right * (ForwardExtent + 0.2f);
+            visual.localRotation = rotation;
+            visual.localPosition = visualRest + tipPivot - rotation * tipPivot;
+            if (progress >= 1f)
+            {
+                VibrationAmount = 0f;
+                visual.localPosition = visualRest;
+                visual.localRotation = Quaternion.identity;
+            }
+        }
+
+        private void CacheShadow()
+        {
+            if (shadow == null) return;
+            shadowRestScale = shadow.localScale;
+            shadowRenderers = shadow.GetComponentsInChildren<SpriteRenderer>(true);
+            shadowRestColors = new Color[shadowRenderers.Length];
+            for (int i = 0; i < shadowRenderers.Length; i++)
+                shadowRestColors[i] = shadowRenderers[i].color;
+        }
+
+        private void ResetShadow()
+        {
+            if (shadow == null) return;
+            shadow.gameObject.SetActive(true);
+            shadow.localScale = shadowRestScale;
+            if (shadowRenderers == null || shadowRestColors == null) return;
+            for (int i = 0; i < shadowRenderers.Length; i++)
+                shadowRenderers[i].color = shadowRestColors[i];
+        }
+
+        private void ApplyShadow(float landingProgress)
+        {
+            if (shadow == null) return;
+            shadow.localScale = shadowRestScale * Mathf.Lerp(1f, 0.42f, landingProgress);
+            if (shadowRenderers == null) return;
+            Color landed = new Color(0.055f, 0.035f, 0.018f, 0.72f);
+            for (int i = 0; i < shadowRenderers.Length; i++)
+                shadowRenderers[i].color = Color.Lerp(shadowRestColors[i], landed, landingProgress);
+        }
+
+        private void StopFlight(bool vibrate)
+        {
+            bool wasFlying = isFlying;
             isFlying = false;
+            FlightHeight = 0f;
             if (body == null) return;
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
+            if (!wasFlying) return;
+            visual.localPosition = visualRest;
+            ApplyShadow(1f);
+            if (!vibrate) return;
+            vibrationStartedAt = Time.time;
+            VibrationAmount = tuning.spearVibrationAngle;
         }
     }
 }

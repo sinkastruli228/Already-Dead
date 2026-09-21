@@ -7,54 +7,84 @@ namespace AlreadyDead
     {
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private Transform visual;
+        [SerializeField] private Transform shadow;
+        [SerializeField] private Transform buriedMark;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
 
         private Rigidbody2D body;
         private CircleCollider2D hitbox;
         private SpriteRenderer renderer;
+        private SpriteRenderer shadowRenderer;
         private TopDownPlayer owner;
+        private Vector3 visualRest;
+        private Vector3 visualRestScale;
+        private Vector3 shadowRestScale;
+        private Color shadowRestColor;
         private float nextStrikeTime;
         private float strikeStartedAt = float.NegativeInfinity;
+        private float flightElapsed;
         private Vector2 strikeDirection = Vector2.right;
+        private Vector2 flightDirection = Vector2.right;
         private bool impactApplied;
+        private bool isFlying;
+        private bool isBuried;
 
         public bool IsHeld => owner != null;
+        public bool IsFlying => isFlying;
+        public bool IsBuried => isBuried;
+        public float FlightHeight { get; private set; }
         public int StrikesMade { get; private set; }
         public int ImpactsMade { get; private set; }
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public CircleCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<CircleCollider2D>();
+        public Transform Visual => visual;
+        public Transform Shadow => shadow;
+        public Transform BuriedMark => buriedMark;
 
-        public void Configure(PrototypeTuning settings, Transform model, Sprite sprite, Material material)
+        public void Configure(PrototypeTuning settings, Transform model, Transform groundShadow,
+            Transform buried, Sprite sprite, Material material)
         {
             tuning = settings;
             visual = model;
+            shadow = groundShadow;
+            buriedMark = buried;
             primitiveSprite = sprite;
             primitiveMaterial = material;
-            renderer = visual.GetComponentInChildren<SpriteRenderer>();
+            CacheVisualState();
+            SetLooseGroundState();
         }
 
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
             hitbox = GetComponent<CircleCollider2D>();
-            if (visual != null) renderer = visual.GetComponentInChildren<SpriteRenderer>();
             body.gravityScale = 0f;
+            body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            CacheVisualState();
+            if (!isBuried) SetLooseGroundState();
         }
 
         private void Update()
         {
+            if (isFlying)
+            {
+                UpdateFlightVisual();
+                return;
+            }
+
             if (!IsHeld) return;
             float progress = (Time.time - strikeStartedAt) / tuning.rockStrikeDuration;
             if (progress < 0f || progress >= 1f)
             {
-                visual.localPosition = Vector3.zero;
+                visual.localPosition = visualRest;
                 return;
             }
 
             float extension = progress < 0.4f ? progress / 0.4f : (1f - progress) / 0.6f;
-            visual.localPosition = Vector3.right * (tuning.rockStrikeReach * 0.55f * Mathf.Clamp01(extension));
+            visual.localPosition = visualRest + Vector3.right *
+                (tuning.rockStrikeReach * 0.55f * Mathf.Clamp01(extension));
             if (!impactApplied && progress >= 0.35f)
             {
                 impactApplied = true;
@@ -62,17 +92,66 @@ namespace AlreadyDead
             }
         }
 
+        private void FixedUpdate()
+        {
+            if (!isFlying) return;
+
+            float remainingTime = Mathf.Max(0f, tuning.rockFlightDuration - flightElapsed);
+            float stepTime = Mathf.Min(Time.fixedDeltaTime, remainingTime);
+            float step = tuning.rockThrowSpeed * stepTime;
+            RaycastHit2D obstruction = Physics2D.CircleCast(Body.position, Hitbox.radius,
+                flightDirection, step + 0.02f, tuning.wallMask);
+            if (obstruction)
+            {
+                Body.position = obstruction.centroid - flightDirection * 0.02f;
+                transform.position = Body.position;
+                ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                Land();
+                return;
+            }
+
+            flightElapsed += stepTime;
+            if (flightElapsed >= tuning.rockFlightDuration - 0.0001f)
+            {
+                Body.position += flightDirection * step;
+                transform.position = Body.position;
+                Land();
+                return;
+            }
+
+            Body.linearVelocity = flightDirection * tuning.rockThrowSpeed;
+            Body.angularVelocity = 0f;
+            Body.rotation = 0f;
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (!isFlying || (tuning.wallMask.value & (1 << collision.gameObject.layer)) == 0) return;
+            if (collision.contactCount > 0)
+            {
+                ContactPoint2D contact = collision.GetContact(0);
+                ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
+            }
+            Land();
+        }
+
         public void Equip(Transform socket, TopDownPlayer player)
         {
             owner = player;
+            isFlying = false;
+            isBuried = false;
+            FlightHeight = 0f;
             Body.linearVelocity = Vector2.zero;
             Body.angularVelocity = 0f;
+            Body.rotation = 0f;
             Body.simulated = false;
             Hitbox.enabled = false;
             transform.SetParent(socket, false);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
-            visual.localPosition = Vector3.zero;
+            ResetVisual();
+            if (shadow != null) shadow.gameObject.SetActive(false);
+            if (buriedMark != null) buriedMark.gameObject.SetActive(false);
             if (renderer != null) renderer.sortingOrder = 13;
             strikeStartedAt = float.NegativeInfinity;
         }
@@ -99,19 +178,26 @@ namespace AlreadyDead
             RaycastHit2D obstruction = Physics2D.CircleCast(origin, clearance, direction,
                 desiredDistance, tuning.wallMask);
             float distance = obstruction ? Mathf.Max(0f, obstruction.distance - 0.04f) : desiredDistance;
+
             transform.SetParent(null, true);
             transform.position = origin + direction * distance;
             transform.rotation = Quaternion.identity;
             owner = null;
-            visual.localPosition = Vector3.zero;
-            if (renderer != null) renderer.sortingOrder = 1;
+            isFlying = true;
+            isBuried = false;
+            flightElapsed = 0f;
+            flightDirection = direction;
             strikeStartedAt = float.NegativeInfinity;
+            ResetVisual();
+            if (shadow != null) shadow.gameObject.SetActive(true);
+            if (buriedMark != null) buriedMark.gameObject.SetActive(false);
+            if (renderer != null) renderer.sortingOrder = 13;
             Hitbox.enabled = true;
             Body.simulated = true;
             Body.position = transform.position;
             Body.rotation = 0f;
             Body.linearVelocity = direction * tuning.rockThrowSpeed;
-            Body.angularVelocity = tuning.throwSpin * 0.45f;
+            Body.angularVelocity = 0f;
             Body.WakeUp();
         }
 
@@ -121,8 +207,9 @@ namespace AlreadyDead
             transform.position = player.transform.position;
             transform.rotation = Quaternion.identity;
             owner = null;
-            visual.localPosition = Vector3.zero;
-            if (renderer != null) renderer.sortingOrder = 1;
+            isFlying = false;
+            isBuried = false;
+            flightElapsed = 0f;
             strikeStartedAt = float.NegativeInfinity;
             Hitbox.enabled = true;
             Body.simulated = true;
@@ -130,6 +217,83 @@ namespace AlreadyDead
             Body.rotation = 0f;
             Body.linearVelocity = Vector2.zero;
             Body.angularVelocity = 0f;
+            SetLooseGroundState();
+        }
+
+        private void UpdateFlightVisual()
+        {
+            float progress = Mathf.Clamp01(flightElapsed / tuning.rockFlightDuration);
+            float arc = 4f * progress * (1f - progress);
+            FlightHeight = arc * tuning.rockThrowHeight;
+            visual.localPosition = visualRest + Vector3.up * FlightHeight;
+            visual.localScale = visualRestScale;
+            visual.localRotation = Quaternion.identity;
+
+            if (shadow == null) return;
+            float scale = Mathf.Lerp(1f, tuning.rockShadowApexScale, arc);
+            shadow.localScale = shadowRestScale * scale;
+            if (shadowRenderer != null)
+            {
+                Color color = shadowRestColor;
+                color.a = Mathf.Lerp(shadowRestColor.a, shadowRestColor.a * 0.38f, arc);
+                shadowRenderer.color = color;
+            }
+        }
+
+        private void Land()
+        {
+            isFlying = false;
+            isBuried = true;
+            FlightHeight = 0f;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            Body.rotation = 0f;
+            transform.rotation = Quaternion.identity;
+            visual.localPosition = visualRest + Vector3.down * 0.055f;
+            visual.localScale = new Vector3(visualRestScale.x * 0.72f,
+                visualRestScale.y * 0.38f, visualRestScale.z);
+            visual.localRotation = Quaternion.identity;
+            if (renderer != null) renderer.sortingOrder = 2;
+            if (shadow != null) shadow.gameObject.SetActive(false);
+            if (buriedMark != null) buriedMark.gameObject.SetActive(true);
+        }
+
+        private void SetLooseGroundState()
+        {
+            ResetVisual();
+            if (renderer != null) renderer.sortingOrder = 1;
+            if (shadow != null)
+            {
+                shadow.gameObject.SetActive(true);
+                shadow.localScale = shadowRestScale;
+                if (shadowRenderer != null) shadowRenderer.color = shadowRestColor;
+            }
+            if (buriedMark != null) buriedMark.gameObject.SetActive(false);
+        }
+
+        private void ResetVisual()
+        {
+            FlightHeight = 0f;
+            if (visual == null) return;
+            visual.localPosition = visualRest;
+            visual.localScale = visualRestScale;
+            visual.localRotation = Quaternion.identity;
+        }
+
+        private void CacheVisualState()
+        {
+            if (visual != null)
+            {
+                renderer = visual.GetComponentInChildren<SpriteRenderer>();
+                visualRest = visual.localPosition;
+                visualRestScale = visual.localScale;
+            }
+            if (shadow != null)
+            {
+                shadowRenderer = shadow.GetComponentInChildren<SpriteRenderer>();
+                shadowRestScale = shadow.localScale;
+                if (shadowRenderer != null) shadowRestColor = shadowRenderer.color;
+            }
         }
 
         private void ApplyStrike()

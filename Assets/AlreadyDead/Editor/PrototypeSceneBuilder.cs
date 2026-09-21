@@ -11,6 +11,7 @@ namespace AlreadyDead.Editor
     {
         public const string ScenePath = "Assets/Scenes/SampleScene.unity";
         private const string ArtPath = "Assets/AlreadyDead/Art";
+        private const string CharacterPath = "Assets/Character";
         private const string SettingsPath = "Assets/AlreadyDead/PrototypeTuning.asset";
         private static Sprite square;
         private static Sprite circle;
@@ -20,6 +21,9 @@ namespace AlreadyDead.Editor
         private static Sprite[] dryBushes;
         private static Sprite dryGrass;
         private static Sprite rockWall;
+        private static Sprite cavemanIdle;
+        private static Sprite cavemanArm;
+        private static Sprite cavemanLeg;
         private static Dictionary<Sprite, Material> pixelMaterials;
         private static Material material;
         private static PhysicsMaterial2D wallMaterial;
@@ -57,6 +61,9 @@ namespace AlreadyDead.Editor
             dryBushes = new[] { DesertPixelArt.Bush(0), DesertPixelArt.Bush(1) };
             dryGrass = DesertPixelArt.Grass();
             rockWall = DesertPixelArt.RockWall();
+            cavemanIdle = LoadSprite(CharacterPath + "/CaveMan_Idle.png");
+            cavemanArm = LoadSprite(CharacterPath + "/CaveMan_Arm.png");
+            cavemanLeg = LoadSprite(CharacterPath + "/CaveMan_Leg.png");
             material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
             if (material == null)
             {
@@ -265,11 +272,20 @@ namespace AlreadyDead.Editor
             CircleCollider2D collider = go.AddComponent<CircleCollider2D>();
             collider.radius = 0.31f;
             collider.sharedMaterial = gunMaterial;
+            Transform shadow = new GameObject("Rock ground shadow").transform;
+            shadow.SetParent(go.transform, false);
+            Draw("Pixel shadow", shadow, new Vector2(0f, -0.08f), new Vector2(0.72f, 0.34f),
+                new Color(0.16f, 0.1f, 0.055f, 0.48f), 0, sprite);
+            Transform buried = new GameObject("Buried rock mark").transform;
+            buried.SetParent(go.transform, false);
+            Draw("Rock buried in sand", buried, new Vector2(0f, -0.07f), new Vector2(0.88f, 0.3f),
+                new Color(0.48f, 0.31f, 0.17f, 0.9f), 1, sprite);
+            buried.gameObject.SetActive(false);
             Transform visual = new GameObject("Rock pixel art").transform;
             visual.SetParent(go.transform, false);
-            Draw("Rock", visual, Vector2.zero, Vector2.one, Color.white, 1, sprite);
+            Draw("Rock", visual, Vector2.zero, Vector2.one, Color.white, 3, sprite);
             RockWeapon rock = go.AddComponent<RockWeapon>();
-            rock.Configure(tuning, visual, square, material);
+            rock.Configure(tuning, visual, shadow, buried, square, material);
         }
 
         private static TopDownPlayer BuildPlayer(AimCamera camera)
@@ -289,20 +305,30 @@ namespace AlreadyDead.Editor
             facing.SetParent(go.transform, false);
             Draw("Shadow", facing, new Vector2(0, -0.07f), new Vector2(0.94f, 0.94f),
                 new Color(0.02f, 0.03f, 0.04f, 0.5f), 8, circle);
-            Draw("Jacket", facing, Vector2.zero, new Vector2(0.7f, 0.82f), Hex(0x55c9b0), 10, circle);
-            Draw("Left shoulder", facing, new Vector2(0.1f, 0.31f), new Vector2(0.38f, 0.3f), Hex(0x3c9386), 11, circle);
-            Draw("Right shoulder", facing, new Vector2(0.12f, -0.3f), new Vector2(0.38f, 0.3f), Hex(0x3c9386), 11, circle);
-            Draw("Head", facing, new Vector2(0.1f, 0), new Vector2(0.47f, 0.47f), Hex(0xe0cab1), 12, circle);
-            Draw("Forward visor", facing, new Vector2(0.28f, 0), new Vector2(0.12f, 0.32f), Hex(0x1d323b), 13);
-            Transform leftFist = Draw("Left fist / punch", facing, new Vector2(0.22f, 0.42f),
-                new Vector2(0.24f, 0.24f), Hex(0xe0cab1), 14, circle).transform;
-            Transform rightFist = Draw("Right fist / punch", facing, new Vector2(0.22f, -0.42f),
-                new Vector2(0.24f, 0.24f), Hex(0xe0cab1), 14, circle).transform;
+            Transform leftLeg = Draw("Left leg / alternating step", facing, new Vector2(-0.12f, 0.12f),
+                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanLeg).transform;
+            Transform rightLeg = Draw("Right leg / alternating step", facing, new Vector2(-0.12f, -0.12f),
+                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanLeg).transform;
+            leftLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightLeg.GetComponent<SpriteRenderer>().flipY = true;
+            Transform cavemanBody = Draw("Caveman body / sprite forward is up", facing, Vector2.zero,
+                new Vector2(0.18f, 0.18f), Color.white, 11, cavemanIdle).transform;
+            cavemanBody.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            Transform leftFist = Draw("Left arm / punch", facing, new Vector2(0.04f, 0.22f),
+                new Vector2(0.18f, 0.18f), Color.white, 12, cavemanArm).transform;
+            Transform rightFist = Draw("Right arm / punch + weapon grip", facing, new Vector2(0.04f, -0.22f),
+                new Vector2(0.18f, 0.18f), Color.white, 12, cavemanArm).transform;
+            leftFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightFist.GetComponent<SpriteRenderer>().flipY = true;
             Transform socket = new GameObject("Weapon socket").transform;
             socket.SetParent(facing, false);
             socket.localPosition = new Vector3(0.38f, -0.22f, 0f);
             UnarmedCombat unarmed = go.AddComponent<UnarmedCombat>();
             unarmed.Configure(tuning, leftFist, rightFist, camera, square, material);
+            PlayerLimbAnimator limbs = go.AddComponent<PlayerLimbAnimator>();
+            limbs.Configure(tuning, body, facing, leftLeg, rightLeg);
             TopDownPlayer player = go.AddComponent<TopDownPlayer>();
             player.Configure(tuning, facing, socket, camera, unarmed);
             return player;
@@ -360,6 +386,14 @@ namespace AlreadyDead.Editor
             SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
                 new Vector2(1.9f, 0.75f), Hex(0xffcf71), 9, ring);
             halo.enabled = false;
+            Transform shadow = new GameObject("Pixel spear shadow").transform;
+            shadow.SetParent(go.transform, false);
+            shadow.localPosition = new Vector3(0f, -0.075f, 0f);
+            Color shadowColor = new Color(0.36f, 0.27f, 0.18f, 0.24f);
+            Draw("Shadow shaft", shadow, new Vector2(-0.08f, 0f), new Vector2(1.36f, 0.1f),
+                shadowColor, 10);
+            Draw("Shadow spearhead", shadow, new Vector2(0.78f, 0f), new Vector2(0.42f, 0.2f),
+                shadowColor, 10);
             Transform visual = new GameObject("Visual / stab and charge").transform;
             visual.SetParent(go.transform, false);
             Draw("Shaft", visual, new Vector2(-0.08f, 0f), new Vector2(1.32f, 0.12f),
@@ -373,7 +407,14 @@ namespace AlreadyDead.Editor
             Draw("Spear tip", visual, new Vector2(0.99f, 0f), new Vector2(0.17f, 0.11f),
                 Hex(0xf7e5b2), 17);
             SpearWeapon spear = go.AddComponent<SpearWeapon>();
-            spear.Configure(tuning, visual, halo, square, material);
+            spear.Configure(tuning, visual, shadow, halo, square, material);
+        }
+
+        private static Sprite LoadSprite(string path)
+        {
+            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+                if (asset is Sprite sprite) return sprite;
+            throw new System.InvalidOperationException("Character sprite is missing or not imported: " + path);
         }
 
         private static SpriteRenderer Draw(string name, Transform parent, Vector2 position, Vector2 size,

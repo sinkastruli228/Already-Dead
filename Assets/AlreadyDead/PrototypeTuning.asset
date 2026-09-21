@@ -50,12 +50,21 @@ MonoBehaviour:
   spearMaxThrowSpeed: 27
   spearMinThrowRange: 4
   spearMaxThrowRange: 13
+  spearThrowHeight: 0.7
+  spearVibrationDuration: 0.42
+  spearVibrationAngle: 9
+  spearVibrationFrequency: 28
   rockStrikeInterval: 0.38
   rockStrikeDuration: 0.22
   rockStrikeReach: 1.05
   rockStrikeRadius: 0.24
   rockStrikeForce: 7
   rockThrowSpeed: 15
+  rockFlightDuration: 0.58
+  rockThrowHeight: 0.9
+  rockShadowApexScale: 0.52
+  legStepDistance: 0.16
+  legStepRate: 7.5
   wallMask:
     serializedVersion: 2
     m_Bits: 256
