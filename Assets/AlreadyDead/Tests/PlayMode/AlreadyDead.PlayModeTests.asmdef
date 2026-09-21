@@ -1,0 +1,8 @@
+{
+  "name": "AlreadyDead.PlayModeTests",
+  "rootNamespace": "AlreadyDead.Tests",
+  "references": ["AlreadyDead.Runtime", "Unity.InputSystem", "Unity.InputSystem.TestFramework"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": false
+}

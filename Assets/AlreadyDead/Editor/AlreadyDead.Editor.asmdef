@@ -1,0 +1,7 @@
+{
+  "name": "AlreadyDead.Editor",
+  "rootNamespace": "AlreadyDead.Editor",
+  "references": ["AlreadyDead.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

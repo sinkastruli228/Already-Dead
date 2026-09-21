@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7e7e8dada81244da7044284127b959, type: 3}
+  m_Name: PrototypeTuning
+  m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PrototypeTuning
+  moveSpeed: 6
+  pickupDistance: 1.8
+  cursorPickupRadius: 0.22
+  punchInterval: 0.32
+  punchDuration: 0.24
+  punchReach: 0.9
+  punchRadius: 0.17
+  punchForce: 6
+  punchShakeStrength: 0.045
+  punchShakeDuration: 0.08
+  cameraSize: 6.5
+  lookAheadWeight: 0.28
+  maxCameraOffset: 2.6
+  cameraSmoothTime: 0.13
+  shotShakeStrength: 0.12
+  shotShakeDuration: 0.14
+  shotInterval: 0.16
+  spreadHalfAngle: 4
+  bulletSpeed: 42
+  bulletRadius: 0.035
+  bulletLifetime: 1.3
+  recoilDistance: 0.17
+  recoilReturnSpeed: 1.5
+  throwSpeed: 12
+  throwSpin: 650
+  throwLinearDamping: 1.9
+  throwAngularDamping: 2.4
+  throwBounce: 0.55
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 256
+  weaponMask:
+    serializedVersion: 2
+    m_Bits: 512
+  punchMask:
+    serializedVersion: 2
+    m_Bits: 256
