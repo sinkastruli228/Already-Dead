@@ -65,6 +65,16 @@ MonoBehaviour:
   rockShadowApexScale: 0.52
   legStepDistance: 0.16
   legStepRate: 7.5
+  playerMaxHealth: 5
+  playerHitInvulnerability: 0.55
+  enemyMaxHealth: 3
+  enemyPatrolSpeed: 1.4
+  enemyChaseSpeed: 2.5
+  enemyWaypointTolerance: 0.18
+  enemyVisionRange: 5
+  enemyVisionHalfAngle: 48
+  enemyAttackRange: 0.9
+  enemyAttackInterval: 0.85
   wallMask:
     serializedVersion: 2
     m_Bits: 256
@@ -73,4 +83,7 @@ MonoBehaviour:
     m_Bits: 512
   punchMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 2304
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 2048

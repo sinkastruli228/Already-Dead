@@ -97,6 +97,10 @@ namespace AlreadyDead.Editor
             camera.transform.position = player.transform.position + Vector3.back * 10f;
             BuildPistol(new Vector2(-6.5f, -3.8f));
             BuildSpear(new Vector2(-9.5f, -4f));
+            BuildEnemy("Patrol / western flats", player, new Vector2(-10f, -0.4f), new Vector2(-6f, -0.4f));
+            BuildEnemy("Patrol / southern dunes", player, new Vector2(1f, -6f), new Vector2(4f, -6f));
+            BuildEnemy("Patrol / northern rim", player, new Vector2(7f, 5.8f), new Vector2(11f, 5.8f));
+            BuildEnemy("Patrol / eastern rocks", player, new Vector2(9f, -1.5f), new Vector2(12f, -1.5f));
             var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
@@ -139,9 +143,11 @@ namespace AlreadyDead.Editor
             layers.GetArrayElementAtIndex(8).stringValue = "Walls";
             layers.GetArrayElementAtIndex(9).stringValue = "Weapons";
             layers.GetArrayElementAtIndex(10).stringValue = "Player";
+            layers.GetArrayElementAtIndex(11).stringValue = "Enemies";
             tags.ApplyModifiedPropertiesWithoutUndo();
             Physics2D.IgnoreLayerCollision(9, 10, true);
             Physics2D.IgnoreLayerCollision(9, 9, true);
+            Physics2D.IgnoreLayerCollision(11, 11, true);
             // Save the collision matrix into the project, not just this editor session.
             var physics = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/Physics2DSettings.asset")[0]);
             physics.Update();
@@ -329,9 +335,46 @@ namespace AlreadyDead.Editor
             unarmed.Configure(tuning, leftFist, rightFist, camera, square, material);
             PlayerLimbAnimator limbs = go.AddComponent<PlayerLimbAnimator>();
             limbs.Configure(tuning, body, facing, leftLeg, rightLeg);
+            PlayerVitality vitality = go.AddComponent<PlayerVitality>();
+            vitality.Configure(tuning, camera);
             TopDownPlayer player = go.AddComponent<TopDownPlayer>();
             player.Configure(tuning, facing, socket, camera, unarmed);
             return player;
+        }
+
+        private static void BuildEnemy(string name, TopDownPlayer player, Vector2 first, Vector2 second)
+        {
+            var go = new GameObject(name);
+            go.layer = 11;
+            go.transform.position = first;
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            CircleCollider2D collider = go.AddComponent<CircleCollider2D>();
+            collider.radius = 0.37f;
+            collider.sharedMaterial = wallMaterial;
+
+            Transform facing = new GameObject("Facing / vision forward +X").transform;
+            facing.SetParent(go.transform, false);
+            Draw("Shadow", facing, new Vector2(0f, -0.07f), new Vector2(0.88f, 0.88f),
+                new Color(0.08f, 0.04f, 0.03f, 0.45f), 8, circle);
+            Transform bodyVisual = Draw("Raider body", facing, Vector2.zero,
+                new Vector2(0.18f, 0.18f), Hex(0xc78064), 11, cavemanIdle).transform;
+            bodyVisual.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            Transform leftArm = Draw("Left arm", facing, new Vector2(0.02f, 0.23f),
+                new Vector2(0.18f, 0.18f), Hex(0xc78064), 12, cavemanArm).transform;
+            Transform rightArm = Draw("Right arm", facing, new Vector2(0.02f, -0.23f),
+                new Vector2(0.18f, 0.18f), Hex(0xc78064), 12, cavemanArm).transform;
+            leftArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            rightArm.GetComponent<SpriteRenderer>().flipY = true;
+            SpriteRenderer alert = Draw("Alert / spotted player", facing, new Vector2(0f, 0.6f),
+                new Vector2(0.16f, 0.24f), Hex(0xff6755), 20);
+            alert.enabled = false;
+
+            PatrolEnemy enemy = go.AddComponent<PatrolEnemy>();
+            enemy.Configure(tuning, player, facing, alert, first, second);
         }
 
         private static void BuildPistol(Vector2 position)

@@ -16,6 +16,7 @@ namespace AlreadyDead.Tests
         private SpearWeapon spear;
         private RockWeapon rock;
         private PlayerLimbAnimator limbs;
+        private PatrolEnemy enemy;
         private Keyboard keyboard;
         private Mouse mouse;
         private InputTestFixture input;
@@ -49,6 +50,8 @@ namespace AlreadyDead.Tests
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
             spear = Object.FindAnyObjectByType<SpearWeapon>();
             limbs = Object.FindAnyObjectByType<PlayerLimbAnimator>();
+            foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
+                if (candidate.name == "Patrol / western flats") enemy = candidate;
             rock = Object.FindObjectsByType<RockWeapon>()[0];
             foreach (RockWeapon candidate in Object.FindObjectsByType<RockWeapon>())
                 if (Vector2.Distance(candidate.transform.position, player.transform.position) <
@@ -58,6 +61,7 @@ namespace AlreadyDead.Tests
             Assert.That(spear, Is.Not.Null);
             Assert.That(rock, Is.Not.Null);
             Assert.That(limbs, Is.Not.Null);
+            Assert.That(enemy, Is.Not.Null);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(Screen.width / 2f, Screen.height / 2f) });
             yield return null;
             yield return new WaitForFixedUpdate();
@@ -89,6 +93,98 @@ namespace AlreadyDead.Tests
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return new WaitForSeconds(0.06f);
             Assert.That(player.Body.linearVelocity.magnitude, Is.LessThan(0.01f));
+        }
+
+        [UnityTest]
+        public IEnumerator EnemiesPatrolAndNoticeOnlyAheadWithClearSight()
+        {
+            Assert.That(Object.FindObjectsByType<PatrolEnemy>().Length, Is.EqualTo(4));
+            Vector2 start = enemy.transform.position;
+            Assert.That(enemy.CanSeePlayer(), Is.False);
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(enemy.transform.position.x, Is.GreaterThan(start.x + 0.3f));
+
+            player.Body.position = (Vector2)enemy.transform.position + Vector2.left * 2f;
+            player.transform.position = player.Body.position;
+            enemy.Facing.rotation = Quaternion.identity;
+            Physics2D.SyncTransforms();
+            Assert.That(enemy.CanSeePlayer(), Is.False, "Player behind the patrol is not visible");
+
+            player.Body.position = (Vector2)enemy.transform.position + Vector2.right * 2f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(enemy.CanSeePlayer(), Is.True);
+            yield return null;
+            Assert.That(enemy.Alerted, Is.True);
+
+            enemy.Body.position = new Vector2(3f, 3f);
+            enemy.transform.position = enemy.Body.position;
+            enemy.Facing.rotation = Quaternion.identity;
+            player.Body.position = new Vector2(5f, 3f);
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(enemy.CanSeePlayer(), Is.False, "Cover blocks enemy vision");
+        }
+
+        [UnityTest]
+        public IEnumerator SpottedEnemyKeepsChasingAfterLosingSightAndRoutesAroundCover()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)enemy.transform.position + Vector2.right * 2f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(enemy.CanSeePlayer(), Is.True);
+            yield return null;
+            Assert.That(enemy.Alerted, Is.True);
+
+            enemy.Body.position = new Vector2(3f, 3f);
+            enemy.transform.position = enemy.Body.position;
+            enemy.Body.linearVelocity = Vector2.zero;
+            player.Body.position = new Vector2(5f, 3f);
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(enemy.CanSeePlayer(), Is.False, "Wall hides the player after detection");
+            yield return new WaitForSeconds(0.3f);
+            Assert.That(Mathf.Abs(enemy.transform.position.y - 3f), Is.GreaterThan(0.1f),
+                "The enemy moves around cover instead of stopping at it");
+            yield return new WaitForSeconds(2.1f);
+            Assert.That(enemy.Alerted, Is.True, "Detection lasts for the rest of the encounter");
+            Assert.That(enemy.Body.linearVelocity.magnitude, Is.GreaterThan(0.5f));
+            yield return new WaitForSeconds(2f);
+            Assert.That(enemy.transform.position.x, Is.GreaterThan(4.4f),
+                "The enemy reaches the player's side of the wall");
+        }
+
+        [UnityTest]
+        public IEnumerator EnemyClosesInAndAttacksPlayerWithCooldown()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)enemy.transform.position + Vector2.right * 0.83f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            int initialHealth = player.Vitality.Health;
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(enemy.Alerted, Is.True);
+            Assert.That(enemy.AttacksMade, Is.EqualTo(1));
+            Assert.That(player.Vitality.Health, Is.EqualTo(initialHealth - 1));
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(player.Vitality.Health, Is.EqualTo(initialHealth - 1), "Attack has a cooldown");
+        }
+
+        [UnityTest]
+        public IEnumerator PlayerCanDefeatPatrolEnemyWithMelee()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)enemy.transform.position + Vector2.left * 0.95f;
+            player.transform.position = player.Body.position;
+            player.AimAt((Vector2)enemy.transform.position);
+            Physics2D.SyncTransforms();
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            yield return new WaitForSeconds(player.Tuning.punchDuration * 0.6f);
+            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - 1));
+            enemy.ReceiveSpear(Vector2.right, 9f);
+            Assert.That(enemy.IsAlive, Is.False);
+            Assert.That(enemy.gameObject.activeSelf, Is.False);
         }
 
         [UnityTest]
@@ -420,6 +516,46 @@ namespace AlreadyDead.Tests
             Assert.That(spear.LastThrowSpeed, Is.EqualTo(player.Tuning.spearMaxThrowSpeed).Within(0.01f));
             Assert.That(spear.LastThrowRange, Is.EqualTo(player.Tuning.spearMaxThrowRange).Within(0.01f));
             Assert.That(player.Unarmed.Available, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ShortChargedSpearThrowDoesNotOneShotEnemy()
+        {
+            player.enabled = false;
+            enemy.enabled = false;
+            enemy.Body.linearVelocity = Vector2.zero;
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            enemy.Body.position = (Vector2)player.transform.position + Vector2.right * 2.5f;
+            enemy.transform.position = enemy.Body.position;
+            player.AimAt(enemy.transform.position);
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(player.ReleaseSpearThrow(), Is.True);
+            Assert.That(spear.LastThrowCharge01, Is.LessThan(1f));
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - 2));
+            Assert.That(enemy.IsAlive, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator FullyChargedSpearThrowOneShotsEnemy()
+        {
+            player.enabled = false;
+            enemy.enabled = false;
+            enemy.Body.linearVelocity = Vector2.zero;
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            enemy.Body.position = (Vector2)player.transform.position + Vector2.right * 2.5f;
+            enemy.transform.position = enemy.Body.position;
+            player.AimAt(enemy.transform.position);
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            yield return new WaitForSeconds(player.Tuning.spearMaxChargeTime + 0.05f);
+            Assert.That(player.ReleaseSpearThrow(), Is.True);
+            Assert.That(spear.LastThrowCharge01, Is.EqualTo(1f).Within(0.001f));
+            yield return new WaitForSeconds(0.25f);
+            Assert.That(enemy.IsAlive, Is.False);
+            Assert.That(enemy.gameObject.activeSelf, Is.False);
         }
 
         [UnityTest]

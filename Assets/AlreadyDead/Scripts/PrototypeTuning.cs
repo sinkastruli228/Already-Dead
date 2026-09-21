@@ -74,9 +74,22 @@ namespace AlreadyDead
         [Min(0.01f)] public float legStepDistance = 0.16f;
         [Min(0.1f)] public float legStepRate = 7.5f;
 
+        [Header("Player and patrol enemies")]
+        [Min(1)] public int playerMaxHealth = 5;
+        [Min(0f)] public float playerHitInvulnerability = 0.55f;
+        [Min(1)] public int enemyMaxHealth = 3;
+        [Min(0.1f)] public float enemyPatrolSpeed = 1.4f;
+        [Min(0.1f)] public float enemyChaseSpeed = 2.5f;
+        [Min(0.01f)] public float enemyWaypointTolerance = 0.18f;
+        [Min(0.1f)] public float enemyVisionRange = 5f;
+        [Range(1f, 180f)] public float enemyVisionHalfAngle = 48f;
+        [Min(0.1f)] public float enemyAttackRange = 0.9f;
+        [Min(0.1f)] public float enemyAttackInterval = 0.85f;
+
         [Header("Collision layers")]
         public LayerMask wallMask = 1 << 8;
         public LayerMask weaponMask = 1 << 9;
-        public LayerMask punchMask = 1 << 8;
+        public LayerMask punchMask = (1 << 8) | (1 << 11);
+        public LayerMask enemyMask = 1 << 11;
     }
 }

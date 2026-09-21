@@ -34,6 +34,12 @@ namespace AlreadyDead
             Label(new Rect(37, 29, 290, 31), "ALREADY DEAD", title, Color.white);
             Label(new Rect(38, 63, 290, 20), "01 / WEAPON HANDLING   •   PROTOTYPE", small, accent);
 
+            Fill(new Rect(20, 107, 210, 38), new Color(0.035f, 0.052f, 0.065f, 0.92f));
+            Label(new Rect(32, 114, 66, 20), "ЖИЗНЬ", small, Color.white);
+            for (int i = 0; i < player.Tuning.playerMaxHealth; i++)
+                Fill(new Rect(93 + i * 24, 117, 17, 12),
+                    i < player.Vitality.Health ? new Color(0.88f, 0.32f, 0.26f) : new Color(0.23f, 0.17f, 0.16f));
+
             Fill(new Rect(width - 220, 20, 200, 77), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(width - 204, 29, 180, 20), "СНАРЯЖЕНИЕ", small, accent);
             string equipment = player.HeldSpear != null ? "КОПЬЁ" :
@@ -50,7 +56,8 @@ namespace AlreadyDead
             Label(new Rect(34, height - 49, width - 65, 26),
                 "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / заменить / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
 
-            string hint = !player.MovementActive ? "Щёлкни по Game; ESC возвращает управление"
+            string hint = !player.IsAlive ? "ТЫ ПОГИБ   •   R — НАЧАТЬ ЗАНОВО"
+                : !player.MovementActive ? "Щёлкни по Game; ESC возвращает управление"
                 : !player.InputActive ? "Верни курсор в окно Game для прицеливания"
                 : player.HoveredWeapon != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА ПИСТОЛЕТ" : "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ")
                 : player.HoveredSpear != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КОПЬЁ" : "ПКМ — ПОДНЯТЬ КОПЬЁ")
@@ -64,6 +71,9 @@ namespace AlreadyDead
                 Label(new Rect(0, height - 96, width, 30), hint, centered,
                     player.HoveredWeapon != null || player.HoveredSpear != null ? amber : Color.white);
             }
+
+            if (Time.time - player.Vitality.LastHitTime < 0.16f)
+                Fill(new Rect(0, 0, width, height), new Color(0.8f, 0.06f, 0.04f, 0.18f));
 
             GUI.matrix = oldMatrix;
             if (!player.InputActive || Mouse.current == null) return;

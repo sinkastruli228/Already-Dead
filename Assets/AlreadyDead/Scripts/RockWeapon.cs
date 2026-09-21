@@ -100,11 +100,12 @@ namespace AlreadyDead
             float stepTime = Mathf.Min(Time.fixedDeltaTime, remainingTime);
             float step = tuning.rockThrowSpeed * stepTime;
             RaycastHit2D obstruction = Physics2D.CircleCast(Body.position, Hitbox.radius,
-                flightDirection, step + 0.02f, tuning.wallMask);
+                flightDirection, step + 0.02f, tuning.wallMask | tuning.enemyMask);
             if (obstruction)
             {
                 Body.position = obstruction.centroid - flightDirection * 0.02f;
                 transform.position = Body.position;
+                HitEnemy(obstruction.collider);
                 ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 Land();
                 return;
@@ -126,7 +127,8 @@ namespace AlreadyDead
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!isFlying || (tuning.wallMask.value & (1 << collision.gameObject.layer)) == 0) return;
+            if (!isFlying || ((tuning.wallMask | tuning.enemyMask) & (1 << collision.gameObject.layer)) == 0) return;
+            HitEnemy(collision.collider);
             if (collision.contactCount > 0)
             {
                 ContactPoint2D contact = collision.GetContact(0);
@@ -306,6 +308,12 @@ namespace AlreadyDead
                 if (behaviour is IPunchReceiver receiver)
                     receiver.ReceivePunch(strikeDirection, tuning.rockStrikeForce);
             ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+        }
+
+        private static void HitEnemy(Collider2D collider)
+        {
+            PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
+            if (enemy != null) enemy.TakeDamage(1);
         }
     }
 }

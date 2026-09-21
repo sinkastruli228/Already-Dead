@@ -13,6 +13,7 @@ namespace AlreadyDead
         [SerializeField] private Transform weaponSocket;
         [SerializeField] private AimCamera aimCamera;
         [SerializeField] private UnarmedCombat unarmed;
+        [SerializeField] private PlayerVitality vitality;
 
         private readonly Collider2D[] hoverResults = new Collider2D[16];
         private Rigidbody2D body;
@@ -33,8 +34,10 @@ namespace AlreadyDead
         public bool HasWeapon => HeldWeapon != null || HeldSpear != null || HeldRock != null;
         public Vector2 AimDirection { get; private set; } = Vector2.right;
         public Vector2 AimWorld { get; private set; }
-        public bool MovementActive => !cursorReleased && (Application.isFocused || Application.isBatchMode);
+        public bool MovementActive => IsAlive && !cursorReleased && (Application.isFocused || Application.isBatchMode);
         public bool InputActive => MovementActive && PointerInsideGame;
+        public bool IsAlive => Vitality == null || Vitality.IsAlive;
+        public PlayerVitality Vitality => vitality != null ? vitality : vitality = GetComponent<PlayerVitality>();
         public PrototypeTuning Tuning => tuning;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public Transform Facing => facing;

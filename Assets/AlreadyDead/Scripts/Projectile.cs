@@ -39,9 +39,11 @@ namespace AlreadyDead
             float distance = tuning.bulletSpeed * Mathf.Min(seconds, remaining);
             // Swept collision, not just overlaps: fast bullets cannot skip thin walls.
             RaycastHit2D hit = Physics2D.CircleCast(transform.position, tuning.bulletRadius,
-                direction, distance, tuning.wallMask);
+                direction, distance, tuning.wallMask | tuning.enemyMask);
             if (hit)
             {
+                PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
+                if (enemy != null) enemy.TakeDamage(1);
                 ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
                 gameObject.SetActive(false);
                 Destroy(gameObject);

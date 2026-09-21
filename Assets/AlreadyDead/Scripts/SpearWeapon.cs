@@ -47,6 +47,7 @@ namespace AlreadyDead
         public int ImpactsMade { get; private set; }
         public float LastThrowSpeed { get; private set; }
         public float LastThrowRange { get; private set; }
+        public float LastThrowCharge01 { get; private set; }
         public float FlightHeight { get; private set; }
         public float VibrationAmount { get; private set; }
         public Transform Shadow => shadow;
@@ -142,10 +143,11 @@ namespace AlreadyDead
             }
 
             RaycastHit2D obstruction = Physics2D.CircleCast(Body.position, tuning.spearStabRadius,
-                flightDirection, ForwardExtent + step, tuning.wallMask);
+                flightDirection, ForwardExtent + step, tuning.wallMask | tuning.enemyMask);
             if (obstruction)
             {
                 PlaceBefore(obstruction);
+                HitEnemy(obstruction.collider);
                 ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 StopFlight(true);
                 return;
@@ -157,7 +159,8 @@ namespace AlreadyDead
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!isFlying || (tuning.wallMask.value & (1 << collision.gameObject.layer)) == 0) return;
+            if (!isFlying || ((tuning.wallMask | tuning.enemyMask) & (1 << collision.gameObject.layer)) == 0) return;
+            HitEnemy(collision.collider);
             if (collision.contactCount > 0)
             {
                 ContactPoint2D contact = collision.GetContact(0);
@@ -222,6 +225,7 @@ namespace AlreadyDead
             if (owner != player || !isCharging) return false;
 
             float charge = Charge01;
+            LastThrowCharge01 = charge;
             LastThrowSpeed = Mathf.Lerp(tuning.spearMinThrowSpeed, tuning.spearMaxThrowSpeed, charge);
             LastThrowRange = Mathf.Lerp(tuning.spearMinThrowRange, tuning.spearMaxThrowRange, charge);
             flightRange = LastThrowRange;
@@ -252,10 +256,11 @@ namespace AlreadyDead
             // The spear's tip is well ahead of its centre. Resolve nearby cover now,
             // before the first physics tick can place the long collider through a wall.
             RaycastHit2D obstruction = Physics2D.CircleCast(origin, tuning.spearStabRadius,
-                flightDirection, ForwardExtent, tuning.wallMask);
+                flightDirection, ForwardExtent, tuning.wallMask | tuning.enemyMask);
             if (obstruction)
             {
                 PlaceBefore(obstruction);
+                HitEnemy(obstruction.collider);
                 ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 StopFlight(true);
             }
@@ -305,6 +310,13 @@ namespace AlreadyDead
             Vector2 centre = hit.centroid == Vector2.zero ? hit.point : hit.centroid;
             Body.position = centre - flightDirection * (ForwardExtent + 0.02f);
             transform.position = Body.position;
+        }
+
+        private void HitEnemy(Collider2D collider)
+        {
+            PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
+            if (enemy != null)
+                enemy.TakeDamage(LastThrowCharge01 >= 0.999f ? enemy.Health : 2);
         }
 
         private void UpdateFlightVisual()
