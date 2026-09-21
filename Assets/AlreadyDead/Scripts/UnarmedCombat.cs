@@ -119,7 +119,8 @@ namespace AlreadyDead
             foreach (MonoBehaviour behaviour in behaviours)
                 if (behaviour is IPunchReceiver receiver)
                     receiver.ReceivePunch(punchDirection, tuning.punchForce);
-            ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 
         private void ResetPose()

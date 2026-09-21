@@ -188,6 +188,78 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
+        public IEnumerator EnemyHitsAndDeathLeaveDifferentBloodPatterns()
+        {
+            enemy.enabled = false;
+            Assert.That(Object.FindObjectsByType<BloodEffect>().Length, Is.EqualTo(0));
+            enemy.TakeDamage(1, Vector2.right);
+            BloodEffect first = Object.FindAnyObjectByType<BloodEffect>();
+            Assert.That(first.Kind, Is.EqualTo(BloodEffect.BloodKind.Hit));
+            enemy.TakeDamage(1, Vector2.up);
+            BloodEffect[] afterSecondHit = Object.FindObjectsByType<BloodEffect>();
+            Assert.That(afterSecondHit.Length, Is.EqualTo(2));
+            Assert.That(afterSecondHit[0].Variant, Is.Not.EqualTo(afterSecondHit[1].Variant));
+
+            enemy.TakeDamage(1, Vector2.right);
+            BloodEffect[] effects = Object.FindObjectsByType<BloodEffect>();
+            int hits = 0;
+            int puddles = 0;
+            foreach (BloodEffect effect in effects)
+            {
+                if (effect.Kind == BloodEffect.BloodKind.Hit) hits++;
+                else puddles++;
+            }
+            Assert.That(hits, Is.EqualTo(3));
+            Assert.That(puddles, Is.EqualTo(1));
+            Assert.That(enemy.IsAlive, Is.False);
+            enemy.TakeDamage(1);
+            Assert.That(Object.FindObjectsByType<BloodEffect>().Length, Is.EqualTo(4),
+                "Dead enemies do not spawn more blood");
+
+            yield return null;
+            Camera camera = player.View.View;
+            Vector3 oldPosition = camera.transform.position;
+            float oldSize = camera.orthographicSize;
+            camera.transform.position = enemy.transform.position + Vector3.back * 10f;
+            camera.orthographicSize = 2f;
+            var renderTexture = new RenderTexture(640, 480, 24);
+            RenderTexture oldActive = RenderTexture.active;
+            camera.targetTexture = renderTexture;
+            camera.Render();
+            RenderTexture.active = renderTexture;
+            var image = new Texture2D(640, 480, TextureFormat.RGB24, false);
+            image.ReadPixels(new Rect(0, 0, 640, 480), 0, 0);
+            image.Apply();
+            int redPixels = 0;
+            foreach (Color32 pixel in image.GetPixels32())
+                if (pixel.r > 90 && pixel.r > pixel.g * 2 && pixel.b < 90) redPixels++;
+            Directory.CreateDirectory("Artifacts");
+            File.WriteAllBytes("Artifacts/blood-preview.png", image.EncodeToPNG());
+            Assert.That(redPixels, Is.GreaterThan(100), "Blood is visible in the rendered scene");
+            camera.targetTexture = null;
+            RenderTexture.active = oldActive;
+            camera.transform.position = oldPosition;
+            camera.orthographicSize = oldSize;
+            Object.Destroy(image);
+            Object.Destroy(renderTexture);
+
+            PatrolEnemy another = Object.FindAnyObjectByType<PatrolEnemy>();
+            another.enabled = false;
+            another.TakeDamage(another.Health);
+            int firstKillVariant = -1;
+            int secondKillVariant = -1;
+            foreach (BloodEffect effect in Object.FindObjectsByType<BloodEffect>())
+            {
+                if (effect.Kind != BloodEffect.BloodKind.Kill) continue;
+                if (firstKillVariant < 0) firstKillVariant = effect.Variant;
+                else secondKillVariant = effect.Variant;
+            }
+            Assert.That(secondKillVariant, Is.GreaterThanOrEqualTo(0));
+            Assert.That(firstKillVariant, Is.Not.EqualTo(secondKillVariant),
+                "Death puddles have different pixel-art variants");
+        }
+
+        [UnityTest]
         public IEnumerator PlayerCannotWalkThroughOuterWall()
         {
             player.Body.position = new Vector2(-13f, -4f);

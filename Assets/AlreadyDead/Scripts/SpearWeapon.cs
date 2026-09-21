@@ -147,8 +147,8 @@ namespace AlreadyDead
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                HitEnemy(obstruction.collider);
-                ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                if (!HitEnemy(obstruction.collider))
+                    ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 StopFlight(true);
                 return;
             }
@@ -160,8 +160,8 @@ namespace AlreadyDead
         private void OnCollisionEnter2D(Collision2D collision)
         {
             if (!isFlying || ((tuning.wallMask | tuning.enemyMask) & (1 << collision.gameObject.layer)) == 0) return;
-            HitEnemy(collision.collider);
-            if (collision.contactCount > 0)
+            bool hitEnemy = HitEnemy(collision.collider);
+            if (!hitEnemy && collision.contactCount > 0)
             {
                 ContactPoint2D contact = collision.GetContact(0);
                 ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
@@ -260,8 +260,8 @@ namespace AlreadyDead
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                HitEnemy(obstruction.collider);
-                ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                if (!HitEnemy(obstruction.collider))
+                    ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 StopFlight(true);
             }
             return true;
@@ -302,7 +302,8 @@ namespace AlreadyDead
             foreach (MonoBehaviour behaviour in behaviours)
                 if (behaviour is ISpearReceiver receiver)
                     receiver.ReceiveSpear(stabDirection, tuning.spearStabForce);
-            ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 
         private void PlaceBefore(RaycastHit2D hit)
@@ -312,11 +313,15 @@ namespace AlreadyDead
             transform.position = Body.position;
         }
 
-        private void HitEnemy(Collider2D collider)
+        private bool HitEnemy(Collider2D collider)
         {
             PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
             if (enemy != null)
-                enemy.TakeDamage(LastThrowCharge01 >= 0.999f ? enemy.Health : 2);
+            {
+                enemy.TakeDamage(LastThrowCharge01 >= 0.999f ? enemy.Health : 2, flightDirection);
+                return true;
+            }
+            return false;
         }
 
         private void UpdateFlightVisual()

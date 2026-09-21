@@ -43,8 +43,8 @@ namespace AlreadyDead
             if (hit)
             {
                 PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
-                if (enemy != null) enemy.TakeDamage(1);
-                ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+                if (enemy != null) enemy.TakeDamage(1, direction);
+                else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
                 gameObject.SetActive(false);
                 Destroy(gameObject);
                 return;

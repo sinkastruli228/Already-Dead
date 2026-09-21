@@ -105,8 +105,8 @@ namespace AlreadyDead
             {
                 Body.position = obstruction.centroid - flightDirection * 0.02f;
                 transform.position = Body.position;
-                HitEnemy(obstruction.collider);
-                ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                if (!HitEnemy(obstruction.collider))
+                    ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                 Land();
                 return;
             }
@@ -128,8 +128,8 @@ namespace AlreadyDead
         private void OnCollisionEnter2D(Collision2D collision)
         {
             if (!isFlying || ((tuning.wallMask | tuning.enemyMask) & (1 << collision.gameObject.layer)) == 0) return;
-            HitEnemy(collision.collider);
-            if (collision.contactCount > 0)
+            bool hitEnemy = HitEnemy(collision.collider);
+            if (!hitEnemy && collision.contactCount > 0)
             {
                 ContactPoint2D contact = collision.GetContact(0);
                 ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
@@ -307,13 +307,16 @@ namespace AlreadyDead
             foreach (MonoBehaviour behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
                 if (behaviour is IPunchReceiver receiver)
                     receiver.ReceivePunch(strikeDirection, tuning.rockStrikeForce);
-            ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 
-        private static void HitEnemy(Collider2D collider)
+        private bool HitEnemy(Collider2D collider)
         {
             PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
-            if (enemy != null) enemy.TakeDamage(1);
+            if (enemy == null) return false;
+            enemy.TakeDamage(1, flightDirection);
+            return true;
         }
     }
 }

@@ -115,18 +115,20 @@ namespace AlreadyDead
             return !Physics2D.Linecast(from, player.transform.position, tuning.wallMask);
         }
 
-        public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1);
-        public void ReceiveSpear(Vector2 direction, float force) => TakeDamage(2);
+        public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1, direction);
+        public void ReceiveSpear(Vector2 direction, float force) => TakeDamage(2, direction);
 
-        public void TakeDamage(int amount)
+        public void TakeDamage(int amount, Vector2 direction = default)
         {
             if (!IsAlive) return;
             health = Mathf.Max(0, health - Mathf.Max(1, amount));
+            BloodEffect.SpawnHit(Body.position, direction);
             if (health > 0)
             {
                 Alerted = true;
                 return;
             }
+            BloodEffect.SpawnKill(Body.position, direction);
             Stop();
             hitbox.enabled = false;
             Body.simulated = false;
