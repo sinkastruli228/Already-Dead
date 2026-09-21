@@ -226,6 +226,25 @@ namespace AlreadyDead
             return true;
         }
 
+        public void Drop(TopDownPlayer player)
+        {
+            CancelCharge();
+            StopFlight();
+            stabStartedAt = float.NegativeInfinity;
+            stabImpactApplied = true;
+            transform.SetParent(null, true);
+            transform.position = player.transform.position;
+            owner = null;
+            visual.localPosition = visualRest;
+            Hitbox.enabled = true;
+            Body.simulated = true;
+            Body.position = transform.position;
+            Body.rotation = transform.eulerAngles.z;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            SetHighlighted(false);
+        }
+
         private void ApplyStabImpact()
         {
             Vector2 origin = owner != null ? (Vector2)owner.transform.position : Body.position;

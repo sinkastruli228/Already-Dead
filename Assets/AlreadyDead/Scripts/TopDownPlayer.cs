@@ -124,8 +124,8 @@ namespace AlreadyDead
             }
 
             AimAt(aimCamera.ScreenToWorld(Mouse.current.position.ReadValue()));
-            PistolWeapon pistol = HasWeapon ? null : FindPickup(AimWorld);
-            SpearWeapon spear = HasWeapon ? null : FindSpearPickup(AimWorld);
+            PistolWeapon pistol = FindPickup(AimWorld);
+            SpearWeapon spear = FindSpearPickup(AimWorld);
             if (pistol != null && spear != null)
             {
                 float pistolDistance = ((Vector2)pistol.transform.position - AimWorld).sqrMagnitude;
@@ -202,6 +202,44 @@ namespace AlreadyDead
 
         public bool Interact(Vector2 cursorWorld)
         {
+            PistolWeapon pickup = FindPickup(cursorWorld);
+            SpearWeapon spearPickup = FindSpearPickup(cursorWorld);
+            if (pickup != null && spearPickup != null)
+            {
+                float pistolDistance = ((Vector2)pickup.transform.position - cursorWorld).sqrMagnitude;
+                float spearDistance = ((Vector2)spearPickup.transform.position - cursorWorld).sqrMagnitude;
+                if (pistolDistance <= spearDistance) spearPickup = null;
+                else pickup = null;
+            }
+            if (pickup != null || spearPickup != null)
+            {
+                // Picking up another weapon replaces the current one in one click.
+                // The previous weapon is left at the player's feet, with no throw impulse.
+                if (HeldWeapon != null)
+                {
+                    HeldWeapon.Drop(this);
+                    HeldWeapon = null;
+                }
+                if (HeldSpear != null)
+                {
+                    HeldSpear.Drop(this);
+                    HeldSpear = null;
+                }
+                if (pickup != null)
+                {
+                    HeldWeapon = pickup;
+                    pickup.Equip(weaponSocket, this);
+                }
+                else
+                {
+                    HeldSpear = spearPickup;
+                    spearPickup.Equip(weaponSocket, this);
+                }
+                unarmed.SetAvailable(false);
+                SetHovered(null, null);
+                return true;
+            }
+
             if (HeldWeapon != null)
             {
                 PistolWeapon thrown = HeldWeapon;
@@ -212,31 +250,7 @@ namespace AlreadyDead
                 return true;
             }
 
-            if (HeldSpear != null) return HeldSpear.BeginCharge();
-
-            PistolWeapon pickup = FindPickup(cursorWorld);
-            SpearWeapon spearPickup = FindSpearPickup(cursorWorld);
-            if (pickup == null && spearPickup == null) return false;
-            if (pickup != null && spearPickup != null)
-            {
-                float pistolDistance = ((Vector2)pickup.transform.position - cursorWorld).sqrMagnitude;
-                float spearDistance = ((Vector2)spearPickup.transform.position - cursorWorld).sqrMagnitude;
-                if (pistolDistance <= spearDistance) spearPickup = null;
-                else pickup = null;
-            }
-            if (pickup != null)
-            {
-                HeldWeapon = pickup;
-                pickup.Equip(weaponSocket, this);
-            }
-            else
-            {
-                HeldSpear = spearPickup;
-                spearPickup.Equip(weaponSocket, this);
-            }
-            unarmed.SetAvailable(false);
-            SetHovered(null, null);
-            return true;
+            return HeldSpear != null && HeldSpear.BeginCharge();
         }
 
         public bool ReleaseSpearThrow()

@@ -47,12 +47,12 @@ namespace AlreadyDead
 
             Fill(new Rect(20, height - 57, width - 40, 37), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(34, height - 49, width - 65, 26),
-                "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
+                "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / заменить / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
 
             string hint = !player.MovementActive ? "Щёлкни по Game; ESC возвращает управление"
                 : !player.InputActive ? "Верни курсор в окно Game для прицеливания"
-                : player.HoveredWeapon != null ? "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ"
-                : player.HoveredSpear != null ? "ПКМ — ПОДНЯТЬ КОПЬЁ"
+                : player.HoveredWeapon != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА ПИСТОЛЕТ" : "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ")
+                : player.HoveredSpear != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КОПЬЁ" : "ПКМ — ПОДНЯТЬ КОПЬЁ")
                 : player.HeldSpear != null ? "ЛКМ — УКОЛ   •   УДЕРЖИВАЙ ПКМ И ОТПУСТИ ДЛЯ БРОСКА"
                 : !player.HasWeapon ? "Подойди к оружию и наведи на него курсор" : "";
             if (hint.Length > 0)

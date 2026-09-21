@@ -212,6 +212,59 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
+        public IEnumerator WeaponsCanBeSwappedWithoutThrowingTheHeldOne()
+        {
+            player.enabled = false;
+            Assert.That(player.Interact(pistol.transform.position), Is.True);
+            Assert.That(player.HeldWeapon, Is.SameAs(pistol));
+
+            Assert.That(player.Interact(spear.transform.position), Is.True);
+            Assert.That(player.HeldWeapon, Is.Null);
+            Assert.That(player.HeldSpear, Is.SameAs(spear));
+            Assert.That(pistol.IsHeld, Is.False);
+            Assert.That(pistol.Hitbox.enabled, Is.True);
+            Assert.That(pistol.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            Assert.That(player.Unarmed.Available, Is.False);
+
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(pistol.transform.position), Is.True);
+            Assert.That(player.HeldWeapon, Is.SameAs(pistol));
+            Assert.That(player.HeldSpear, Is.Null);
+            Assert.That(spear.IsHeld, Is.False);
+            Assert.That(spear.IsCharging, Is.False);
+            Assert.That(spear.Hitbox.enabled, Is.True);
+            Assert.That(spear.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            Assert.That(player.Unarmed.Available, Is.False);
+            yield return new WaitForFixedUpdate();
+            Assert.That(pistol.IsHeld, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator RightClickOnAnotherWeaponSwapsWithoutStartingSpearThrow()
+        {
+            Vector2 pistolPixel = player.View.View.WorldToScreenPoint(pistol.transform.position);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = pistolPixel }.WithButton(MouseButton.Right));
+            yield return null;
+            yield return null;
+            Assert.That(player.HeldWeapon, Is.SameAs(pistol));
+
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = pistolPixel });
+            yield return null;
+            Vector2 spearPixel = player.View.View.WorldToScreenPoint(spear.transform.position);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = spearPixel }.WithButton(MouseButton.Right));
+            yield return null;
+            yield return null;
+            Assert.That(player.HeldSpear, Is.SameAs(spear));
+            Assert.That(player.HeldWeapon, Is.Null);
+            Assert.That(pistol.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = spearPixel });
+            yield return null;
+            Assert.That(spear.IsCharging, Is.False);
+            Assert.That(spear.IsFlying, Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator WasdStillMovesWhenPointerLeavesGameView()
         {
             Vector2 start = player.transform.position;

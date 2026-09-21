@@ -112,6 +112,24 @@ namespace AlreadyDead
             muzzleFlash.enabled = false;
         }
 
+        public void Drop(TopDownPlayer player)
+        {
+            transform.SetParent(null, true);
+            transform.position = player.transform.position;
+            owner = null;
+            recoil = 0f;
+            visual.localPosition = Vector3.zero;
+            flashUntil = 0f;
+            muzzleFlash.enabled = false;
+            Hitbox.enabled = true;
+            Body.simulated = true;
+            Body.position = transform.position;
+            Body.rotation = transform.eulerAngles.z;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            SetHighlighted(false);
+        }
+
         public bool TryFire(Vector2 aimDirection, AimCamera camera)
         {
             if (!IsHeld || Time.time < nextShotTime) return false;
