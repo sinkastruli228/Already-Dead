@@ -35,13 +35,29 @@ MonoBehaviour:
   bulletLifetime: 1.3
   recoilDistance: 0.17
   recoilReturnSpeed: 1.5
+  musketCooldownMultiplier: 5
+  musketDamage: 99
+  musketRecoilDistance: 0.28
+  musketShakeMultiplier: 1.75
+  clubSwingInterval: 0.62
+  clubSwingDuration: 0.42
+  clubReach: 1.45
+  clubRadius: 0.3
+  clubDamage: 2
   fireCastInterval: 0.48
   frostCastInterval: 0.38
   lightningCastInterval: 0.65
   magicProjectileSpeed: 15
   magicProjectileRadius: 0.12
   magicProjectileLifetime: 1.2
+  frostShardMin: 4
+  frostShardMax: 6
+  frostSpreadHalfAngle: 18
+  frostSlowMultiplier: 0.45
+  frostSlowDuration: 2.2
+  lightningRange: 8
   lightningChainRange: 2.7
+  lightningMaxTargets: 4
   throwSpeed: 12
   throwSpin: 650
   throwLinearDamping: 1.9

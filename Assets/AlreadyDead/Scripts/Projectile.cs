@@ -7,14 +7,15 @@ namespace AlreadyDead
         private PrototypeTuning tuning;
         private Vector2 direction;
         private float remaining;
+        private int damage = 1;
         private Sprite primitiveSprite;
         private Material primitiveMaterial;
         public Vector2 Direction => direction;
 
         public static Projectile Spawn(Vector2 origin, Vector2 heading, PrototypeTuning settings,
-            Sprite sprite, Material material)
+            Sprite sprite, Material material, int hitDamage = 1, string projectileName = "Pistol bullet")
         {
-            var go = new GameObject("Pistol bullet");
+            var go = new GameObject(projectileName);
             go.transform.position = origin;
             go.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg);
             var renderer = go.AddComponent<SpriteRenderer>();
@@ -27,6 +28,7 @@ namespace AlreadyDead
             bullet.tuning = settings;
             bullet.direction = heading.normalized;
             bullet.remaining = settings.bulletLifetime;
+            bullet.damage = Mathf.Max(1, hitDamage);
             bullet.primitiveSprite = sprite;
             bullet.primitiveMaterial = material;
             return bullet;
@@ -43,9 +45,9 @@ namespace AlreadyDead
             if (hit)
             {
                 PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
-                if (enemy != null) enemy.TakeDamage(1, direction);
+                if (enemy != null) enemy.TakeDamage(damage, direction);
                 else if (hit.collider.GetComponentInParent<FantasyEnemy>() is FantasyEnemy fantasyEnemy)
-                    fantasyEnemy.TakeDamage(1, direction);
+                    fantasyEnemy.TakeDamage(damage, direction);
                 else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
                 gameObject.SetActive(false);
                 Destroy(gameObject);

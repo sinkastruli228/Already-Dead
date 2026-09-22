@@ -39,6 +39,18 @@ namespace AlreadyDead
         public Transform LeftArm => leftFist;
         public Transform RightArm => rightFist;
 
+        public void SetWeaponArmPose(Vector3 localPosition, float localAngle)
+        {
+            if (Available || rightFist == null) return;
+            rightFist.localPosition = localPosition;
+            rightFist.localRotation = Quaternion.Euler(0f, 0f, localAngle);
+        }
+
+        public void ResetWeaponArmPose()
+        {
+            if (!Available) ApplyModePose();
+        }
+
         public void Configure(PrototypeTuning settings, Transform left, Transform right, AimCamera view,
             Sprite sprite, Material material)
         {

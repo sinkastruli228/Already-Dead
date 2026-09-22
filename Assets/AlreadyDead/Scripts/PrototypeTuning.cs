@@ -36,6 +36,19 @@ namespace AlreadyDead
         [Min(0f)] public float recoilDistance = 0.17f;
         [Min(0.01f)] public float recoilReturnSpeed = 1.5f;
 
+        [Header("Musket")]
+        [Min(1f)] public float musketCooldownMultiplier = 5f;
+        [Min(1)] public int musketDamage = 99;
+        [Min(0f)] public float musketRecoilDistance = 0.28f;
+        [Min(0f)] public float musketShakeMultiplier = 1.75f;
+
+        [Header("Club")]
+        [Min(0.05f)] public float clubSwingInterval = 0.62f;
+        [Min(0.05f)] public float clubSwingDuration = 0.42f;
+        [Min(0.1f)] public float clubReach = 1.45f;
+        [Min(0.01f)] public float clubRadius = 0.3f;
+        [Min(1)] public int clubDamage = 2;
+
         [Header("Magic staffs")]
         [Min(0.05f)] public float fireCastInterval = 0.48f;
         [Min(0.05f)] public float frostCastInterval = 0.38f;
@@ -43,7 +56,14 @@ namespace AlreadyDead
         [Min(0.1f)] public float magicProjectileSpeed = 15f;
         [Min(0.01f)] public float magicProjectileRadius = 0.12f;
         [Min(0.1f)] public float magicProjectileLifetime = 1.2f;
+        [Range(1, 12)] public int frostShardMin = 4;
+        [Range(1, 12)] public int frostShardMax = 6;
+        [Range(0f, 45f)] public float frostSpreadHalfAngle = 18f;
+        [Range(0.05f, 1f)] public float frostSlowMultiplier = 0.45f;
+        [Min(0.1f)] public float frostSlowDuration = 2.2f;
+        [Min(0.1f)] public float lightningRange = 8f;
         [Min(0.1f)] public float lightningChainRange = 2.7f;
+        [Range(1, 8)] public int lightningMaxTargets = 4;
 
         [Header("Throw (XY plane, no gravity)")]
         [Min(0f)] public float throwSpeed = 12f;

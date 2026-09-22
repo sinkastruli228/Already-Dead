@@ -108,17 +108,19 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator FantasySceneContainsAllStaffsAndEnemyClasses()
+        public IEnumerator FantasySceneContainsOneUniversalStaffAndEnemyClasses()
         {
             yield return SceneManager.LoadSceneAsync("FantasyScene");
             TopDownPlayer fantasyPlayer = Object.FindAnyObjectByType<TopDownPlayer>();
             Assert.That(fantasyPlayer, Is.Not.Null);
             Assert.That(fantasyPlayer.IsAlive, Is.True);
             MagicStaff[] staffs = Object.FindObjectsByType<MagicStaff>(FindObjectsSortMode.None);
-            Assert.That(staffs.Length, Is.GreaterThanOrEqualTo(3));
+            Assert.That(staffs.Length, Is.EqualTo(1), "Old separate elemental staffs were removed");
             foreach (MagicElement element in new[] { MagicElement.Fire, MagicElement.Frost, MagicElement.Lightning })
-                Assert.That(System.Array.Exists(staffs, staff => staff.Element == element), Is.True,
-                    element + " staff is present in the forest");
+            {
+                staffs[0].SelectElement(element);
+                Assert.That(staffs[0].SelectedElement, Is.EqualTo(element));
+            }
             FantasyEnemy[] enemies = Object.FindObjectsByType<FantasyEnemy>(FindObjectsSortMode.None);
             Assert.That(System.Array.Exists(enemies, foe => foe.Kind == FantasyEnemyKind.Knight), Is.True);
             Assert.That(System.Array.Exists(enemies, foe => foe.Kind == FantasyEnemyKind.Mage), Is.True);
@@ -140,23 +142,22 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator PlayerCanEquipCastAndReplaceElementalStaffs()
+        public IEnumerator PlayerCanEquipAndSwitchTheUniversalStaff()
         {
             yield return SceneManager.LoadSceneAsync("FantasyScene");
             TopDownPlayer mage = Object.FindAnyObjectByType<TopDownPlayer>();
             mage.enabled = false;
             MagicStaff[] staffs = Object.FindObjectsByType<MagicStaff>(FindObjectsSortMode.None);
-            MagicStaff fire = System.Array.Find(staffs, staff => staff.Element == MagicElement.Fire);
-            MagicStaff frost = System.Array.Find(staffs, staff => staff.Element == MagicElement.Frost);
+            Assert.That(staffs.Length, Is.EqualTo(1));
+            MagicStaff universal = staffs[0];
             FantasyEnemy knight = System.Array.Find(
                 Object.FindObjectsByType<FantasyEnemy>(FindObjectsSortMode.None),
                 foe => foe.Kind == FantasyEnemyKind.Knight);
-            Assert.That(fire, Is.Not.Null);
-            Assert.That(frost, Is.Not.Null);
+            Assert.That(universal, Is.Not.Null);
             Assert.That(knight, Is.Not.Null);
 
-            Assert.That(mage.Interact(fire.transform.position), Is.True);
-            Assert.That(mage.HeldStaff, Is.EqualTo(fire));
+            Assert.That(mage.Interact(universal.transform.position), Is.True);
+            Assert.That(mage.HeldStaff, Is.EqualTo(universal));
             knight.enabled = false;
             knight.Body.linearVelocity = Vector2.zero;
             knight.Body.position = new Vector2(3f, -8f);
@@ -166,16 +167,15 @@ namespace AlreadyDead.Tests
             mage.AimAt(new Vector2(3f, -8f));
             Assert.That(mage.TryPrimaryAttack(), Is.True);
             yield return new WaitForSeconds(0.35f);
-            Assert.That(fire.CastsMade, Is.EqualTo(1));
+            Assert.That(universal.CastsMade, Is.EqualTo(1));
             Assert.That(knight.Health, Is.EqualTo(initialHealth - 2), "Fire cast reaches the enemy");
 
-            mage.Body.position = (Vector2)frost.transform.position + Vector2.down * 0.5f;
-            mage.transform.position = mage.Body.position;
-            Physics2D.SyncTransforms();
-            Assert.That(mage.Interact(frost.transform.position), Is.True);
-            Assert.That(mage.HeldStaff, Is.EqualTo(frost));
-            Assert.That(fire.IsHeld, Is.False);
-            Assert.That(fire.gameObject.activeSelf, Is.True);
+            yield return new WaitForSeconds(mage.Tuning.fireCastInterval + 0.02f);
+            universal.SelectElement(MagicElement.Frost);
+            Assert.That(mage.TryPrimaryAttack(), Is.True);
+            Assert.That(universal.LastVolleyCount, Is.InRange(4, 6));
+            universal.SelectElement(MagicElement.Lightning);
+            Assert.That(universal.SelectedElement, Is.EqualTo(MagicElement.Lightning));
         }
 
         private FantasyEnemy CreateEnemy(FantasyEnemyKind kind, Vector2 position)

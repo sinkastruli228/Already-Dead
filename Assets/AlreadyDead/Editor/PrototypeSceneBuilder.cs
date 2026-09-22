@@ -12,6 +12,7 @@ namespace AlreadyDead.Editor
         public const string ScenePath = "Assets/Scenes/SampleScene.unity";
         private const string ArtPath = "Assets/AlreadyDead/Art";
         private const string CharacterPath = "Assets/Character";
+        private const string WeaponPath = "Assets/Waepon";
         private const string SettingsPath = "Assets/AlreadyDead/PrototypeTuning.asset";
         private static Sprite square;
         private static Sprite circle;
@@ -24,6 +25,11 @@ namespace AlreadyDead.Editor
         private static Sprite cavemanIdle;
         private static Sprite cavemanArm;
         private static Sprite cavemanLeg;
+        private static Sprite spearArt;
+        private static Sprite musketSideArt;
+        private static Sprite musketTopArt;
+        private static Sprite clubArt;
+        private static Sprite staffArt;
         private static Dictionary<Sprite, Material> pixelMaterials;
         private static Material material;
         private static PhysicsMaterial2D wallMaterial;
@@ -64,6 +70,11 @@ namespace AlreadyDead.Editor
             cavemanIdle = LoadSprite(CharacterPath + "/CaveMan_Idle.png");
             cavemanArm = LoadSprite(CharacterPath + "/CaveMan_Arm.png");
             cavemanLeg = LoadSprite(CharacterPath + "/CaveMan_Leg.png");
+            spearArt = LoadSprite(WeaponPath + "/Spear/Spear.png");
+            musketSideArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Side.png");
+            musketTopArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Up.png");
+            clubArt = LoadSprite(WeaponPath + "/Dubinka/Dubinka.png");
+            staffArt = LoadSprite(WeaponPath + "/Stick/Stick.png");
             material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
             if (material == null)
             {
@@ -97,6 +108,9 @@ namespace AlreadyDead.Editor
             camera.transform.position = player.transform.position + Vector3.back * 10f;
             BuildPistol(new Vector2(-6.5f, -3.8f));
             BuildSpear(new Vector2(-9.5f, -4f));
+            BuildMusket(new Vector2(-7.8f, -2.5f));
+            BuildClub(new Vector2(-5.7f, -4.4f));
+            BuildStaff(new Vector2(-9.6f, -2.4f));
             BuildEnemy("Patrol / western flats", player, new Vector2(-10f, -0.4f), new Vector2(-6f, -0.4f));
             BuildEnemy("Patrol / southern dunes", player, new Vector2(1f, -6f), new Vector2(4f, -6f));
             BuildEnemy("Patrol / northern rim", player, new Vector2(7f, 5.8f), new Vector2(11f, 5.8f));
@@ -327,24 +341,31 @@ namespace AlreadyDead.Editor
             Transform facing = new GameObject("Facing / local +X is forward").transform;
             facing.SetParent(go.transform, false);
             Draw("Shadow", facing, new Vector2(0, -0.07f), new Vector2(0.94f, 0.94f),
-                new Color(0.02f, 0.03f, 0.04f, 0.5f), 8, circle);
+                new Color(0.02f, 0.03f, 0.04f, 0.5f), 5, circle);
             Transform leftLeg = Draw("Left leg / alternating step", facing, new Vector2(-0.12f, 0.12f),
-                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanLeg).transform;
+                new Vector2(0.18f, 0.18f), Color.white, 7, cavemanLeg).transform;
             Transform rightLeg = Draw("Right leg / alternating step", facing, new Vector2(-0.12f, -0.12f),
-                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanLeg).transform;
+                new Vector2(0.18f, 0.18f), Color.white, 7, cavemanLeg).transform;
             leftLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            rightLeg.GetComponent<SpriteRenderer>().flipY = true;
+            // Mirror only left/right. flipY would swap the brown forward edge to the rear
+            // after the source sprite (+Y forward) is rotated onto gameplay +X.
+            rightLeg.GetComponent<SpriteRenderer>().flipX = true;
             Transform cavemanBody = Draw("Caveman body / sprite forward is up", facing, Vector2.zero,
                 new Vector2(0.18f, 0.18f), Color.white, 11, cavemanIdle).transform;
             cavemanBody.localRotation = Quaternion.Euler(0f, 0f, -90f);
             Transform leftFist = Draw("Left arm / punch", facing, new Vector2(0.04f, 0.22f),
-                new Vector2(0.18f, 0.18f), Color.white, 12, cavemanArm).transform;
+                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanArm).transform;
             Transform rightFist = Draw("Right arm / punch + weapon grip", facing, new Vector2(0.04f, -0.22f),
-                new Vector2(0.18f, 0.18f), Color.white, 12, cavemanArm).transform;
+                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanArm).transform;
             leftFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            rightFist.GetComponent<SpriteRenderer>().flipY = true;
+            rightFist.GetComponent<SpriteRenderer>().flipX = true;
+            AddPixelOutline(leftLeg, 6);
+            AddPixelOutline(rightLeg, 6);
+            AddPixelOutline(leftFist, 8);
+            AddPixelOutline(rightFist, 8);
+            AddPixelOutline(cavemanBody, 10);
             Transform socket = new GameObject("Weapon socket").transform;
             socket.SetParent(facing, false);
             socket.localPosition = new Vector3(0.38f, -0.22f, 0f);
@@ -375,17 +396,20 @@ namespace AlreadyDead.Editor
             Transform facing = new GameObject("Facing / vision forward +X").transform;
             facing.SetParent(go.transform, false);
             Draw("Shadow", facing, new Vector2(0f, -0.07f), new Vector2(0.88f, 0.88f),
-                new Color(0.08f, 0.04f, 0.03f, 0.45f), 8, circle);
+                new Color(0.08f, 0.04f, 0.03f, 0.45f), 5, circle);
             Transform bodyVisual = Draw("Raider body", facing, Vector2.zero,
                 new Vector2(0.18f, 0.18f), Hex(0xc78064), 11, cavemanIdle).transform;
             bodyVisual.localRotation = Quaternion.Euler(0f, 0f, -90f);
             Transform leftArm = Draw("Left arm", facing, new Vector2(0.02f, 0.23f),
-                new Vector2(0.18f, 0.18f), Hex(0xc78064), 12, cavemanArm).transform;
+                new Vector2(0.18f, 0.18f), Hex(0xc78064), 9, cavemanArm).transform;
             Transform rightArm = Draw("Right arm", facing, new Vector2(0.02f, -0.23f),
-                new Vector2(0.18f, 0.18f), Hex(0xc78064), 12, cavemanArm).transform;
+                new Vector2(0.18f, 0.18f), Hex(0xc78064), 9, cavemanArm).transform;
             leftArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            rightArm.GetComponent<SpriteRenderer>().flipY = true;
+            rightArm.GetComponent<SpriteRenderer>().flipX = true;
+            AddPixelOutline(leftArm, 8);
+            AddPixelOutline(rightArm, 8);
+            AddPixelOutline(bodyVisual, 10);
             SpriteRenderer alert = Draw("Alert / spotted player", facing, new Vector2(0f, 0.6f),
                 new Vector2(0.16f, 0.24f), Hex(0xff6755), 20);
             alert.enabled = false;
@@ -449,25 +473,103 @@ namespace AlreadyDead.Editor
             Transform shadow = new GameObject("Pixel spear shadow").transform;
             shadow.SetParent(go.transform, false);
             shadow.localPosition = new Vector3(0f, -0.075f, 0f);
-            Color shadowColor = new Color(0.36f, 0.27f, 0.18f, 0.24f);
-            Draw("Shadow shaft", shadow, new Vector2(-0.08f, 0f), new Vector2(1.36f, 0.1f),
-                shadowColor, 10);
-            Draw("Shadow spearhead", shadow, new Vector2(0.78f, 0f), new Vector2(0.42f, 0.2f),
-                shadowColor, 10);
+            Transform shadowSprite = Draw("Spear shadow sprite", shadow, Vector2.zero,
+                new Vector2(0.18f, 0.18f), new Color(0.11f, 0.075f, 0.045f, 0.32f), 10, spearArt).transform;
+            shadowSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
             Transform visual = new GameObject("Visual / stab and charge").transform;
             visual.SetParent(go.transform, false);
-            Draw("Shaft", visual, new Vector2(-0.08f, 0f), new Vector2(1.32f, 0.12f),
-                Hex(0x8c674a), 13);
-            Draw("Shaft highlight", visual, new Vector2(-0.08f, 0.035f), new Vector2(1.28f, 0.035f),
-                Hex(0xc49a66), 14);
-            Draw("Binding", visual, new Vector2(0.52f, 0f), new Vector2(0.15f, 0.19f),
-                Hex(0x36464d), 15);
-            Draw("Spearhead", visual, new Vector2(0.77f, 0f), new Vector2(0.4f, 0.23f),
-                Hex(0xd6e0d8), 16);
-            Draw("Spear tip", visual, new Vector2(0.99f, 0f), new Vector2(0.17f, 0.11f),
-                Hex(0xf7e5b2), 17);
+            Transform spearSprite = Draw("New spear asset", visual, Vector2.zero,
+                new Vector2(0.18f, 0.18f), Color.white, 16, spearArt).transform;
+            spearSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
             SpearWeapon spear = go.AddComponent<SpearWeapon>();
             spear.Configure(tuning, visual, shadow, halo, square, material);
+        }
+
+        private static void BuildMusket(Vector2 position)
+        {
+            var go = new GameObject("Musket / side on ground + top in hands");
+            go.layer = 9;
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, 12f);
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.mass = 1.2f;
+            body.linearDamping = tuning.throwLinearDamping;
+            body.angularDamping = tuning.throwAngularDamping;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(1.2f, 0.28f);
+            collider.sharedMaterial = gunMaterial;
+            SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
+                new Vector2(1.55f, 0.68f), Hex(0xffcf71), 9, ring);
+            halo.enabled = false;
+            Transform recoil = new GameObject("Visual / musket recoil").transform;
+            recoil.SetParent(go.transform, false);
+            SpriteRenderer side = Draw("Musket side / ground", recoil, Vector2.zero,
+                new Vector2(0.23f, 0.23f), Color.white, 15, musketSideArt);
+            SpriteRenderer top = Draw("Musket top / held", recoil, Vector2.zero,
+                new Vector2(0.23f, 0.23f), Color.white, 15, musketTopArt);
+            Transform muzzle = new GameObject("Muzzle").transform;
+            muzzle.SetParent(recoil, false);
+            muzzle.localPosition = new Vector3(0.63f, 0f, 0f);
+            SpriteRenderer flash = Draw("Musket pixel muzzle flash", muzzle, new Vector2(0.15f, 0f),
+                new Vector2(0.42f, 0.26f), Hex(0xffdf74), 19, circle);
+            flash.enabled = false;
+            MusketWeapon musket = go.AddComponent<MusketWeapon>();
+            musket.Configure(tuning, recoil, muzzle, side, top, halo, flash, square, material);
+        }
+
+        private static void BuildClub(Vector2 position)
+        {
+            var go = new GameObject("Club / shoulder arc swing");
+            go.layer = 9;
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, -18f);
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.mass = 1.1f;
+            body.linearDamping = tuning.throwLinearDamping;
+            body.angularDamping = tuning.throwAngularDamping;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(1.3f, 0.34f);
+            collider.sharedMaterial = gunMaterial;
+            SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
+                new Vector2(1.6f, 0.72f), Hex(0xffcf71), 9, ring);
+            halo.enabled = false;
+            Transform swing = new GameObject("Visual / shoulder swing root").transform;
+            swing.SetParent(go.transform, false);
+            Transform clubSprite = Draw("Club asset / handle at shoulder", swing, new Vector2(0.54f, 0f),
+                new Vector2(0.27f, 0.27f), Color.white, 16, clubArt).transform;
+            clubSprite.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            ClubWeapon club = go.AddComponent<ClubWeapon>();
+            club.Configure(tuning, swing, halo, square, material);
+        }
+
+        private static void BuildStaff(Vector2 position)
+        {
+            var go = new GameObject("Universal staff / 1 fire + 2 frost + 3 lightning");
+            go.layer = 9;
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, -15f);
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(1.25f, 0.3f);
+            collider.sharedMaterial = gunMaterial;
+            SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
+                new Vector2(1.55f, 0.74f), Hex(0xb990ff), 9, ring);
+            halo.enabled = false;
+            Transform visual = new GameObject("Visual / universal staff").transform;
+            visual.SetParent(go.transform, false);
+            Transform staffSprite = Draw("New staff asset", visual, Vector2.zero,
+                new Vector2(0.23f, 0.23f), Color.white, 16, staffArt).transform;
+            staffSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
+            MagicStaff staff = go.AddComponent<MagicStaff>();
+            staff.Configure(tuning, MagicElement.Fire, visual, halo, square, material);
         }
 
         private static Sprite LoadSprite(string path)
@@ -475,6 +577,28 @@ namespace AlreadyDead.Editor
             foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
                 if (asset is Sprite sprite) return sprite;
             throw new System.InvalidOperationException("Character sprite is missing or not imported: " + path);
+        }
+
+        private static void AddPixelOutline(Transform source, int order)
+        {
+            SpriteRenderer sourceRenderer = source.GetComponent<SpriteRenderer>();
+            float pixel = 1f / sourceRenderer.sprite.pixelsPerUnit;
+            int index = 0;
+            for (int y = -2; y <= 2; y++)
+            for (int x = -2; x <= 2; x++)
+            {
+                if (x == 0 && y == 0) continue;
+                var outline = new GameObject("Black pixel outline " + index++);
+                outline.transform.SetParent(source, false);
+                outline.transform.localPosition = new Vector3(x * pixel, y * pixel, 0f);
+                SpriteRenderer renderer = outline.AddComponent<SpriteRenderer>();
+                renderer.sprite = sourceRenderer.sprite;
+                renderer.sharedMaterial = sourceRenderer.sharedMaterial;
+                renderer.color = new Color(0.025f, 0.018f, 0.016f, 1f);
+                renderer.sortingOrder = order;
+                renderer.flipX = sourceRenderer.flipX;
+                renderer.flipY = sourceRenderer.flipY;
+            }
         }
 
         private static SpriteRenderer Draw(string name, Transform parent, Vector2 position, Vector2 size,

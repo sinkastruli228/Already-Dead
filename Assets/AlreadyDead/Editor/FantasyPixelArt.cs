@@ -17,8 +17,6 @@ namespace AlreadyDead.Editor
         internal static Sprite Fence() => Ensure("Fence", 20, 20, 5, 0);
         internal static Sprite Mage() => Ensure("Mage", 32, 32, 6, 0);
         internal static Sprite Knight() => Ensure("Knight", 32, 32, 7, 0);
-        // element: 0 fire, 1 frost, 2 lightning. The sprite points along local +X.
-        internal static Sprite Staff(int element) => Ensure("Staff" + element, 32, 20, 8, element);
 
         // Batch entry point for preparing the checked-in sprite library in an isolated Unity copy.
         public static void GenerateAll()
@@ -28,7 +26,6 @@ namespace AlreadyDead.Editor
                 Grass(i);
                 Tree(i);
                 Flowers(i);
-                Staff(i);
             }
             for (int i = 0; i < 2; i++) Path(i);
             Stone();
@@ -56,7 +53,6 @@ namespace AlreadyDead.Editor
                     case 5: DrawFence(pixels, width, height); break;
                     case 6: DrawMage(pixels, width, height); break;
                     case 7: DrawKnight(pixels, width, height); break;
-                    case 8: DrawStaff(pixels, width, height, variant); break;
                 }
                 var texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
                 texture.SetPixels32(pixels);
@@ -67,7 +63,7 @@ namespace AlreadyDead.Editor
             }
 
             var importer = (TextureImporter)AssetImporter.GetAtPath(assetPath);
-            int pixelsPerUnit = kind == 2 ? 32 : kind == 6 || kind == 7 || kind == 8 ? 32 : 20;
+            int pixelsPerUnit = kind == 2 ? 32 : kind == 6 || kind == 7 ? 32 : 20;
             if (importer.textureType != TextureImporterType.Sprite ||
                 importer.spritePixelsPerUnit != pixelsPerUnit ||
                 importer.filterMode != FilterMode.Point ||
@@ -241,21 +237,6 @@ namespace AlreadyDead.Editor
             Rect(p, w, h, 15, 27, 2, 3, C(182, 43, 49));
             Rect(p, w, h, 8, 14, 3, 9, C(109, 129, 141));
             Rect(p, w, h, 22, 14, 3, 9, C(109, 129, 141));
-        }
-
-        private static void DrawStaff(Color32[] p, int w, int h, int variant)
-        {
-            Color32 gem = variant == 0 ? C(248, 114, 43) :
-                variant == 1 ? C(90, 207, 247) : C(246, 231, 73);
-            Color32 bright = variant == 0 ? C(255, 211, 90) :
-                variant == 1 ? C(206, 250, 255) : C(255, 251, 182);
-            Line(p, w, h, 3, 8, 24, 10, C(69, 46, 37));
-            Line(p, w, h, 4, 9, 24, 11, C(155, 104, 59));
-            Rect(p, w, h, 23, 8, 3, 6, C(104, 112, 115));
-            Ellipse(p, w, h, 27, 11, 4, 4, gem);
-            Rect(p, w, h, 26, 11, 2, 2, bright);
-            Put(p, w, h, 30, 13, gem);
-            Put(p, w, h, 29, 16, bright);
         }
 
         private static void Rect(Color32[] p, int w, int h, int x, int y, int width, int height, Color32 color)

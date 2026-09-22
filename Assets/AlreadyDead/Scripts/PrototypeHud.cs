@@ -47,6 +47,8 @@ namespace AlreadyDead
             Label(new Rect(width - 204, 29, 180, 20), "СНАРЯЖЕНИЕ", small, accent);
             string equipment = player.HeldStaff != null ? player.HeldStaff.DisplayName :
                 player.HeldSpear != null ? "КОПЬЁ" :
+                player.HeldMusket != null ? "МУШКЕТ / ∞" :
+                player.HeldClub != null ? "ДУБИНКА" :
                 player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" :
                 player.HeldRock != null ? "КАМЕНЬ" : "КУЛАКИ";
             Label(new Rect(width - 204, 52, 180, 27), equipment, text, Color.white);
@@ -58,7 +60,7 @@ namespace AlreadyDead
 
             Fill(new Rect(20, height - 57, width - 40, 37), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(34, height - 49, width - 65, 26),
-                fantasy ? "WASD  движение   МЫШЬ  прицел   ЛКМ  заклинание / удар   ПКМ  взять / заменить / положить посох   R  сброс   ESC  курсор" :
+                fantasy ? "WASD  движение   МЫШЬ  прицел   ЛКМ  заклинание / удар   1/2/3  стихия посоха   ПКМ  взять / положить   R  сброс   ESC  курсор" :
                 "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / заменить / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
 
             string hint = !player.IsAlive ? "ТЫ ПОГИБ   •   R — НАЧАТЬ ЗАНОВО"
@@ -68,7 +70,11 @@ namespace AlreadyDead
                 : player.HoveredSpear != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КОПЬЁ" : "ПКМ — ПОДНЯТЬ КОПЬЁ")
                 : player.HoveredRock != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КАМЕНЬ" : "ПКМ — ПОДНЯТЬ КАМЕНЬ")
                 : player.HoveredStaff != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА " : "ПКМ — ПОДНЯТЬ ") + player.HoveredStaff.DisplayName
-                : player.HeldStaff != null ? "ЛКМ — ЗАКЛИНАНИЕ   •   ПКМ — ПОЛОЖИТЬ ПОСОХ"
+                : player.HoveredMusket != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА МУШКЕТ" : "ПКМ — ПОДНЯТЬ МУШКЕТ")
+                : player.HoveredClub != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА ДУБИНКУ" : "ПКМ — ПОДНЯТЬ ДУБИНКУ")
+                : player.HeldStaff != null ? "ЛКМ — ЗАКЛИНАНИЕ   •   1 ОГОНЬ   2 ЛЁД   3 МОЛНИЯ   •   ПКМ — ПОЛОЖИТЬ"
+                : player.HeldMusket != null ? "ЛКМ — ВЫСТРЕЛ   •   ДОЛГАЯ ПЕРЕЗАРЯДКА   •   ПКМ — БРОСИТЬ"
+                : player.HeldClub != null ? "ЛКМ — ЗАМАХ ДУБИНКОЙ   •   ПКМ — БРОСИТЬ"
                 : player.HeldSpear != null ? "ЛКМ — УКОЛ   •   УДЕРЖИВАЙ ПКМ И ОТПУСТИ ДЛЯ БРОСКА"
                 : player.HeldRock != null ? "ЛКМ — УДАР КАМНЕМ   •   ПКМ — БРОСИТЬ СРАЗУ"
                 : !player.HasWeapon ? "Подойди к оружию и наведи на него курсор" : "";
@@ -76,7 +82,7 @@ namespace AlreadyDead
             {
                 var centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
                 Label(new Rect(0, height - 96, width, 30), hint, centered,
-                    player.HoveredWeapon != null || player.HoveredSpear != null || player.HoveredStaff != null ? amber : Color.white);
+                    HasHoveredWeapon() ? amber : Color.white);
             }
 
             if (Time.time - player.Vitality.LastHitTime < 0.16f)
@@ -86,11 +92,15 @@ namespace AlreadyDead
             if (!player.InputActive || Mouse.current == null) return;
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 point = new Vector2(mouse.x, Screen.height - mouse.y);
-            Color crossColor = player.HoveredWeapon != null || player.HoveredSpear != null || player.HoveredStaff != null ? amber : Color.white;
+            Color crossColor = HasHoveredWeapon() ? amber : Color.white;
             Cross(point, 3f, 13f, 4f, new Color(0.02f, 0.03f, 0.04f, 0.9f));
             Cross(point, 4f, 12f, 2f, crossColor);
             Fill(new Rect(point.x - 1, point.y - 1, 2, 2), crossColor);
         }
+
+        private bool HasHoveredWeapon() => player.HoveredWeapon != null || player.HoveredSpear != null ||
+            player.HoveredRock != null || player.HoveredStaff != null || player.HoveredMusket != null ||
+            player.HoveredClub != null;
 
         private static void Cross(Vector2 p, float gap, float length, float thickness, Color color)
         {

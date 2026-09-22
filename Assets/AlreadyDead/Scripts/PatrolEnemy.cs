@@ -3,7 +3,7 @@ using UnityEngine;
 namespace AlreadyDead
 {
     [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
-    public sealed class PatrolEnemy : MonoBehaviour, IPunchReceiver, ISpearReceiver
+    public sealed class PatrolEnemy : MonoBehaviour, IPunchReceiver, ISpearReceiver, IMagicDamageable
     {
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private TopDownPlayer player;
@@ -19,6 +19,7 @@ namespace AlreadyDead
         private bool hasDetour;
         private bool towardB = true;
         private float nextAttackTime;
+        private float slowedUntil;
         private int health;
 
         public bool Alerted { get; private set; }
@@ -27,6 +28,7 @@ namespace AlreadyDead
         public int AttacksMade { get; private set; }
         public Transform Facing => facing;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
+        public float SpeedMultiplier => Time.time < slowedUntil ? tuning.frostSlowMultiplier : 1f;
 
         public void Configure(PrototypeTuning settings, TopDownPlayer target, Transform visual,
             SpriteRenderer indicator, Vector2 first, Vector2 second)
@@ -80,7 +82,7 @@ namespace AlreadyDead
                 }
                 else
                 {
-                    moveDirection = ChaseDirection(position, toPlayer) * tuning.enemyChaseSpeed;
+                    moveDirection = ChaseDirection(position, toPlayer) * tuning.enemyChaseSpeed * SpeedMultiplier;
                     Face(moveDirection);
                 }
                 return;
@@ -95,7 +97,7 @@ namespace AlreadyDead
                 path = waypoint - position;
             }
             moveDirection = path.sqrMagnitude > 0.0001f
-                ? path.normalized * tuning.enemyPatrolSpeed : Vector2.zero;
+                ? path.normalized * tuning.enemyPatrolSpeed * SpeedMultiplier : Vector2.zero;
             Face(path);
         }
 
@@ -117,6 +119,12 @@ namespace AlreadyDead
 
         public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1, direction);
         public void ReceiveSpear(Vector2 direction, float force) => TakeDamage(2, direction);
+        public void TakeMagicDamage(int amount, MagicElement element, Vector2 direction)
+        {
+            if (element == MagicElement.Frost)
+                slowedUntil = Mathf.Max(slowedUntil, Time.time + tuning.frostSlowDuration);
+            TakeDamage(amount, direction);
+        }
 
         public void TakeDamage(int amount, Vector2 direction = default)
         {

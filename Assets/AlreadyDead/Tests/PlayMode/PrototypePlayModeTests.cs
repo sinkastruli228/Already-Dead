@@ -15,6 +15,9 @@ namespace AlreadyDead.Tests
         private PistolWeapon pistol;
         private SpearWeapon spear;
         private RockWeapon rock;
+        private MusketWeapon musket;
+        private ClubWeapon club;
+        private MagicStaff staff;
         private PlayerLimbAnimator limbs;
         private PatrolEnemy enemy;
         private Keyboard keyboard;
@@ -49,6 +52,9 @@ namespace AlreadyDead.Tests
             player = Object.FindAnyObjectByType<TopDownPlayer>();
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
             spear = Object.FindAnyObjectByType<SpearWeapon>();
+            musket = Object.FindAnyObjectByType<MusketWeapon>();
+            club = Object.FindAnyObjectByType<ClubWeapon>();
+            staff = Object.FindAnyObjectByType<MagicStaff>();
             limbs = Object.FindAnyObjectByType<PlayerLimbAnimator>();
             foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
                 if (candidate.name == "Patrol / western flats") enemy = candidate;
@@ -60,6 +66,9 @@ namespace AlreadyDead.Tests
             Assert.That(pistol, Is.Not.Null);
             Assert.That(spear, Is.Not.Null);
             Assert.That(rock, Is.Not.Null);
+            Assert.That(musket, Is.Not.Null);
+            Assert.That(club, Is.Not.Null);
+            Assert.That(staff, Is.Not.Null);
             Assert.That(limbs, Is.Not.Null);
             Assert.That(enemy, Is.Not.Null);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(Screen.width / 2f, Screen.height / 2f) });
@@ -456,14 +465,42 @@ namespace AlreadyDead.Tests
             Assert.That(player.Unarmed.WeaponArmRaised, Is.False);
             Assert.That(limbs.LeftLeg.GetComponent<SpriteRenderer>().sprite.name, Does.Contain("CaveMan_Leg"));
             Assert.That(limbs.RightLeg.GetComponent<SpriteRenderer>().sprite.name, Does.Contain("CaveMan_Leg"));
+            Assert.That(limbs.RightLeg.GetComponent<SpriteRenderer>().flipX, Is.True);
+            Assert.That(limbs.RightLeg.GetComponent<SpriteRenderer>().flipY, Is.False,
+                "Both legs must keep the brown forward edge facing the same way");
             Transform cavemanBody = null;
             foreach (SpriteRenderer spriteRenderer in player.GetComponentsInChildren<SpriteRenderer>(true))
-                if (spriteRenderer.sprite != null && spriteRenderer.sprite.name.Contains("CaveMan_Idle"))
+                if (spriteRenderer.transform.parent == player.Facing && spriteRenderer.sprite != null &&
+                    spriteRenderer.sprite.name.Contains("CaveMan_Idle"))
                     cavemanBody = spriteRenderer.transform;
             Assert.That(cavemanBody, Is.Not.Null);
             Assert.That(Mathf.DeltaAngle(cavemanBody.localEulerAngles.z, -90f), Is.EqualTo(0f).Within(0.01f));
             Assert.That(Mathf.DeltaAngle(player.Unarmed.LeftArm.localEulerAngles.z, -90f),
                 Is.EqualTo(0f).Within(0.01f));
+            Assert.That(player.Unarmed.RightArm.GetComponent<SpriteRenderer>().flipX, Is.True);
+            Assert.That(player.Unarmed.RightArm.GetComponent<SpriteRenderer>().flipY, Is.False,
+                "Both fists must keep the top of the source sprite facing forward");
+            Assert.That(limbs.LeftLeg.GetComponent<SpriteRenderer>().sortingOrder, Is.EqualTo(7));
+            Assert.That(player.Unarmed.LeftArm.GetComponent<SpriteRenderer>().sortingOrder, Is.EqualTo(9));
+            Assert.That(cavemanBody.GetComponent<SpriteRenderer>().sortingOrder, Is.EqualTo(11),
+                "Arms render below the body but above the legs");
+            Assert.That(limbs.LeftLeg.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(25));
+            Assert.That(player.Unarmed.LeftArm.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(25));
+            Assert.That(cavemanBody.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(25),
+                "Each body part has a solid two-pixel black outline");
+
+            Transform enemyBody = enemy.Facing.Find("Raider body");
+            Transform enemyLeftArm = enemy.Facing.Find("Left arm");
+            Transform enemyRightArm = enemy.Facing.Find("Right arm");
+            Assert.That(enemyBody, Is.Not.Null);
+            Assert.That(enemyLeftArm, Is.Not.Null);
+            Assert.That(enemyRightArm, Is.Not.Null);
+            Assert.That(enemyRightArm.GetComponent<SpriteRenderer>().flipX, Is.True);
+            Assert.That(enemyRightArm.GetComponent<SpriteRenderer>().flipY, Is.False);
+            Assert.That(enemyLeftArm.GetComponent<SpriteRenderer>().sortingOrder, Is.EqualTo(9));
+            Assert.That(enemyBody.GetComponent<SpriteRenderer>().sortingOrder, Is.EqualTo(11));
+            Assert.That(enemyLeftArm.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(25));
+            Assert.That(enemyBody.GetComponentsInChildren<SpriteRenderer>(true).Length, Is.EqualTo(25));
 
             Vector2 startingPosition = player.Body.position;
             player.Body.linearVelocity = Vector2.right * player.Tuning.moveSpeed;
@@ -482,6 +519,103 @@ namespace AlreadyDead.Tests
             Assert.That(player.Unarmed.WeaponArmRaised, Is.True);
             Assert.That(player.Interact(Vector2.zero), Is.True);
             Assert.That(player.Unarmed.VisibleArmCount, Is.EqualTo(2));
+        }
+
+        [UnityTest]
+        public IEnumerator NewWeaponSpritesUseTheirIntendedViews()
+        {
+            player.enabled = false;
+            Assert.That(System.Array.Exists(spear.GetComponentsInChildren<SpriteRenderer>(true),
+                renderer => renderer.sprite != null && renderer.sprite.name.Contains("Spear")), Is.True);
+            Assert.That(musket.GroundViewVisible, Is.True);
+            Assert.That(musket.HeldViewVisible, Is.False);
+
+            player.Body.position = (Vector2)musket.transform.position + Vector2.down * 0.5f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(musket.transform.position), Is.True);
+            Assert.That(player.HeldMusket, Is.SameAs(musket));
+            Assert.That(musket.GroundViewVisible, Is.False);
+            Assert.That(musket.HeldViewVisible, Is.True);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator MusketIsLethalShakesCameraAndReloadsFiveTimesSlower()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)musket.transform.position + Vector2.down * 0.5f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(musket.transform.position), Is.True);
+            Assert.That(musket.ShotInterval,
+                Is.EqualTo(player.Tuning.shotInterval * 5f).Within(0.001f));
+
+            player.Body.position = new Vector2(70f, 70f);
+            player.transform.position = player.Body.position;
+            enemy.enabled = false;
+            enemy.Body.position = new Vector2(72f, 70f);
+            enemy.transform.position = enemy.Body.position;
+            player.AimAt(enemy.transform.position);
+            Physics2D.SyncTransforms();
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(player.TryPrimaryAttack(), Is.False, "Musket has a long cooldown");
+            Assert.That(player.View.ShakeRemaining, Is.GreaterThan(0f));
+            yield return new WaitForSeconds(0.12f);
+            Assert.That(enemy.IsAlive, Is.False, "A musket shot kills in one hit");
+        }
+
+        [UnityTest]
+        public IEnumerator ClubSwingsWithArmAndCreatesPixelTrail()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)club.transform.position + Vector2.left * 0.5f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(club.transform.position), Is.True);
+
+            player.Body.position = new Vector2(70f, 70f);
+            player.transform.position = player.Body.position;
+            enemy.enabled = false;
+            enemy.Body.position = new Vector2(71f, 70f);
+            enemy.transform.position = enemy.Body.position;
+            player.AimAt(enemy.transform.position);
+            Physics2D.SyncTransforms();
+            Quaternion armBefore = player.Unarmed.RightArm.localRotation;
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            yield return new WaitForSeconds(player.Tuning.clubSwingDuration * 0.38f);
+            Assert.That(Quaternion.Angle(armBefore, player.Unarmed.RightArm.localRotation), Is.GreaterThan(2f));
+            Assert.That(club.TrailBursts, Is.EqualTo(1));
+            Assert.That(GameObject.Find("Club pixel swing trail"), Is.Not.Null);
+            yield return new WaitForSeconds(player.Tuning.clubSwingDuration * 0.25f);
+            Assert.That(club.ImpactsMade, Is.EqualTo(1));
+            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - player.Tuning.clubDamage));
+        }
+
+        [UnityTest]
+        public IEnumerator UniversalStaffSwitchesAbilitiesAndFrostLaunchesFourToSixShards()
+        {
+            player.enabled = false;
+            player.Body.position = (Vector2)staff.transform.position + Vector2.down * 0.5f;
+            player.transform.position = player.Body.position;
+            Physics2D.SyncTransforms();
+            Assert.That(player.Interact(staff.transform.position), Is.True);
+            Assert.That(player.HeldStaff, Is.SameAs(staff));
+
+            staff.SelectElement(MagicElement.Fire);
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(staff.LastVolleyCount, Is.EqualTo(1));
+            yield return new WaitForSeconds(player.Tuning.fireCastInterval + 0.02f);
+
+            staff.SelectElement(MagicElement.Frost);
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(staff.LastVolleyCount, Is.InRange(4, 6));
+            Assert.That(Object.FindObjectsByType<MagicProjectile>().Length, Is.GreaterThanOrEqualTo(4));
+            yield return new WaitForSeconds(player.Tuning.frostCastInterval + 0.02f);
+
+            staff.SelectElement(MagicElement.Lightning);
+            Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(staff.SelectedElement, Is.EqualTo(MagicElement.Lightning));
         }
 
         [UnityTest]

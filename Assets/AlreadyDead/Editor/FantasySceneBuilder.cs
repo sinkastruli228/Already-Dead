@@ -16,6 +16,7 @@ namespace AlreadyDead.Editor
         private static Sprite square;
         private static Sprite circle;
         private static Sprite ring;
+        private static Sprite staffArt;
         private static PrototypeTuning tuning;
         private static TopDownPlayer player;
         private static readonly Dictionary<Sprite, Material> pixelMaterials = new Dictionary<Sprite, Material>();
@@ -38,6 +39,7 @@ namespace AlreadyDead.Editor
             square = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AlreadyDead/Art/Square.png");
             circle = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AlreadyDead/Art/Circle.png");
             ring = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AlreadyDead/Art/Ring.png");
+            staffArt = LoadSprite("Assets/Waepon/Stick/Stick.png");
             EnsureGate(scene, new Vector2(11.7f, 7.3f), "FantasyScene",
                 new Color(0.27f, 0.94f, 0.68f), "FOREST GATE / enter to reach the fantasy level");
         }
@@ -66,7 +68,6 @@ namespace AlreadyDead.Editor
             FantasyPixelArt.Fence();
             FantasyPixelArt.Mage();
             FantasyPixelArt.Knight();
-            for (int i = 0; i < 3; i++) FantasyPixelArt.Staff(i);
 
             Scene source = EditorSceneManager.OpenScene(PrototypeSceneBuilder.ScenePath, OpenSceneMode.Single);
             EnsureDesertGate(source);
@@ -94,9 +95,7 @@ namespace AlreadyDead.Editor
 
             Transform forest = new GameObject("ENCHANTED FOREST / 32 x 24").transform;
             BuildForest(forest);
-            BuildStaff(new Vector2(-0.8f, -7.1f), MagicElement.Fire);
-            BuildStaff(new Vector2(1.15f, -6.1f), MagicElement.Frost);
-            BuildStaff(new Vector2(-1.2f, -4.8f), MagicElement.Lightning);
+            BuildStaff(new Vector2(-0.8f, -7.1f));
 
             BuildEnemy("Knight / lower trail", FantasyEnemyKind.Knight, MagicElement.Fire,
                 new Vector2(3f, -2.8f), new Vector2(1.7f, -2.1f));
@@ -240,9 +239,9 @@ namespace AlreadyDead.Editor
             collider.size = size;
         }
 
-        private static void BuildStaff(Vector2 position, MagicElement element)
+        private static void BuildStaff(Vector2 position)
         {
-            var staff = new GameObject(element + " staff / RMB to equip, LMB to cast");
+            var staff = new GameObject("Universal staff / 1 fire + 2 frost + 3 lightning");
             staff.layer = 9;
             staff.transform.position = position;
             var body = staff.AddComponent<Rigidbody2D>();
@@ -255,14 +254,15 @@ namespace AlreadyDead.Editor
             Draw("Staff shadow", staff.transform, new Vector2(0.06f, -0.13f),
                 new Vector2(1.1f, 0.34f), new Color(0f, 0.12f, 0.08f, 0.5f), 8, circle);
             SpriteRenderer halo = Draw("Pickup halo", staff.transform, Vector2.zero,
-                new Vector2(1.28f, 0.58f), ElementColor(element), 9, ring);
+                new Vector2(1.28f, 0.58f), Hex(0xb990ff), 9, ring);
             halo.enabled = false;
-            Transform visual = new GameObject("Runed staff visual").transform;
+            Transform visual = new GameObject("Universal staff visual").transform;
             visual.SetParent(staff.transform, false);
-            Draw("Staff", visual, Vector2.zero, new Vector2(1.25f, 0.8f),
-                Color.white, 14, FantasyPixelArt.Staff((int)element));
+            Transform sprite = Draw("New staff asset", visual, Vector2.zero, new Vector2(0.23f, 0.23f),
+                Color.white, 14, staffArt).transform;
+            sprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
             MagicStaff magic = staff.AddComponent<MagicStaff>();
-            magic.Configure(tuning, element, visual, halo, circle, primitiveMaterial);
+            magic.Configure(tuning, MagicElement.Fire, visual, halo, square, primitiveMaterial);
         }
 
         private static void BuildEnemy(string name, FantasyEnemyKind kind, MagicElement element,
@@ -331,6 +331,13 @@ namespace AlreadyDead.Editor
             renderer.color = color;
             renderer.sortingOrder = order;
             return renderer;
+        }
+
+        private static Sprite LoadSprite(string path)
+        {
+            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+                if (asset is Sprite sprite) return sprite;
+            throw new System.InvalidOperationException("Weapon sprite is missing or not imported: " + path);
         }
 
         private static Material PixelMaterial(Sprite sprite)

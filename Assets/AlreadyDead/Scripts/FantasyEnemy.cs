@@ -36,7 +36,7 @@ namespace AlreadyDead
         public int AttacksMade { get; private set; }
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public Transform Facing => facing;
-        public float SpeedMultiplier => Time.time < slowedUntil ? 0.45f : 1f;
+        public float SpeedMultiplier => Time.time < slowedUntil ? tuning.frostSlowMultiplier : 1f;
 
         public void Configure(PrototypeTuning settings, TopDownPlayer target, Transform visual,
             SpriteRenderer indicator, Vector2 first, Vector2 second, FantasyEnemyKind enemyKind,
@@ -156,7 +156,8 @@ namespace AlreadyDead
             if (health > 0)
             {
                 Alerted = true;
-                if (element == MagicElement.Frost) slowedUntil = Mathf.Max(slowedUntil, Time.time + 2.2f);
+                if (element == MagicElement.Frost)
+                    slowedUntil = Mathf.Max(slowedUntil, Time.time + tuning.frostSlowDuration);
                 if (element == MagicElement.Lightning) stunnedUntil = Mathf.Max(stunnedUntil, Time.time + 0.28f);
                 return;
             }
