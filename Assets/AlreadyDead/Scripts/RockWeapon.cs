@@ -304,18 +304,28 @@ namespace AlreadyDead
                 strikeDirection, tuning.rockStrikeReach, tuning.punchMask);
             if (!hit) return;
             ImpactsMade++;
+            bool hitReceiver = false;
             foreach (MonoBehaviour behaviour in hit.collider.GetComponentsInParent<MonoBehaviour>())
                 if (behaviour is IPunchReceiver receiver)
+                {
                     receiver.ReceivePunch(strikeDirection, tuning.rockStrikeForce);
-            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                    hitReceiver = true;
+                }
+            if (!hitReceiver)
                 ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 
         private bool HitEnemy(Collider2D collider)
         {
             PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
-            if (enemy == null) return false;
-            enemy.TakeDamage(1, flightDirection);
+            if (enemy != null)
+            {
+                enemy.TakeDamage(1, flightDirection);
+                return true;
+            }
+            FantasyEnemy fantasyEnemy = collider.GetComponentInParent<FantasyEnemy>();
+            if (fantasyEnemy == null) return false;
+            fantasyEnemy.TakeDamage(1, flightDirection);
             return true;
         }
     }

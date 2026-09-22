@@ -115,11 +115,15 @@ namespace AlreadyDead
                 tuning.punchReach, tuning.punchMask);
             if (!hit) return;
             ImpactCount++;
+            bool hitReceiver = false;
             MonoBehaviour[] behaviours = hit.collider.GetComponentsInParent<MonoBehaviour>();
             foreach (MonoBehaviour behaviour in behaviours)
                 if (behaviour is IPunchReceiver receiver)
+                {
                     receiver.ReceivePunch(punchDirection, tuning.punchForce);
-            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                    hitReceiver = true;
+                }
+            if (!hitReceiver)
                 ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 

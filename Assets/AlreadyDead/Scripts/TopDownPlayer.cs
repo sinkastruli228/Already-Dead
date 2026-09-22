@@ -31,7 +31,9 @@ namespace AlreadyDead
         public SpearWeapon HoveredSpear { get; private set; }
         public RockWeapon HeldRock { get; private set; }
         public RockWeapon HoveredRock { get; private set; }
-        public bool HasWeapon => HeldWeapon != null || HeldSpear != null || HeldRock != null;
+        public MagicStaff HeldStaff { get; private set; }
+        public MagicStaff HoveredStaff { get; private set; }
+        public bool HasWeapon => HeldWeapon != null || HeldSpear != null || HeldRock != null || HeldStaff != null;
         public Vector2 AimDirection { get; private set; } = Vector2.right;
         public Vector2 AimWorld { get; private set; }
         public bool MovementActive => IsAlive && !cursorReleased && (Application.isFocused || Application.isBatchMode);
@@ -78,7 +80,7 @@ namespace AlreadyDead
             Cursor.visible = previousCursorVisible;
             Cursor.lockState = previousCursorLock;
             HeldSpear?.CancelCharge();
-            SetHovered(null, null, null);
+            SetHovered(null, null, null, null);
         }
 
         private void Update()
@@ -124,7 +126,7 @@ namespace AlreadyDead
             if (!InputActive)
             {
                 HeldSpear?.CancelCharge();
-                SetHovered(null, null, null);
+                SetHovered(null, null, null, null);
                 return;
             }
 
@@ -132,8 +134,9 @@ namespace AlreadyDead
             PistolWeapon pistol = FindPickup(AimWorld);
             SpearWeapon spear = FindSpearPickup(AimWorld);
             RockWeapon rock = FindRockPickup(AimWorld);
-            SelectNearest(AimWorld, ref pistol, ref spear, ref rock);
-            SetHovered(pistol, spear, rock);
+            MagicStaff staff = FindStaffPickup(AimWorld);
+            SelectNearest(AimWorld, ref pistol, ref spear, ref rock, ref staff);
+            SetHovered(pistol, spear, rock, staff);
             if (interactRequested) Interact(AimWorld);
             if (interactReleased) ReleaseSpearThrow();
             if (fireRequested) TryPrimaryAttack();
@@ -213,8 +216,28 @@ namespace AlreadyDead
             return nearest;
         }
 
+        public MagicStaff FindStaffPickup(Vector2 cursorWorld)
+        {
+            var filter = new ContactFilter2D();
+            filter.SetLayerMask(tuning.weaponMask);
+            filter.useTriggers = false;
+            int count = Physics2D.OverlapCircle(cursorWorld, tuning.cursorPickupRadius, filter, hoverResults);
+            MagicStaff nearest = null;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < count; i++)
+            {
+                MagicStaff staff = hoverResults[i].GetComponentInParent<MagicStaff>();
+                if (staff == null || staff.IsHeld || !CanReach(staff.transform.position)) continue;
+                float distance = ((Vector2)staff.transform.position - cursorWorld).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                nearest = staff;
+            }
+            return nearest;
+        }
+
         private static void SelectNearest(Vector2 cursorWorld, ref PistolWeapon pistol,
-            ref SpearWeapon spear, ref RockWeapon rock)
+            ref SpearWeapon spear, ref RockWeapon rock, ref MagicStaff staff)
         {
             float best = float.PositiveInfinity;
             Component selected = null;
@@ -228,11 +251,17 @@ namespace AlreadyDead
                 float distance = ((Vector2)spear.transform.position - cursorWorld).sqrMagnitude;
                 if (distance < best) { best = distance; selected = spear; }
             }
-            if (rock != null && ((Vector2)rock.transform.position - cursorWorld).sqrMagnitude < best)
-                selected = rock;
+            if (rock != null)
+            {
+                float distance = ((Vector2)rock.transform.position - cursorWorld).sqrMagnitude;
+                if (distance < best) { best = distance; selected = rock; }
+            }
+            if (staff != null && ((Vector2)staff.transform.position - cursorWorld).sqrMagnitude < best)
+                selected = staff;
             if (selected != pistol) pistol = null;
             if (selected != spear) spear = null;
             if (selected != rock) rock = null;
+            if (selected != staff) staff = null;
         }
 
         private bool CanReach(Vector2 destination)
@@ -247,8 +276,9 @@ namespace AlreadyDead
             PistolWeapon pickup = FindPickup(cursorWorld);
             SpearWeapon spearPickup = FindSpearPickup(cursorWorld);
             RockWeapon rockPickup = FindRockPickup(cursorWorld);
-            SelectNearest(cursorWorld, ref pickup, ref spearPickup, ref rockPickup);
-            if (pickup != null || spearPickup != null || rockPickup != null)
+            MagicStaff staffPickup = FindStaffPickup(cursorWorld);
+            SelectNearest(cursorWorld, ref pickup, ref spearPickup, ref rockPickup, ref staffPickup);
+            if (pickup != null || spearPickup != null || rockPickup != null || staffPickup != null)
             {
                 // Picking up another weapon replaces the current one in one click.
                 // The previous weapon is left at the player's feet, with no throw impulse.
@@ -267,6 +297,11 @@ namespace AlreadyDead
                     HeldRock.Drop(this);
                     HeldRock = null;
                 }
+                if (HeldStaff != null)
+                {
+                    HeldStaff.Drop(this);
+                    HeldStaff = null;
+                }
                 if (pickup != null)
                 {
                     HeldWeapon = pickup;
@@ -277,13 +312,18 @@ namespace AlreadyDead
                     HeldSpear = spearPickup;
                     spearPickup.Equip(weaponSocket, this);
                 }
-                else
+                else if (rockPickup != null)
                 {
                     HeldRock = rockPickup;
                     rockPickup.Equip(weaponSocket, this);
                 }
+                else
+                {
+                    HeldStaff = staffPickup;
+                    staffPickup.Equip(weaponSocket, this);
+                }
                 unarmed.SetAvailable(false);
-                SetHovered(null, null, null);
+                SetHovered(null, null, null, null);
                 return true;
             }
 
@@ -293,7 +333,7 @@ namespace AlreadyDead
                 HeldWeapon = null;
                 thrown.Throw(this, AimDirection);
                 unarmed.SetAvailable(true);
-                SetHovered(null, null, null);
+                SetHovered(null, null, null, null);
                 return true;
             }
 
@@ -303,7 +343,17 @@ namespace AlreadyDead
                 HeldRock = null;
                 thrown.Throw(this, AimDirection);
                 unarmed.SetAvailable(true);
-                SetHovered(null, null, null);
+                SetHovered(null, null, null, null);
+                return true;
+            }
+
+            if (HeldStaff != null)
+            {
+                MagicStaff dropped = HeldStaff;
+                HeldStaff = null;
+                dropped.Drop(this);
+                unarmed.SetAvailable(true);
+                SetHovered(null, null, null, null);
                 return true;
             }
 
@@ -323,10 +373,11 @@ namespace AlreadyDead
             if (HeldWeapon != null) return HeldWeapon.TryFire(AimDirection, aimCamera);
             if (HeldSpear != null) return HeldSpear.TryStab(AimDirection);
             if (HeldRock != null) return HeldRock.TryStrike(AimDirection);
+            if (HeldStaff != null) return HeldStaff.TryCast(AimDirection, aimCamera);
             return unarmed.TryPunch(AimDirection);
         }
 
-        private void SetHovered(PistolWeapon weapon, SpearWeapon spear, RockWeapon rock)
+        private void SetHovered(PistolWeapon weapon, SpearWeapon spear, RockWeapon rock, MagicStaff staff)
         {
             if (HoveredWeapon != weapon)
             {
@@ -341,6 +392,12 @@ namespace AlreadyDead
                 if (HoveredSpear != null) HoveredSpear.SetHighlighted(true);
             }
             HoveredRock = rock;
+            if (HoveredStaff != staff)
+            {
+                if (HoveredStaff != null) HoveredStaff.SetHighlighted(false);
+                HoveredStaff = staff;
+                if (HoveredStaff != null) HoveredStaff.SetHighlighted(true);
+            }
         }
     }
 }

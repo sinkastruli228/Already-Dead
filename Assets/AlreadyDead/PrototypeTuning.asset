@@ -35,6 +35,13 @@ MonoBehaviour:
   bulletLifetime: 1.3
   recoilDistance: 0.17
   recoilReturnSpeed: 1.5
+  fireCastInterval: 0.48
+  frostCastInterval: 0.38
+  lightningCastInterval: 0.65
+  magicProjectileSpeed: 15
+  magicProjectileRadius: 0.12
+  magicProjectileLifetime: 1.2
+  lightningChainRange: 2.7
   throwSpeed: 12
   throwSpin: 650
   throwLinearDamping: 1.9

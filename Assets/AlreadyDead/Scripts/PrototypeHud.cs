@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace AlreadyDead
 {
@@ -17,6 +18,7 @@ namespace AlreadyDead
         private void OnGUI()
         {
             if (player == null) return;
+            bool fantasy = SceneManager.GetActiveScene().name == "FantasyScene";
             if (title == null)
             {
                 title = new GUIStyle(GUI.skin.label) { fontSize = 23, fontStyle = FontStyle.Bold };
@@ -32,7 +34,8 @@ namespace AlreadyDead
             Fill(new Rect(20, 20, 320, 77), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Fill(new Rect(20, 20, 3, 77), accent);
             Label(new Rect(37, 29, 290, 31), "ALREADY DEAD", title, Color.white);
-            Label(new Rect(38, 63, 290, 20), "01 / WEAPON HANDLING   •   PROTOTYPE", small, accent);
+            Label(new Rect(38, 63, 290, 20), fantasy ? "02 / ЗАЧАРОВАННЫЙ ЛЕС" :
+                "01 / WEAPON HANDLING   •   PROTOTYPE", small, accent);
 
             Fill(new Rect(20, 107, 210, 38), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(32, 114, 66, 20), "ЖИЗНЬ", small, Color.white);
@@ -42,7 +45,8 @@ namespace AlreadyDead
 
             Fill(new Rect(width - 220, 20, 200, 77), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(width - 204, 29, 180, 20), "СНАРЯЖЕНИЕ", small, accent);
-            string equipment = player.HeldSpear != null ? "КОПЬЁ" :
+            string equipment = player.HeldStaff != null ? player.HeldStaff.DisplayName :
+                player.HeldSpear != null ? "КОПЬЁ" :
                 player.HeldWeapon != null ? "ПИСТОЛЕТ / ∞" :
                 player.HeldRock != null ? "КАМЕНЬ" : "КУЛАКИ";
             Label(new Rect(width - 204, 52, 180, 27), equipment, text, Color.white);
@@ -54,6 +58,7 @@ namespace AlreadyDead
 
             Fill(new Rect(20, height - 57, width - 40, 37), new Color(0.035f, 0.052f, 0.065f, 0.92f));
             Label(new Rect(34, height - 49, width - 65, 26),
+                fantasy ? "WASD  движение   МЫШЬ  прицел   ЛКМ  заклинание / удар   ПКМ  взять / заменить / положить посох   R  сброс   ESC  курсор" :
                 "WASD  движение   МЫШЬ  прицел   ЛКМ  удар / выстрел   ПКМ  взять / заменить / бросить   КОПЬЁ: держать ПКМ   R  сброс   ESC  курсор", small, Color.white);
 
             string hint = !player.IsAlive ? "ТЫ ПОГИБ   •   R — НАЧАТЬ ЗАНОВО"
@@ -62,6 +67,8 @@ namespace AlreadyDead
                 : player.HoveredWeapon != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА ПИСТОЛЕТ" : "ПКМ — ПОДНЯТЬ ПИСТОЛЕТ")
                 : player.HoveredSpear != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КОПЬЁ" : "ПКМ — ПОДНЯТЬ КОПЬЁ")
                 : player.HoveredRock != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА КАМЕНЬ" : "ПКМ — ПОДНЯТЬ КАМЕНЬ")
+                : player.HoveredStaff != null ? (player.HasWeapon ? "ПКМ — ЗАМЕНИТЬ НА " : "ПКМ — ПОДНЯТЬ ") + player.HoveredStaff.DisplayName
+                : player.HeldStaff != null ? "ЛКМ — ЗАКЛИНАНИЕ   •   ПКМ — ПОЛОЖИТЬ ПОСОХ"
                 : player.HeldSpear != null ? "ЛКМ — УКОЛ   •   УДЕРЖИВАЙ ПКМ И ОТПУСТИ ДЛЯ БРОСКА"
                 : player.HeldRock != null ? "ЛКМ — УДАР КАМНЕМ   •   ПКМ — БРОСИТЬ СРАЗУ"
                 : !player.HasWeapon ? "Подойди к оружию и наведи на него курсор" : "";
@@ -69,7 +76,7 @@ namespace AlreadyDead
             {
                 var centered = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
                 Label(new Rect(0, height - 96, width, 30), hint, centered,
-                    player.HoveredWeapon != null || player.HoveredSpear != null ? amber : Color.white);
+                    player.HoveredWeapon != null || player.HoveredSpear != null || player.HoveredStaff != null ? amber : Color.white);
             }
 
             if (Time.time - player.Vitality.LastHitTime < 0.16f)
@@ -79,7 +86,7 @@ namespace AlreadyDead
             if (!player.InputActive || Mouse.current == null) return;
             Vector2 mouse = Mouse.current.position.ReadValue();
             Vector2 point = new Vector2(mouse.x, Screen.height - mouse.y);
-            Color crossColor = player.HoveredWeapon != null || player.HoveredSpear != null ? amber : Color.white;
+            Color crossColor = player.HoveredWeapon != null || player.HoveredSpear != null || player.HoveredStaff != null ? amber : Color.white;
             Cross(point, 3f, 13f, 4f, new Color(0.02f, 0.03f, 0.04f, 0.9f));
             Cross(point, 4f, 12f, 2f, crossColor);
             Fill(new Rect(point.x - 1, point.y - 1, 2, 2), crossColor);

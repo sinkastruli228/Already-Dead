@@ -36,6 +36,15 @@ namespace AlreadyDead
         [Min(0f)] public float recoilDistance = 0.17f;
         [Min(0.01f)] public float recoilReturnSpeed = 1.5f;
 
+        [Header("Magic staffs")]
+        [Min(0.05f)] public float fireCastInterval = 0.48f;
+        [Min(0.05f)] public float frostCastInterval = 0.38f;
+        [Min(0.05f)] public float lightningCastInterval = 0.65f;
+        [Min(0.1f)] public float magicProjectileSpeed = 15f;
+        [Min(0.01f)] public float magicProjectileRadius = 0.12f;
+        [Min(0.1f)] public float magicProjectileLifetime = 1.2f;
+        [Min(0.1f)] public float lightningChainRange = 2.7f;
+
         [Header("Throw (XY plane, no gravity)")]
         [Min(0f)] public float throwSpeed = 12f;
         [Min(0f)] public float throwSpin = 650f;

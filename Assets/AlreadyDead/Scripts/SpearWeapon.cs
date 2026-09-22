@@ -294,15 +294,19 @@ namespace AlreadyDead
         {
             Vector2 origin = owner != null ? (Vector2)owner.transform.position : Body.position;
             RaycastHit2D hit = Physics2D.CircleCast(origin, tuning.spearStabRadius, stabDirection,
-                tuning.spearStabReach, tuning.wallMask);
+                tuning.spearStabReach, tuning.wallMask | tuning.enemyMask);
             if (!hit) return;
 
             ImpactsMade++;
+            bool hitReceiver = false;
             MonoBehaviour[] behaviours = hit.collider.GetComponentsInParent<MonoBehaviour>();
             foreach (MonoBehaviour behaviour in behaviours)
                 if (behaviour is ISpearReceiver receiver)
+                {
                     receiver.ReceiveSpear(stabDirection, tuning.spearStabForce);
-            if (hit.collider.GetComponentInParent<PatrolEnemy>() == null)
+                    hitReceiver = true;
+                }
+            if (!hitReceiver)
                 ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
         }
 
@@ -319,6 +323,12 @@ namespace AlreadyDead
             if (enemy != null)
             {
                 enemy.TakeDamage(LastThrowCharge01 >= 0.999f ? enemy.Health : 2, flightDirection);
+                return true;
+            }
+            FantasyEnemy fantasyEnemy = collider.GetComponentInParent<FantasyEnemy>();
+            if (fantasyEnemy != null)
+            {
+                fantasyEnemy.TakeDamage(LastThrowCharge01 >= 0.999f ? fantasyEnemy.Health : 2, flightDirection);
                 return true;
             }
             return false;

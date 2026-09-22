@@ -104,8 +104,22 @@ namespace AlreadyDead.Editor
             var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(FantasySceneBuilder.ScenePath) != null)
+                FantasySceneBuilder.EnsureDesertGate(scene);
+
             EditorSceneManager.SaveScene(scene, ScenePath);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            // Keep additional levels in the build when the prototype is rebuilt.
+            var buildScenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            bool hasPrototype = false;
+            for (int i = 0; i < buildScenes.Count; i++)
+            {
+                if (buildScenes[i].path != ScenePath) continue;
+                buildScenes[i] = new EditorBuildSettingsScene(ScenePath, true);
+                hasPrototype = true;
+                break;
+            }
+            if (!hasPrototype) buildScenes.Insert(0, new EditorBuildSettingsScene(ScenePath, true));
+            EditorBuildSettings.scenes = buildScenes.ToArray();
             PlayerSettings.defaultScreenWidth = 1440;
             PlayerSettings.defaultScreenHeight = 900;
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
@@ -118,9 +132,12 @@ namespace AlreadyDead.Editor
         {
             string destination = Path.GetFullPath("Builds/AlreadyDead/AlreadyDead.exe");
             Directory.CreateDirectory(Path.GetDirectoryName(destination));
+            var enabledScenes = new List<string>();
+            foreach (EditorBuildSettingsScene entry in EditorBuildSettings.scenes)
+                if (entry.enabled) enabledScenes.Add(entry.path);
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { ScenePath },
+                scenes = enabledScenes.ToArray(),
                 locationPathName = destination,
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.Development

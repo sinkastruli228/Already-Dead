@@ -44,6 +44,8 @@ namespace AlreadyDead
             {
                 PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
                 if (enemy != null) enemy.TakeDamage(1, direction);
+                else if (hit.collider.GetComponentInParent<FantasyEnemy>() is FantasyEnemy fantasyEnemy)
+                    fantasyEnemy.TakeDamage(1, direction);
                 else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
                 gameObject.SetActive(false);
                 Destroy(gameObject);
