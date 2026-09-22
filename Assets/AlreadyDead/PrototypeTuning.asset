@@ -91,8 +91,8 @@ MonoBehaviour:
   playerMaxHealth: 5
   playerHitInvulnerability: 0.55
   enemyMaxHealth: 3
-  enemyPatrolSpeed: 1.4
-  enemyChaseSpeed: 2.5
+  enemyPatrolSpeed: 2.8
+  enemyChaseSpeed: 5
   enemyWaypointTolerance: 0.18
   enemyVisionRange: 5
   enemyVisionHalfAngle: 48

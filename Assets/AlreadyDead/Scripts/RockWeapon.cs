@@ -143,6 +143,7 @@ namespace AlreadyDead
             isFlying = false;
             isBuried = false;
             FlightHeight = 0f;
+            Body.bodyType = RigidbodyType2D.Dynamic;
             Body.linearVelocity = Vector2.zero;
             Body.angularVelocity = 0f;
             Body.rotation = 0f;
@@ -195,6 +196,7 @@ namespace AlreadyDead
             if (buriedMark != null) buriedMark.gameObject.SetActive(false);
             if (renderer != null) renderer.sortingOrder = 13;
             Hitbox.enabled = true;
+            Body.bodyType = RigidbodyType2D.Dynamic;
             Body.simulated = true;
             Body.position = transform.position;
             Body.rotation = 0f;
@@ -214,6 +216,7 @@ namespace AlreadyDead
             flightElapsed = 0f;
             strikeStartedAt = float.NegativeInfinity;
             Hitbox.enabled = true;
+            Body.bodyType = RigidbodyType2D.Dynamic;
             Body.simulated = true;
             Body.position = transform.position;
             Body.rotation = 0f;
@@ -251,10 +254,12 @@ namespace AlreadyDead
             Body.angularVelocity = 0f;
             Body.rotation = 0f;
             transform.rotation = Quaternion.identity;
-            visual.localPosition = visualRest + Vector3.down * 0.055f;
-            visual.localScale = new Vector3(visualRestScale.x * 0.72f,
-                visualRestScale.y * 0.38f, visualRestScale.z);
+            Body.bodyType = RigidbodyType2D.Static;
+            Body.Sleep();
+            visual.localPosition = visualRest;
+            visual.localScale = visualRestScale;
             visual.localRotation = Quaternion.identity;
+            visual.gameObject.SetActive(false);
             if (renderer != null) renderer.sortingOrder = 2;
             if (shadow != null) shadow.gameObject.SetActive(false);
             if (buriedMark != null) buriedMark.gameObject.SetActive(true);
@@ -262,6 +267,7 @@ namespace AlreadyDead
 
         private void SetLooseGroundState()
         {
+            Body.bodyType = RigidbodyType2D.Dynamic;
             ResetVisual();
             if (renderer != null) renderer.sortingOrder = 1;
             if (shadow != null)
@@ -277,6 +283,7 @@ namespace AlreadyDead
         {
             FlightHeight = 0f;
             if (visual == null) return;
+            visual.gameObject.SetActive(true);
             visual.localPosition = visualRest;
             visual.localScale = visualRestScale;
             visual.localRotation = Quaternion.identity;

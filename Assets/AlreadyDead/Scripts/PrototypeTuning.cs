@@ -107,8 +107,8 @@ namespace AlreadyDead
         [Min(1)] public int playerMaxHealth = 5;
         [Min(0f)] public float playerHitInvulnerability = 0.55f;
         [Min(1)] public int enemyMaxHealth = 3;
-        [Min(0.1f)] public float enemyPatrolSpeed = 1.4f;
-        [Min(0.1f)] public float enemyChaseSpeed = 2.5f;
+        [Min(0.1f)] public float enemyPatrolSpeed = 2.8f;
+        [Min(0.1f)] public float enemyChaseSpeed = 5f;
         [Min(0.01f)] public float enemyWaypointTolerance = 0.18f;
         [Min(0.1f)] public float enemyVisionRange = 5f;
         [Range(1f, 180f)] public float enemyVisionHalfAngle = 48f;

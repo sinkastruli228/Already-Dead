@@ -105,6 +105,14 @@ namespace AlreadyDead.Tests
             Assert.That(player.Body.linearVelocity.magnitude, Is.LessThan(0.01f));
         }
 
+        [Test]
+        public void EnemyMovementSpeedsAreDoubledWhilePlayerSpeedStaysOriginal()
+        {
+            Assert.That(player.Tuning.moveSpeed, Is.EqualTo(6f).Within(0.001f));
+            Assert.That(player.Tuning.enemyPatrolSpeed, Is.EqualTo(2.8f).Within(0.001f));
+            Assert.That(player.Tuning.enemyChaseSpeed, Is.EqualTo(5f).Within(0.001f));
+        }
+
         [UnityTest]
         public IEnumerator EnemiesPatrolAndNoticeOnlyAheadWithClearSight()
         {
@@ -159,10 +167,8 @@ namespace AlreadyDead.Tests
                 "The enemy moves around cover instead of stopping at it");
             yield return new WaitForSeconds(2.1f);
             Assert.That(enemy.Alerted, Is.True, "Detection lasts for the rest of the encounter");
-            Assert.That(enemy.Body.linearVelocity.magnitude, Is.GreaterThan(0.5f));
-            yield return new WaitForSeconds(2f);
             Assert.That(enemy.transform.position.x, Is.GreaterThan(4.4f),
-                "The enemy reaches the player's side of the wall");
+                "The faster enemy has already reached the player's side of the wall");
         }
 
         [UnityTest]
@@ -407,6 +413,10 @@ namespace AlreadyDead.Tests
                 "Rocks do not use the weapon pickup outline");
             Assert.That(rock.Shadow, Is.Not.Null);
             Assert.That(rock.BuriedMark, Is.Not.Null);
+            Assert.That(rock.Visual.GetComponentInChildren<SpriteRenderer>(true).sprite.name,
+                Is.EqualTo("Stone_0"));
+            Assert.That(rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true).sprite.name,
+                Is.EqualTo("Stone_Ground_0"));
             Assert.That(player.FindRockPickup(rock.transform.position), Is.SameAs(rock));
             Assert.That(player.Interact(rock.transform.position), Is.True);
             Assert.That(player.HeldRock, Is.SameAs(rock));
@@ -454,8 +464,21 @@ namespace AlreadyDead.Tests
             Assert.That(rock.IsFlying, Is.False);
             Assert.That(rock.IsBuried, Is.True);
             Assert.That(rock.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            Assert.That(rock.Body.bodyType, Is.EqualTo(RigidbodyType2D.Static));
+            Assert.That(rock.Visual.gameObject.activeSelf, Is.False,
+                "The flying stone is replaced by the grounded sprite");
             Assert.That(rock.Shadow.gameObject.activeSelf, Is.False);
             Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.True);
+            Vector2 landedPosition = rock.transform.position;
+            enemy.enabled = false;
+            enemy.Body.position = landedPosition + Vector2.left * 0.7f;
+            enemy.transform.position = enemy.Body.position;
+            enemy.Body.linearVelocity = Vector2.right * 12f;
+            Physics2D.SyncTransforms();
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That((Vector2)rock.transform.position, Is.EqualTo(landedPosition),
+                "Enemies cannot push a landed static rock");
         }
 
         [UnityTest]

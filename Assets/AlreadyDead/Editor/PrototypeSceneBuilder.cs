@@ -10,6 +10,7 @@ namespace AlreadyDead.Editor
     public static class PrototypeSceneBuilder
     {
         public const string ScenePath = "Assets/Scenes/SampleScene.unity";
+        private const string WeaponSandboxPath = "Assets/AlreadyDead/Tests/Scenes/WeaponSandbox.unity";
         private const string ArtPath = "Assets/AlreadyDead/Art";
         private const string CharacterPath = "Assets/Character";
         private const string WeaponPath = "Assets/Waepon";
@@ -18,7 +19,6 @@ namespace AlreadyDead.Editor
         private static Sprite circle;
         private static Sprite ring;
         private static Sprite[] sand;
-        private static Sprite[] rocks;
         private static Sprite[] dryBushes;
         private static Sprite dryGrass;
         private static Sprite rockWall;
@@ -30,6 +30,8 @@ namespace AlreadyDead.Editor
         private static Sprite musketTopArt;
         private static Sprite clubArt;
         private static Sprite staffArt;
+        private static Sprite thrownRockArt;
+        private static Sprite landedRockArt;
         private static Dictionary<Sprite, Material> pixelMaterials;
         private static Material material;
         private static PhysicsMaterial2D wallMaterial;
@@ -63,7 +65,6 @@ namespace AlreadyDead.Editor
             circle = CreateSprite("Circle", 1);
             ring = CreateSprite("Ring", 2);
             sand = new[] { DesertPixelArt.Sand(0), DesertPixelArt.Sand(1), DesertPixelArt.Sand(2) };
-            rocks = new[] { DesertPixelArt.Rock(0), DesertPixelArt.Rock(1) };
             dryBushes = new[] { DesertPixelArt.Bush(0), DesertPixelArt.Bush(1) };
             dryGrass = DesertPixelArt.Grass();
             rockWall = DesertPixelArt.RockWall();
@@ -75,6 +76,8 @@ namespace AlreadyDead.Editor
             musketTopArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Up.png");
             clubArt = LoadSprite(WeaponPath + "/Dubinka/Dubinka.png");
             staffArt = LoadSprite(WeaponPath + "/Stick/Stick.png");
+            thrownRockArt = LoadSprite("Assets/Enviroment/Stone.png", "Stone_0");
+            landedRockArt = LoadSprite("Assets/Enviroment/Stone_Ground.png", "Stone_Ground_0");
             material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
             if (material == null)
             {
@@ -134,6 +137,7 @@ namespace AlreadyDead.Editor
                 FantasySceneBuilder.EnsureDesertGate(scene);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            UpdateWeaponSandboxRocks();
             // Keep additional levels in the build when the prototype is rebuilt.
             var buildScenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             bool hasPrototype = false;
@@ -152,6 +156,39 @@ namespace AlreadyDead.Editor
             PlayerSettings.resizableWindow = true;
             AssetDatabase.SaveAssets();
             Debug.Log("ALREADY_DEAD_SCENE_READY: " + ScenePath);
+        }
+
+        private static void UpdateWeaponSandboxRocks()
+        {
+            if (!File.Exists(WeaponSandboxPath)) return;
+            Scene sandbox = EditorSceneManager.OpenScene(WeaponSandboxPath, OpenSceneMode.Additive);
+            foreach (GameObject root in sandbox.GetRootGameObjects())
+            foreach (RockWeapon rock in root.GetComponentsInChildren<RockWeapon>(true))
+            {
+                SpriteRenderer thrown = rock.Visual.GetComponentInChildren<SpriteRenderer>(true);
+                thrown.name = "New thrown rock asset";
+                thrown.sprite = thrownRockArt;
+                thrown.sharedMaterial = PixelMaterial(thrownRockArt);
+                thrown.transform.localPosition = Vector3.zero;
+                thrown.transform.localScale = new Vector3(0.28f, 0.28f, 1f);
+
+                SpriteRenderer grounded = rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true);
+                grounded.name = "New grounded rock asset";
+                grounded.sprite = landedRockArt;
+                grounded.sharedMaterial = PixelMaterial(landedRockArt);
+                grounded.color = Color.white;
+                grounded.sortingOrder = 3;
+                grounded.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+                grounded.transform.localScale = new Vector3(0.29f, 0.29f, 1f);
+
+                SpriteRenderer rockShadow = rock.Shadow.GetComponentInChildren<SpriteRenderer>(true);
+                rockShadow.sprite = circle;
+                rockShadow.sharedMaterial = material;
+                rockShadow.transform.localPosition = new Vector3(0f, -0.08f, 0f);
+                rockShadow.transform.localScale = new Vector3(0.72f, 0.34f, 1f);
+            }
+            EditorSceneManager.SaveScene(sandbox);
+            EditorSceneManager.CloseScene(sandbox, true);
         }
 
         public static void BuildWindowsPlayer()
@@ -277,7 +314,7 @@ namespace AlreadyDead.Editor
                 Map(286, 591), Map(106, 725), Map(595, 631)
             };
             for (int i = 0; i < stonePositions.Length; i++)
-                BuildRock(details, stonePositions[i], rocks[i % rocks.Length]);
+                BuildRock(details, stonePositions[i]);
 
             Vector2[] bushPositions =
             {
@@ -299,7 +336,7 @@ namespace AlreadyDead.Editor
             }
         }
 
-        private static RockWeapon BuildRock(Transform parent, Vector2 position, Sprite sprite)
+        private static RockWeapon BuildRock(Transform parent, Vector2 position)
         {
             var go = new GameObject("Stone / RMB pickup + instant throw");
             go.layer = 9;
@@ -317,15 +354,16 @@ namespace AlreadyDead.Editor
             Transform shadow = new GameObject("Rock ground shadow").transform;
             shadow.SetParent(go.transform, false);
             Draw("Pixel shadow", shadow, new Vector2(0f, -0.08f), new Vector2(0.72f, 0.34f),
-                new Color(0.16f, 0.1f, 0.055f, 0.48f), 0, sprite);
+                new Color(0.16f, 0.1f, 0.055f, 0.48f), 0, circle);
             Transform buried = new GameObject("Buried rock mark").transform;
             buried.SetParent(go.transform, false);
-            Draw("Rock buried in sand", buried, new Vector2(0f, -0.07f), new Vector2(0.88f, 0.3f),
-                new Color(0.48f, 0.31f, 0.17f, 0.9f), 1, sprite);
+            Draw("New grounded rock asset", buried, new Vector2(0f, -0.02f), new Vector2(0.29f, 0.29f),
+                Color.white, 3, landedRockArt);
             buried.gameObject.SetActive(false);
             Transform visual = new GameObject("Rock pixel art").transform;
             visual.SetParent(go.transform, false);
-            Draw("Rock", visual, Vector2.zero, Vector2.one, Color.white, 3, sprite);
+            Draw("New thrown rock asset", visual, Vector2.zero, new Vector2(0.28f, 0.28f),
+                Color.white, 4, thrownRockArt);
             RockWeapon rock = go.AddComponent<RockWeapon>();
             rock.Configure(tuning, visual, shadow, buried, square, material);
             return rock;
@@ -425,7 +463,7 @@ namespace AlreadyDead.Editor
             PatrolEnemy enemy = go.AddComponent<PatrolEnemy>();
             enemy.ConfigureRoute(tuning, player, facing, alert, route);
 
-            RockWeapon carriedRock = BuildRock(facing, new Vector2(0.48f, -0.19f), rocks[0]);
+            RockWeapon carriedRock = BuildRock(facing, new Vector2(0.48f, -0.19f));
             SpearWeapon carriedSpear = BuildSpear(Vector2.zero);
             ClubWeapon carriedClub = BuildClub(Vector2.zero);
             carriedSpear.transform.SetParent(facing, false);
@@ -598,11 +636,12 @@ namespace AlreadyDead.Editor
             staff.Configure(tuning, MagicElement.Fire, visual, halo, square, material);
         }
 
-        private static Sprite LoadSprite(string path)
+        private static Sprite LoadSprite(string path, string expectedName = null)
         {
             foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
-                if (asset is Sprite sprite) return sprite;
-            throw new System.InvalidOperationException("Character sprite is missing or not imported: " + path);
+                if (asset is Sprite sprite && (expectedName == null || sprite.name == expectedName)) return sprite;
+            throw new System.InvalidOperationException("Sprite is missing or not imported: " + path +
+                (expectedName == null ? string.Empty : " / " + expectedName));
         }
 
         private static void AddPixelOutline(Transform source, int order)
