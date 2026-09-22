@@ -28,7 +28,7 @@ namespace AlreadyDead
         private Vector2 flightDirection = Vector2.right;
         private bool impactApplied;
         private bool isFlying;
-        private bool isBuried;
+        [SerializeField] private bool isBuried;
 
         public bool IsHeld => owner != null;
         public bool IsFlying => isFlying;
@@ -53,6 +53,27 @@ namespace AlreadyDead
             primitiveMaterial = material;
             CacheVisualState();
             SetLooseGroundState();
+        }
+
+        public void PlaceBuried()
+        {
+            owner = null;
+            isFlying = false;
+            isBuried = true;
+            FlightHeight = 0f;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            Body.rotation = 0f;
+            transform.rotation = Quaternion.identity;
+            Body.bodyType = RigidbodyType2D.Static;
+            Body.Sleep();
+            visual.localPosition = visualRest;
+            visual.localScale = visualRestScale;
+            visual.localRotation = Quaternion.identity;
+            visual.gameObject.SetActive(false);
+            if (renderer != null) renderer.sortingOrder = 2;
+            if (shadow != null) shadow.gameObject.SetActive(false);
+            if (buriedMark != null) buriedMark.gameObject.SetActive(true);
         }
 
         private void Awake()
@@ -247,22 +268,7 @@ namespace AlreadyDead
 
         private void Land()
         {
-            isFlying = false;
-            isBuried = true;
-            FlightHeight = 0f;
-            Body.linearVelocity = Vector2.zero;
-            Body.angularVelocity = 0f;
-            Body.rotation = 0f;
-            transform.rotation = Quaternion.identity;
-            Body.bodyType = RigidbodyType2D.Static;
-            Body.Sleep();
-            visual.localPosition = visualRest;
-            visual.localScale = visualRestScale;
-            visual.localRotation = Quaternion.identity;
-            visual.gameObject.SetActive(false);
-            if (renderer != null) renderer.sortingOrder = 2;
-            if (shadow != null) shadow.gameObject.SetActive(false);
-            if (buriedMark != null) buriedMark.gameObject.SetActive(true);
+            PlaceBuried();
         }
 
         private void SetLooseGroundState()

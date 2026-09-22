@@ -12,6 +12,8 @@ namespace AlreadyDead
     {
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private Transform visual;
+        [SerializeField] private Transform airborneVisual;
+        [SerializeField] private Transform groundedVisual;
         [SerializeField] private Transform shadow;
         [SerializeField] private SpriteRenderer highlight;
         [SerializeField] private Sprite primitiveSprite;
@@ -50,6 +52,11 @@ namespace AlreadyDead
         public float LastThrowCharge01 { get; private set; }
         public float FlightHeight { get; private set; }
         public float VibrationAmount { get; private set; }
+        public Transform Visual => visual;
+        public Transform AirborneVisual => airborneVisual;
+        public Transform GroundedVisual => groundedVisual;
+        public bool AirborneViewVisible => airborneVisual != null && airborneVisual.gameObject.activeSelf;
+        public bool GroundedViewVisible => groundedVisual != null && groundedVisual.gameObject.activeSelf;
         public Transform Shadow => shadow;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public BoxCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<BoxCollider2D>();
@@ -77,6 +84,13 @@ namespace AlreadyDead
             ResetShadow();
         }
 
+        public void ConfigureGroundViews(Transform airborneModel, Transform groundedModel)
+        {
+            airborneVisual = airborneModel;
+            groundedVisual = groundedModel;
+            SetGroundedView(false);
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
@@ -85,6 +99,12 @@ namespace AlreadyDead
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             visualRest = visual.localPosition;
+            if (airborneVisual == null && visual != null)
+            {
+                SpriteRenderer firstRenderer = visual.GetComponentInChildren<SpriteRenderer>(true);
+                if (firstRenderer != null) airborneVisual = firstRenderer.transform;
+            }
+            SetGroundedView(false);
             CacheShadow();
             ResetShadow();
             SetHighlighted(false);
@@ -190,6 +210,7 @@ namespace AlreadyDead
             transform.localRotation = Quaternion.identity;
             visual.localPosition = visualRest;
             visual.localRotation = Quaternion.identity;
+            SetGroundedView(false);
             ResetShadow();
             SetHighlighted(false);
         }
@@ -239,6 +260,7 @@ namespace AlreadyDead
                 Quaternion.Euler(0f, 0f, Mathf.Atan2(flightDirection.y, flightDirection.x) * Mathf.Rad2Deg));
             visual.localPosition = visualRest;
             visual.localRotation = Quaternion.identity;
+            SetGroundedView(false);
             owner = null;
             Hitbox.enabled = true;
             Body.simulated = true;
@@ -278,6 +300,7 @@ namespace AlreadyDead
             owner = null;
             visual.localPosition = visualRest;
             visual.localRotation = Quaternion.identity;
+            SetGroundedView(false);
             vibrationStartedAt = float.NegativeInfinity;
             VibrationAmount = 0f;
             ResetShadow();
@@ -402,15 +425,24 @@ namespace AlreadyDead
             bool wasFlying = isFlying;
             isFlying = false;
             FlightHeight = 0f;
+            if (!vibrate) SetGroundedView(false);
             if (body == null) return;
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
             if (!wasFlying) return;
+            SetGroundedView(vibrate);
             visual.localPosition = visualRest;
             ApplyShadow(1f);
             if (!vibrate) return;
             vibrationStartedAt = Time.time;
             VibrationAmount = tuning.spearVibrationAngle;
+        }
+
+        private void SetGroundedView(bool grounded)
+        {
+            bool useGrounded = grounded && groundedVisual != null;
+            if (airborneVisual != null) airborneVisual.gameObject.SetActive(!useGrounded);
+            if (groundedVisual != null) groundedVisual.gameObject.SetActive(useGrounded);
         }
     }
 }

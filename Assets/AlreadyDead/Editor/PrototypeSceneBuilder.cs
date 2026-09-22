@@ -26,6 +26,7 @@ namespace AlreadyDead.Editor
         private static Sprite cavemanArm;
         private static Sprite cavemanLeg;
         private static Sprite spearArt;
+        private static Sprite spearGroundArt;
         private static Sprite musketSideArt;
         private static Sprite musketTopArt;
         private static Sprite clubArt;
@@ -72,6 +73,7 @@ namespace AlreadyDead.Editor
             cavemanArm = LoadSprite(CharacterPath + "/CaveMan_Arm.png");
             cavemanLeg = LoadSprite(CharacterPath + "/CaveMan_Leg.png");
             spearArt = LoadSprite(WeaponPath + "/Spear/Spear.png");
+            spearGroundArt = LoadSprite(WeaponPath + "/Spear/Spear_Ground.png", "Spear_Ground_0");
             musketSideArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Side.png");
             musketTopArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Up.png");
             clubArt = LoadSprite(WeaponPath + "/Dubinka/Dubinka.png");
@@ -137,7 +139,7 @@ namespace AlreadyDead.Editor
                 FantasySceneBuilder.EnsureDesertGate(scene);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
-            UpdateWeaponSandboxRocks();
+            UpdateWeaponSandboxAssets();
             // Keep additional levels in the build when the prototype is rebuilt.
             var buildScenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             bool hasPrototype = false;
@@ -158,34 +160,67 @@ namespace AlreadyDead.Editor
             Debug.Log("ALREADY_DEAD_SCENE_READY: " + ScenePath);
         }
 
-        private static void UpdateWeaponSandboxRocks()
+        private static void UpdateWeaponSandboxAssets()
         {
             if (!File.Exists(WeaponSandboxPath)) return;
             Scene sandbox = EditorSceneManager.OpenScene(WeaponSandboxPath, OpenSceneMode.Additive);
             foreach (GameObject root in sandbox.GetRootGameObjects())
-            foreach (RockWeapon rock in root.GetComponentsInChildren<RockWeapon>(true))
             {
-                SpriteRenderer thrown = rock.Visual.GetComponentInChildren<SpriteRenderer>(true);
-                thrown.name = "New thrown rock asset";
-                thrown.sprite = thrownRockArt;
-                thrown.sharedMaterial = PixelMaterial(thrownRockArt);
-                thrown.transform.localPosition = Vector3.zero;
-                thrown.transform.localScale = new Vector3(0.28f, 0.28f, 1f);
+                foreach (RockWeapon rock in root.GetComponentsInChildren<RockWeapon>(true))
+                {
+                    SpriteRenderer thrown = rock.Visual.GetComponentInChildren<SpriteRenderer>(true);
+                    thrown.name = "New thrown rock asset";
+                    thrown.sprite = thrownRockArt;
+                    thrown.sharedMaterial = PixelMaterial(thrownRockArt);
+                    thrown.transform.localPosition = Vector3.zero;
+                    thrown.transform.localScale = new Vector3(0.28f, 0.28f, 1f);
 
-                SpriteRenderer grounded = rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true);
-                grounded.name = "New grounded rock asset";
-                grounded.sprite = landedRockArt;
-                grounded.sharedMaterial = PixelMaterial(landedRockArt);
-                grounded.color = Color.white;
-                grounded.sortingOrder = 3;
-                grounded.transform.localPosition = new Vector3(0f, -0.02f, 0f);
-                grounded.transform.localScale = new Vector3(0.29f, 0.29f, 1f);
+                    SpriteRenderer grounded = rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true);
+                    grounded.name = "New grounded rock asset";
+                    grounded.sprite = landedRockArt;
+                    grounded.sharedMaterial = PixelMaterial(landedRockArt);
+                    grounded.color = Color.white;
+                    grounded.sortingOrder = 3;
+                    grounded.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+                    grounded.transform.localScale = new Vector3(0.29f, 0.29f, 1f);
 
-                SpriteRenderer rockShadow = rock.Shadow.GetComponentInChildren<SpriteRenderer>(true);
-                rockShadow.sprite = circle;
-                rockShadow.sharedMaterial = material;
-                rockShadow.transform.localPosition = new Vector3(0f, -0.08f, 0f);
-                rockShadow.transform.localScale = new Vector3(0.72f, 0.34f, 1f);
+                    SpriteRenderer rockShadow = rock.Shadow.GetComponentInChildren<SpriteRenderer>(true);
+                    rockShadow.sprite = circle;
+                    rockShadow.sharedMaterial = material;
+                    rockShadow.transform.localPosition = new Vector3(0f, -0.08f, 0f);
+                    rockShadow.transform.localScale = new Vector3(0.72f, 0.34f, 1f);
+
+                    if (rock.GetComponentInParent<EnemyWeaponLoadout>(true) == null)
+                        rock.PlaceBuried();
+                }
+                foreach (SpearWeapon spear in root.GetComponentsInChildren<SpearWeapon>(true))
+                {
+                    Transform spearRoot = spear.Visual;
+                    if (spearRoot == null) continue;
+                    Transform airborne = spear.AirborneVisual;
+                    if (airborne == null)
+                    {
+                        SpriteRenderer renderer = spearRoot.GetComponentInChildren<SpriteRenderer>(true);
+                        if (renderer != null) airborne = renderer.transform;
+                    }
+
+                    Transform grounded = spear.GroundedVisual;
+                    if (grounded == null)
+                    {
+                        grounded = Draw("Spear embedded in ground", spearRoot, Vector2.zero,
+                            new Vector2(0.18f, 0.18f), Color.white, 16, spearGroundArt).transform;
+                    }
+                    else
+                    {
+                        SpriteRenderer groundedRenderer = grounded.GetComponent<SpriteRenderer>();
+                        groundedRenderer.sprite = spearGroundArt;
+                        groundedRenderer.sharedMaterial = PixelMaterial(spearGroundArt);
+                        grounded.localPosition = Vector3.zero;
+                        grounded.localScale = new Vector3(0.18f, 0.18f, 1f);
+                    }
+                    grounded.localRotation = Quaternion.Euler(0f, 0f, -45f);
+                    spear.ConfigureGroundViews(airborne, grounded);
+                }
             }
             EditorSceneManager.SaveScene(sandbox);
             EditorSceneManager.CloseScene(sandbox, true);
@@ -314,7 +349,7 @@ namespace AlreadyDead.Editor
                 Map(286, 591), Map(106, 725), Map(595, 631)
             };
             for (int i = 0; i < stonePositions.Length; i++)
-                BuildRock(details, stonePositions[i]);
+                BuildRock(details, stonePositions[i], true);
 
             Vector2[] bushPositions =
             {
@@ -336,7 +371,7 @@ namespace AlreadyDead.Editor
             }
         }
 
-        private static RockWeapon BuildRock(Transform parent, Vector2 position)
+        private static RockWeapon BuildRock(Transform parent, Vector2 position, bool startsBuried = false)
         {
             var go = new GameObject("Stone / RMB pickup + instant throw");
             go.layer = 9;
@@ -366,6 +401,7 @@ namespace AlreadyDead.Editor
                 Color.white, 4, thrownRockArt);
             RockWeapon rock = go.AddComponent<RockWeapon>();
             rock.Configure(tuning, visual, shadow, buried, square, material);
+            if (startsBuried) rock.PlaceBuried();
             return rock;
         }
 
@@ -543,8 +579,13 @@ namespace AlreadyDead.Editor
             Transform spearSprite = Draw("New spear asset", visual, Vector2.zero,
                 new Vector2(0.18f, 0.18f), Color.white, 16, spearArt).transform;
             spearSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
+            Transform groundedSprite = Draw("Spear embedded in ground", visual, Vector2.zero,
+                new Vector2(0.18f, 0.18f), Color.white, 16, spearGroundArt).transform;
+            groundedSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
+            groundedSprite.gameObject.SetActive(false);
             SpearWeapon spear = go.AddComponent<SpearWeapon>();
             spear.Configure(tuning, visual, shadow, halo, square, material);
+            spear.ConfigureGroundViews(spearSprite, groundedSprite);
             return spear;
         }
 

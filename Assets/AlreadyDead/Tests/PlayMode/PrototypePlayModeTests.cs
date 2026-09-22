@@ -59,10 +59,13 @@ namespace AlreadyDead.Tests
             limbs = Object.FindAnyObjectByType<PlayerLimbAnimator>();
             foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
                 if (candidate.name == "Patrol / western flats") enemy = candidate;
-            rock = Object.FindObjectsByType<RockWeapon>()[0];
+            rock = null;
             foreach (RockWeapon candidate in Object.FindObjectsByType<RockWeapon>())
-                if (Vector2.Distance(candidate.transform.position, player.transform.position) <
+            {
+                if (candidate.GetComponentInParent<EnemyWeaponLoadout>() != null) continue;
+                if (rock == null || Vector2.Distance(candidate.transform.position, player.transform.position) <
                     Vector2.Distance(rock.transform.position, player.transform.position)) rock = candidate;
+            }
             Assert.That(player, Is.Not.Null);
             Assert.That(pistol, Is.Not.Null);
             Assert.That(spear, Is.Not.Null);
@@ -417,6 +420,10 @@ namespace AlreadyDead.Tests
                 Is.EqualTo("Stone_0"));
             Assert.That(rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true).sprite.name,
                 Is.EqualTo("Stone_Ground_0"));
+            Assert.That(rock.IsBuried, Is.True, "Rocks placed in the level start embedded in the ground");
+            Assert.That(rock.Visual.gameObject.activeSelf, Is.False);
+            Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.True);
+            Assert.That(rock.Body.bodyType, Is.EqualTo(RigidbodyType2D.Static));
             Assert.That(player.FindRockPickup(rock.transform.position), Is.SameAs(rock));
             Assert.That(player.Interact(rock.transform.position), Is.True);
             Assert.That(player.HeldRock, Is.SameAs(rock));
@@ -804,6 +811,10 @@ namespace AlreadyDead.Tests
             Assert.That(spear.transform.position.x, Is.LessThan(3.675f));
             Assert.That(spear.Hitbox.enabled, Is.True);
             Assert.That(spear.VibrationAmount, Is.GreaterThan(0f));
+            Assert.That(spear.AirborneViewVisible, Is.False);
+            Assert.That(spear.GroundedViewVisible, Is.True);
+            Assert.That(spear.GroundedVisual.GetComponent<SpriteRenderer>().sprite.name,
+                Is.EqualTo("Spear_Ground_0"));
             Assert.That(spear.Shadow.localScale.x, Is.LessThan(1f));
         }
 
