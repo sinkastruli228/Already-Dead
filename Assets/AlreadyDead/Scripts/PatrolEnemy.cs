@@ -11,13 +11,15 @@ namespace AlreadyDead
         [SerializeField] private SpriteRenderer alert;
         [SerializeField] private Vector2 patrolA;
         [SerializeField] private Vector2 patrolB;
+        [SerializeField] private Vector2[] patrolRoute;
 
         private Rigidbody2D body;
         private CircleCollider2D hitbox;
+        private EnemyWeaponLoadout loadout;
         private Vector2 moveDirection;
         private Vector2 detourTarget;
         private bool hasDetour;
-        private bool towardB = true;
+        private int nextWaypoint = 1;
         private float nextAttackTime;
         private float slowedUntil;
         private int health;
@@ -29,16 +31,27 @@ namespace AlreadyDead
         public Transform Facing => facing;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public float SpeedMultiplier => Time.time < slowedUntil ? tuning.frostSlowMultiplier : 1f;
+        public Vector2[] PatrolRoute => patrolRoute;
 
         public void Configure(PrototypeTuning settings, TopDownPlayer target, Transform visual,
             SpriteRenderer indicator, Vector2 first, Vector2 second)
         {
+            ConfigureRoute(settings, target, visual, indicator, new[] { first, second });
+        }
+
+        public void ConfigureRoute(PrototypeTuning settings, TopDownPlayer target, Transform visual,
+            SpriteRenderer indicator, Vector2[] waypoints)
+        {
+            if (waypoints == null || waypoints.Length == 0)
+                throw new System.ArgumentException("A patrol needs at least one waypoint.", nameof(waypoints));
             tuning = settings;
             player = target;
             facing = visual;
             alert = indicator;
-            patrolA = first;
-            patrolB = second;
+            patrolRoute = (Vector2[])waypoints.Clone();
+            patrolA = patrolRoute[0];
+            patrolB = patrolRoute[patrolRoute.Length > 1 ? 1 : 0];
+            nextWaypoint = patrolRoute.Length > 1 ? 1 : 0;
             health = tuning.enemyMaxHealth;
             Alerted = false;
             hasDetour = false;
@@ -50,6 +63,8 @@ namespace AlreadyDead
         {
             body = GetComponent<Rigidbody2D>();
             hitbox = GetComponent<CircleCollider2D>();
+            loadout = GetComponent<EnemyWeaponLoadout>();
+            nextWaypoint = patrolRoute != null && patrolRoute.Length > 1 ? 1 : 0;
             body.gravityScale = 0f;
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -68,7 +83,8 @@ namespace AlreadyDead
 
             if (Alerted)
             {
-                if (distance <= tuning.enemyAttackRange && !Physics2D.Linecast(position,
+                float attackRange = tuning.enemyAttackRange + (loadout != null ? loadout.AttackRangeBonus : 0f);
+                if (distance <= attackRange && !Physics2D.Linecast(position,
                         player.transform.position, tuning.wallMask))
                 {
                     moveDirection = Vector2.zero;
@@ -77,7 +93,8 @@ namespace AlreadyDead
                     {
                         nextAttackTime = Time.time + tuning.enemyAttackInterval;
                         AttacksMade++;
-                        player.Vitality.TakeHit(1);
+                        loadout?.PlayAttack();
+                        player.Vitality.TakeHit(loadout != null ? loadout.AttackDamage : 1);
                     }
                 }
                 else
@@ -88,12 +105,14 @@ namespace AlreadyDead
                 return;
             }
 
-            Vector2 waypoint = towardB ? patrolB : patrolA;
+            if (patrolRoute == null || patrolRoute.Length == 0)
+                patrolRoute = new[] { patrolA, patrolB };
+            Vector2 waypoint = patrolRoute[nextWaypoint];
             Vector2 path = waypoint - position;
             if (path.magnitude <= tuning.enemyWaypointTolerance)
             {
-                towardB = !towardB;
-                waypoint = towardB ? patrolB : patrolA;
+                nextWaypoint = (nextWaypoint + 1) % patrolRoute.Length;
+                waypoint = patrolRoute[nextWaypoint];
                 path = waypoint - position;
             }
             moveDirection = path.sqrMagnitude > 0.0001f
@@ -137,6 +156,7 @@ namespace AlreadyDead
                 return;
             }
             BloodEffect.SpawnKill(Body.position, direction);
+            loadout?.DropOnDeath();
             Stop();
             hitbox.enabled = false;
             Body.simulated = false;

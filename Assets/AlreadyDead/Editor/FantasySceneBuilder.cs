@@ -40,8 +40,8 @@ namespace AlreadyDead.Editor
             circle = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AlreadyDead/Art/Circle.png");
             ring = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/AlreadyDead/Art/Ring.png");
             staffArt = LoadSprite("Assets/Waepon/Stick/Stick.png");
-            EnsureGate(scene, new Vector2(11.7f, 7.3f), "FantasyScene",
-                new Color(0.27f, 0.94f, 0.68f), "FOREST GATE / enter to reach the fantasy level");
+            EnsureGate(scene, new Vector2(-13.35f, -1.9f), "FantasyScene",
+                new Color(1f, 0.53f, 0.12f), "DESERT EXIT / enter to reach the fantasy level");
         }
 
         // Batch-mode entry point. Never calls PrototypeSceneBuilder.BuildScene.

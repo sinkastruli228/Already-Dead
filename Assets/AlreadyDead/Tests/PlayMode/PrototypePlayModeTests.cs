@@ -41,7 +41,8 @@ namespace AlreadyDead.Tests
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            yield return SceneManager.LoadSceneAsync("SampleScene");
+            // Keep the original combat sandbox for weapon and collision regression checks.
+            yield return SceneManager.LoadSceneAsync("WeaponSandbox");
             // UnitySetUp runs before NUnit SetUp. Compose the input fixture here
             // so a later base SetUp cannot reset the devices created in this coroutine.
             input = new InputTestFixture();

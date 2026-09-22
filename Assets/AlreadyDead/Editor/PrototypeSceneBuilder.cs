@@ -88,7 +88,7 @@ namespace AlreadyDead.Editor
             gunMaterial = GetPhysicsMaterial("ThrownPistol", 0.35f, tuning.throwBounce);
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            Transform arena = new GameObject("ARENA / 28 x 18").transform;
+            Transform arena = new GameObject("DESERT MAZE / 28 x 24").transform;
             BuildArena(arena);
 
             var cameraObject = new GameObject("Main Camera");
@@ -106,15 +106,27 @@ namespace AlreadyDead.Editor
             TopDownPlayer player = BuildPlayer(view);
             view.Configure(tuning, player);
             camera.transform.position = player.transform.position + Vector3.back * 10f;
-            BuildPistol(new Vector2(-6.5f, -3.8f));
-            BuildSpear(new Vector2(-9.5f, -4f));
-            BuildMusket(new Vector2(-7.8f, -2.5f));
-            BuildClub(new Vector2(-5.7f, -4.4f));
-            BuildStaff(new Vector2(-9.6f, -2.4f));
-            BuildEnemy("Patrol / western flats", player, new Vector2(-10f, -0.4f), new Vector2(-6f, -0.4f));
-            BuildEnemy("Patrol / southern dunes", player, new Vector2(1f, -6f), new Vector2(4f, -6f));
-            BuildEnemy("Patrol / northern rim", player, new Vector2(7f, 5.8f), new Vector2(11f, 5.8f));
-            BuildEnemy("Patrol / eastern rocks", player, new Vector2(9f, -1.5f), new Vector2(12f, -1.5f));
+            // The supplied map is 924 x 794 pixels. Each enemy starts at a red dot;
+            // waypoints follow the drawn patrol lines. The closest guard has a spear.
+            BuildEnemy("Patrol / first spear guard", player, true,
+                Map(473, 703), Map(715, 703), Map(715, 595), Map(473, 595));
+            BuildEnemy("Patrol / western flats", player, false,
+                Map(160, 430), Map(160, 145));
+            BuildEnemy("Patrol / western exit", player, false,
+                Map(108, 475), Map(197, 475));
+            BuildEnemy("Patrol / north west", player, false,
+                Map(342, 107), Map(610, 107));
+            BuildEnemy("Patrol / north east", player, false,
+                Map(641, 105), Map(641, 392));
+            BuildEnemy("Patrol / central west", player, false,
+                Map(344, 439), Map(344, 155));
+            BuildEnemy("Patrol / central south", player, false,
+                Map(639, 439), Map(384, 439));
+            BuildEnemy("Patrol / eastern passage", player, false,
+                Map(865, 501), Map(758, 501), Map(758, 74), Map(869, 74), Map(869, 439));
+            BuildEnemy("Guard / lower east", player, false, Map(779, 685));
+            BuildEnemy("Guard / eastern turn", player, false, Map(836, 638));
+            BuildEnemy("Guard / south east", player, false, Map(840, 705));
             var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
@@ -187,42 +199,49 @@ namespace AlreadyDead.Editor
 
         private static void BuildArena(Transform parent)
         {
-            Draw("Sand base", parent, Vector2.zero, new Vector2(28, 18), Hex(0xbe9c64), -20);
+            Draw("Sand base", parent, Vector2.zero, new Vector2(28, 24), Hex(0xbe9c64), -20);
             Transform ground = new GameObject("Sand / 20px tiles").transform;
             ground.SetParent(parent, false);
             for (int x = 0; x < 28; x++)
-                for (int y = 0; y < 18; y++)
+                for (int y = 0; y < 24; y++)
                 {
                     int variant = ((x * 73856093) ^ (y * 19349663)) & 0x7fffffff;
-                    Draw("Sand tile", ground, new Vector2(x - 13.5f, y - 8.5f), Vector2.one,
+                    Draw("Sand tile", ground, new Vector2(x - 13.5f, y - 11.5f), Vector2.one,
                         Color.white, -19, sand[variant % sand.Length]);
                 }
 
             BuildDesertDetails(parent);
 
-            Wall(parent, "North wall", new Vector2(0, 9.3f), new Vector2(29.2f, 0.6f));
-            Wall(parent, "South wall", new Vector2(0, -9.3f), new Vector2(29.2f, 0.6f));
-            Wall(parent, "West wall", new Vector2(-14.3f, 0), new Vector2(0.6f, 18));
-            Wall(parent, "East wall", new Vector2(14.3f, 0), new Vector2(0.6f, 18));
-            Wall(parent, "Cover A / horizontal", new Vector2(-6, 2.4f), new Vector2(5.2f, 0.65f));
-            Wall(parent, "Cover B / vertical", new Vector2(4, 3f), new Vector2(0.65f, 5f));
-            Wall(parent, "Cover C / horizontal", new Vector2(7, -4), new Vector2(4.4f, 0.65f));
-            Pillar(parent, new Vector2(-2.3f, -1.2f));
-            Pillar(parent, new Vector2(0, 4.8f));
-            Pillar(parent, new Vector2(9.4f, 2.6f));
+            MapWall(parent, "North boundary", 40, 24, 929, 53);
+            MapWall(parent, "South boundary", 32, 753, 929, 780);
+            MapWall(parent, "West boundary / above exit", 40, 53, 68, 397);
+            MapWall(parent, "West boundary / below exit", 32, 528, 61, 753);
+            MapWall(parent, "East boundary", 901, 53, 929, 753);
+            MapWall(parent, "Lower division / west", 32, 528, 725, 557);
+            MapWall(parent, "Lower division / east", 859, 528, 929, 557);
+            MapWall(parent, "Lower left post / upper", 362, 557, 389, 607);
+            MapWall(parent, "Lower left post / lower", 362, 703, 389, 753);
+            MapWall(parent, "Western inner wall", 244, 185, 271, 528);
+            MapWall(parent, "Eastern inner wall / upper", 698, 53, 725, 382);
+            MapWall(parent, "Eastern inner wall / lower", 698, 456, 725, 528);
 
-            // Painted starting bay and weapon pad are flat, non-colliding primitives.
-            for (int i = 0; i < 8; i++)
-                Draw("Spawn bay stripe", parent, new Vector2(-10f + i * 0.7f, -6.1f),
-                    new Vector2(0.34f, 0.07f), Hex(0x9b8159), -15);
-            Draw("Pistol pad", parent, new Vector2(-6.5f, -3.8f), new Vector2(1.3f, 1.3f),
-                new Color(1f, 0.76f, 0.34f, 0.3f), -12, ring);
-            for (int i = 0; i < 3; i++)
-            {
-                Vector2 target = new Vector2(12.8f, -2.5f + i * 2.5f);
-                Wall(parent, "Ballistic test block", target, new Vector2(0.4f, 1.1f));
-                Draw("Target marking", parent, target, new Vector2(0.27f, 0.5f), Hex(0xdd8a62), 7, ring);
-            }
+            Vector2 mound = Map(489, 272);
+            SpriteRenderer rock = Draw("Central round rock formation", parent, mound,
+                new Vector2(6.85f, 6.85f), Hex(0x6e5940), 5, circle);
+            rock.gameObject.layer = 8;
+            CircleCollider2D rockCollider = rock.gameObject.AddComponent<CircleCollider2D>();
+            rockCollider.radius = 0.5f;
+            rockCollider.sharedMaterial = wallMaterial;
+            Draw("Round rock sunlit face", parent, mound + Vector2.up * 0.11f,
+                new Vector2(6.48f, 6.48f), Hex(0x9b8059), 6, circle);
+        }
+
+        private static Vector2 Map(float x, float y) => new Vector2((x - 481f) / 32f, (402f - y) / 32f);
+
+        private static void MapWall(Transform parent, string name, float left, float top, float right, float bottom)
+        {
+            Wall(parent, name, Map((left + right) * 0.5f, (top + bottom) * 0.5f),
+                new Vector2((right - left) / 32f, (bottom - top) / 32f));
         }
 
         private static void Pillar(Transform parent, Vector2 position)
@@ -253,33 +272,19 @@ namespace AlreadyDead.Editor
             details.SetParent(parent, false);
             Vector2[] stonePositions =
             {
-                new Vector2(-12.3f, 6.4f), new Vector2(-10.8f, 4.5f),
-                new Vector2(-9.9f, 0.8f), new Vector2(-12f, -1.4f),
-                new Vector2(-8.2f, -5.3f), new Vector2(-5.5f, 7.2f),
-                new Vector2(-3.8f, 5.9f), new Vector2(-1.2f, 7.2f),
-                new Vector2(2.4f, 7.3f), new Vector2(6.8f, 6.8f),
-                new Vector2(11.4f, 7f), new Vector2(12.1f, 5f),
-                new Vector2(10f, 0.1f), new Vector2(6.5f, 0.3f),
-                new Vector2(1.2f, -2.2f), new Vector2(-3f, -4.6f),
-                new Vector2(-11.5f, -7f), new Vector2(-4f, -7.3f),
-                new Vector2(1f, -7f), new Vector2(9f, -6.7f),
-                new Vector2(12f, -6f)
+                Map(236, 76), Map(400, 367), Map(571, 367),
+                Map(778, 179), Map(832, 392), Map(111, 592),
+                Map(286, 591), Map(106, 725), Map(595, 631)
             };
             for (int i = 0; i < stonePositions.Length; i++)
                 BuildRock(details, stonePositions[i], rocks[i % rocks.Length]);
 
             Vector2[] bushPositions =
             {
-                new Vector2(-12f, 5.4f), new Vector2(-11f, 2.3f),
-                new Vector2(-8.5f, 6.6f), new Vector2(-4.2f, 4f),
-                new Vector2(-1.5f, 5.8f), new Vector2(2.2f, 6f),
-                new Vector2(5.4f, 7f), new Vector2(11.2f, 3.8f),
-                new Vector2(8.7f, 0.8f), new Vector2(5.4f, -1.3f),
-                new Vector2(1.6f, -0.3f), new Vector2(-3.2f, -0.6f),
-                new Vector2(-6.8f, -1.7f), new Vector2(-11.2f, -2.3f),
-                new Vector2(-11.2f, -5.2f), new Vector2(-5.1f, -5.5f),
-                new Vector2(0.1f, -5.8f), new Vector2(4f, -7.3f),
-                new Vector2(11f, -4.5f)
+                Map(88, 85), Map(290, 94), Map(448, 79), Map(571, 84),
+                Map(96, 337), Map(195, 342), Map(302, 323), Map(658, 324),
+                Map(807, 273), Map(756, 420), Map(103, 654), Map(292, 651),
+                Map(396, 661), Map(679, 645), Map(734, 734)
             };
             for (int i = 0; i < bushPositions.Length; i++)
                 Draw("Dry bush", details, bushPositions[i], Vector2.one, Color.white, 2,
@@ -288,13 +293,13 @@ namespace AlreadyDead.Editor
             for (int i = 0; i < 22; i++)
             {
                 float x = -12f + ((i * 59) % 25);
-                float y = -7.5f + ((i * 37) % 16);
-                if (Vector2.Distance(new Vector2(x, y), new Vector2(-8f, -4f)) < 2f) continue;
+                float y = -10.5f + ((i * 37) % 22);
+                if (Vector2.Distance(new Vector2(x, y), Map(193, 663)) < 2f) continue;
                 Draw("Dry grass", details, new Vector2(x, y), Vector2.one, Color.white, 0, dryGrass);
             }
         }
 
-        private static void BuildRock(Transform parent, Vector2 position, Sprite sprite)
+        private static RockWeapon BuildRock(Transform parent, Vector2 position, Sprite sprite)
         {
             var go = new GameObject("Stone / RMB pickup + instant throw");
             go.layer = 9;
@@ -323,13 +328,14 @@ namespace AlreadyDead.Editor
             Draw("Rock", visual, Vector2.zero, Vector2.one, Color.white, 3, sprite);
             RockWeapon rock = go.AddComponent<RockWeapon>();
             rock.Configure(tuning, visual, shadow, buried, square, material);
+            return rock;
         }
 
         private static TopDownPlayer BuildPlayer(AimCamera camera)
         {
             var go = new GameObject("Player / WASD + mouse aim");
             go.layer = 10;
-            go.transform.position = new Vector3(-8f, -4f, 0f);
+            go.transform.position = Map(193, 663);
             Rigidbody2D body = go.AddComponent<Rigidbody2D>();
             body.gravityScale = 0;
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -380,8 +386,10 @@ namespace AlreadyDead.Editor
             return player;
         }
 
-        private static void BuildEnemy(string name, TopDownPlayer player, Vector2 first, Vector2 second)
+        private static void BuildEnemy(string name, TopDownPlayer player, bool guaranteedSpear,
+            params Vector2[] route)
         {
+            Vector2 first = route[0];
             var go = new GameObject(name);
             go.layer = 11;
             go.transform.position = first;
@@ -415,7 +423,23 @@ namespace AlreadyDead.Editor
             alert.enabled = false;
 
             PatrolEnemy enemy = go.AddComponent<PatrolEnemy>();
-            enemy.Configure(tuning, player, facing, alert, first, second);
+            enemy.ConfigureRoute(tuning, player, facing, alert, route);
+
+            RockWeapon carriedRock = BuildRock(facing, new Vector2(0.48f, -0.19f), rocks[0]);
+            SpearWeapon carriedSpear = BuildSpear(Vector2.zero);
+            ClubWeapon carriedClub = BuildClub(Vector2.zero);
+            carriedSpear.transform.SetParent(facing, false);
+            carriedClub.transform.SetParent(facing, false);
+            carriedSpear.transform.localPosition = new Vector3(0.53f, -0.2f, 0f);
+            carriedClub.transform.localPosition = new Vector3(0.5f, -0.2f, 0f);
+            carriedRock.name = "Carried rock / drops on defeat";
+            carriedSpear.name = "Carried spear / drops on defeat";
+            carriedClub.name = "Carried club / drops on defeat";
+            carriedRock.gameObject.SetActive(false);
+            carriedSpear.gameObject.SetActive(false);
+            carriedClub.gameObject.SetActive(false);
+            EnemyWeaponLoadout loadout = go.AddComponent<EnemyWeaponLoadout>();
+            loadout.Configure(guaranteedSpear, carriedRock, carriedSpear, carriedClub);
         }
 
         private static void BuildPistol(Vector2 position)
@@ -453,7 +477,7 @@ namespace AlreadyDead.Editor
             pistol.Configure(tuning, visual, muzzle, halo, flash, square, material);
         }
 
-        private static void BuildSpear(Vector2 position)
+        private static SpearWeapon BuildSpear(Vector2 position)
         {
             var go = new GameObject("Spear / hold RMB to throw");
             go.layer = 9;
@@ -483,6 +507,7 @@ namespace AlreadyDead.Editor
             spearSprite.localRotation = Quaternion.Euler(0f, 0f, -45f);
             SpearWeapon spear = go.AddComponent<SpearWeapon>();
             spear.Configure(tuning, visual, shadow, halo, square, material);
+            return spear;
         }
 
         private static void BuildMusket(Vector2 position)
@@ -520,7 +545,7 @@ namespace AlreadyDead.Editor
             musket.Configure(tuning, recoil, muzzle, side, top, halo, flash, square, material);
         }
 
-        private static void BuildClub(Vector2 position)
+        private static ClubWeapon BuildClub(Vector2 position)
         {
             var go = new GameObject("Club / shoulder arc swing");
             go.layer = 9;
@@ -546,6 +571,7 @@ namespace AlreadyDead.Editor
             clubSprite.localRotation = Quaternion.Euler(0f, 0f, -90f);
             ClubWeapon club = go.AddComponent<ClubWeapon>();
             club.Configure(tuning, swing, halo, square, material);
+            return club;
         }
 
         private static void BuildStaff(Vector2 position)

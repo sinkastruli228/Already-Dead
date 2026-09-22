@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FantasyScene.unity
     guid: 974319c2bae28554a9485d33fc0b2f0c
+  - enabled: 1
+    path: Assets/AlreadyDead/Tests/Scenes/WeaponSandbox.unity
+    guid: 40b0463909fd4e438c5c0749e5b8f220
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
