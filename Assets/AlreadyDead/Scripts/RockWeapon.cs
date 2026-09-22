@@ -5,6 +5,8 @@ namespace AlreadyDead
     [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
     public sealed class RockWeapon : MonoBehaviour
     {
+        private const string GroundedResourcePath = "Stone_Ground_Runtime";
+
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private Transform visual;
         [SerializeField] private Transform shadow;
@@ -84,7 +86,9 @@ namespace AlreadyDead
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             CacheVisualState();
-            if (!isBuried) SetLooseGroundState();
+            EnsureGroundedSprite();
+            if (ShouldStartBuried()) PlaceBuried();
+            else SetLooseGroundState();
         }
 
         private void Update()
@@ -309,6 +313,42 @@ namespace AlreadyDead
                 shadowRestScale = shadow.localScale;
                 if (shadowRenderer != null) shadowRestColor = shadowRenderer.color;
             }
+        }
+
+        private bool ShouldStartBuried()
+        {
+            if (isBuried) return true;
+            if (GetComponentInParent<EnemyWeaponLoadout>(true) != null) return false;
+            return !name.StartsWith("Carried rock", System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void EnsureGroundedSprite()
+        {
+            if (buriedMark == null) return;
+            SpriteRenderer groundedRenderer = buriedMark.GetComponentInChildren<SpriteRenderer>(true);
+            if (groundedRenderer == null) return;
+
+            Sprite groundedSprite = LoadLargestResourceSprite(GroundedResourcePath);
+            if (groundedSprite == null) return;
+            groundedRenderer.sprite = groundedSprite;
+            groundedRenderer.color = Color.white;
+            groundedRenderer.sortingOrder = 3;
+            groundedRenderer.transform.localPosition = new Vector3(0f, -0.02f, 0f);
+            groundedRenderer.transform.localScale = new Vector3(0.29f, 0.29f, 1f);
+        }
+
+        private static Sprite LoadLargestResourceSprite(string path)
+        {
+            Sprite best = null;
+            float bestArea = -1f;
+            foreach (Sprite candidate in Resources.LoadAll<Sprite>(path))
+            {
+                float area = candidate.rect.width * candidate.rect.height;
+                if (area <= bestArea) continue;
+                best = candidate;
+                bestArea = area;
+            }
+            return best;
         }
 
         private void ApplyStrike()

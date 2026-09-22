@@ -419,7 +419,7 @@ namespace AlreadyDead.Tests
             Assert.That(rock.Visual.GetComponentInChildren<SpriteRenderer>(true).sprite.name,
                 Is.EqualTo("Stone_0"));
             Assert.That(rock.BuriedMark.GetComponentInChildren<SpriteRenderer>(true).sprite.name,
-                Is.EqualTo("Stone_Ground_0"));
+                Does.StartWith("Stone_Ground"));
             Assert.That(rock.IsBuried, Is.True, "Rocks placed in the level start embedded in the ground");
             Assert.That(rock.Visual.gameObject.activeSelf, Is.False);
             Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.True);
@@ -569,6 +569,23 @@ namespace AlreadyDead.Tests
             Assert.That(musket.GroundViewVisible, Is.False);
             Assert.That(musket.HeldViewVisible, Is.True);
             yield return null;
+        }
+
+        [Test]
+        public void SpearRestoresGroundedViewWhenAnOldOpenSceneHasNoSerializedReference()
+        {
+            Transform serializedGroundedView = spear.GroundedVisual;
+            var field = typeof(SpearWeapon).GetField("groundedVisual",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            field.SetValue(spear, null);
+
+            spear.ConfigureGroundViews(spear.AirborneVisual, null);
+
+            Assert.That(spear.GroundedVisual, Is.Not.Null);
+            Assert.That(spear.GroundedVisual, Is.Not.SameAs(serializedGroundedView));
+            Assert.That(spear.GroundedVisual.GetComponent<SpriteRenderer>().sprite.name,
+                Does.StartWith("Spear_Ground"));
         }
 
         [UnityTest]
@@ -814,7 +831,7 @@ namespace AlreadyDead.Tests
             Assert.That(spear.AirborneViewVisible, Is.False);
             Assert.That(spear.GroundedViewVisible, Is.True);
             Assert.That(spear.GroundedVisual.GetComponent<SpriteRenderer>().sprite.name,
-                Is.EqualTo("Spear_Ground_0"));
+                Does.StartWith("Spear_Ground"));
             Assert.That(spear.Shadow.localScale.x, Is.LessThan(1f));
         }
 

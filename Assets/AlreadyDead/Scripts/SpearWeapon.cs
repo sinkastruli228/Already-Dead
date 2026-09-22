@@ -10,6 +10,8 @@ namespace AlreadyDead
     [RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
     public sealed class SpearWeapon : MonoBehaviour
     {
+        private const string GroundedResourcePath = "Spear_Ground_Runtime";
+
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private Transform visual;
         [SerializeField] private Transform airborneVisual;
@@ -88,6 +90,7 @@ namespace AlreadyDead
         {
             airborneVisual = airborneModel;
             groundedVisual = groundedModel;
+            EnsureGroundedVisual();
             SetGroundedView(false);
         }
 
@@ -104,6 +107,7 @@ namespace AlreadyDead
                 SpriteRenderer firstRenderer = visual.GetComponentInChildren<SpriteRenderer>(true);
                 if (firstRenderer != null) airborneVisual = firstRenderer.transform;
             }
+            EnsureGroundedVisual();
             SetGroundedView(false);
             CacheShadow();
             ResetShadow();
@@ -443,6 +447,46 @@ namespace AlreadyDead
             bool useGrounded = grounded && groundedVisual != null;
             if (airborneVisual != null) airborneVisual.gameObject.SetActive(!useGrounded);
             if (groundedVisual != null) groundedVisual.gameObject.SetActive(useGrounded);
+        }
+
+        private void EnsureGroundedVisual()
+        {
+            if (groundedVisual != null || visual == null || airborneVisual == null) return;
+
+            Sprite groundedSprite = LoadLargestResourceSprite(GroundedResourcePath);
+            if (groundedSprite == null) return;
+
+            SpriteRenderer source = airborneVisual.GetComponent<SpriteRenderer>();
+            var groundedObject = new GameObject("Spear embedded in ground / runtime fallback");
+            groundedVisual = groundedObject.transform;
+            groundedVisual.SetParent(visual, false);
+            groundedVisual.localPosition = airborneVisual.localPosition;
+            groundedVisual.localRotation = airborneVisual.localRotation;
+            groundedVisual.localScale = airborneVisual.localScale;
+            SpriteRenderer renderer = groundedObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = groundedSprite;
+            if (source != null)
+            {
+                renderer.sharedMaterial = source.sharedMaterial;
+                renderer.color = source.color;
+                renderer.sortingLayerID = source.sortingLayerID;
+                renderer.sortingOrder = source.sortingOrder;
+            }
+            groundedObject.SetActive(false);
+        }
+
+        private static Sprite LoadLargestResourceSprite(string path)
+        {
+            Sprite best = null;
+            float bestArea = -1f;
+            foreach (Sprite candidate in Resources.LoadAll<Sprite>(path))
+            {
+                float area = candidate.rect.width * candidate.rect.height;
+                if (area <= bestArea) continue;
+                best = candidate;
+                bestArea = area;
+            }
+            return best;
         }
     }
 }
