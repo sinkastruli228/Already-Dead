@@ -119,7 +119,7 @@ namespace AlreadyDead.Tests
         {
             Assert.That(player.Tuning.moveSpeed, Is.EqualTo(6f).Within(0.001f));
             Assert.That(player.Tuning.enemyPatrolSpeed, Is.EqualTo(2.8f).Within(0.001f));
-            Assert.That(player.Tuning.enemyChaseSpeed, Is.EqualTo(5f).Within(0.001f));
+            Assert.That(player.Tuning.enemyChaseSpeed, Is.EqualTo(7.5f).Within(0.001f));
         }
 
         [UnityTest]
@@ -206,8 +206,7 @@ namespace AlreadyDead.Tests
             Physics2D.SyncTransforms();
             Assert.That(player.TryPrimaryAttack(), Is.True);
             yield return new WaitForSeconds(player.Tuning.punchDuration * 0.6f);
-            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - 1));
-            enemy.ReceiveSpear(Vector2.right, 9f);
+            Assert.That(enemy.Health, Is.Zero);
             Assert.That(enemy.IsAlive, Is.False);
             Assert.That(enemy.gameObject.activeSelf, Is.False);
         }
@@ -218,14 +217,7 @@ namespace AlreadyDead.Tests
             enemy.enabled = false;
             Assert.That(Object.FindObjectsByType<BloodEffect>().Length, Is.EqualTo(0));
             enemy.TakeDamage(1, Vector2.right);
-            BloodEffect first = Object.FindAnyObjectByType<BloodEffect>();
-            Assert.That(first.Kind, Is.EqualTo(BloodEffect.BloodKind.Hit));
-            enemy.TakeDamage(1, Vector2.up);
-            BloodEffect[] afterSecondHit = Object.FindObjectsByType<BloodEffect>();
-            Assert.That(afterSecondHit.Length, Is.EqualTo(2));
-            Assert.That(afterSecondHit[0].Variant, Is.Not.EqualTo(afterSecondHit[1].Variant));
-
-            enemy.TakeDamage(1, Vector2.right);
+            Assert.That(enemy.IsAlive, Is.False);
             BloodEffect[] effects = Object.FindObjectsByType<BloodEffect>();
             int hits = 0;
             int puddles = 0;
@@ -234,11 +226,10 @@ namespace AlreadyDead.Tests
                 if (effect.Kind == BloodEffect.BloodKind.Hit) hits++;
                 else puddles++;
             }
-            Assert.That(hits, Is.EqualTo(3));
+            Assert.That(hits, Is.EqualTo(1));
             Assert.That(puddles, Is.EqualTo(1));
-            Assert.That(enemy.IsAlive, Is.False);
             enemy.TakeDamage(1);
-            Assert.That(Object.FindObjectsByType<BloodEffect>().Length, Is.EqualTo(4),
+            Assert.That(Object.FindObjectsByType<BloodEffect>().Length, Is.EqualTo(2),
                 "Dead enemies do not spawn more blood");
 
             yield return null;
@@ -446,7 +437,23 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator RockSwapsAndThrowsImmediatelyOnRightClick()
+        public IEnumerator ShortRockChargeThrowsNearby()
+        {
+            player.enabled = false;
+            Assert.That(player.Interact(rock.transform.position), Is.True);
+            player.AimAt((Vector2)player.transform.position + Vector2.right * 5f);
+            Assert.That(player.Interact(Vector2.zero), Is.True);
+            yield return new WaitForSeconds(0.05f);
+            Assert.That(player.ReleaseRockThrow(), Is.True);
+            Assert.That(rock.LastThrowCharge01, Is.LessThan(0.2f));
+            Assert.That(rock.LastThrowRange,
+                Is.InRange(player.Tuning.rockMinThrowRange, player.Tuning.rockMaxThrowRange * 0.5f));
+            Assert.That(rock.Body.linearVelocity.magnitude,
+                Is.LessThan(player.Tuning.rockThrowSpeed));
+        }
+
+        [UnityTest]
+        public IEnumerator RockSwapsAndThrowsAfterCharge()
         {
             player.enabled = false;
             Assert.That(player.Interact(pistol.transform.position), Is.True);
@@ -460,6 +467,10 @@ namespace AlreadyDead.Tests
             player.AimAt((Vector2)player.transform.position + Vector2.right * 5f);
             Physics2D.SyncTransforms();
             Assert.That(player.Interact(Vector2.zero), Is.True);
+            Assert.That(rock.IsCharging, Is.True);
+            Assert.That(player.HeldRock, Is.SameAs(rock));
+            yield return new WaitForSeconds(player.Tuning.rockMaxChargeTime + 0.02f);
+            Assert.That(player.ReleaseRockThrow(), Is.True);
             Assert.That(player.HeldRock, Is.Null);
             Assert.That(rock.IsHeld, Is.False);
             Assert.That(rock.IsFlying, Is.True);
@@ -467,17 +478,19 @@ namespace AlreadyDead.Tests
                 "A flying rock cannot be picked back up");
             Assert.That(rock.Body.linearVelocity.magnitude,
                 Is.EqualTo(player.Tuning.rockThrowSpeed).Within(0.01f));
+            Assert.That(rock.LastThrowRange, Is.EqualTo(player.Tuning.rockMaxThrowRange).Within(0.01f));
             Assert.That(rock.Body.angularVelocity, Is.EqualTo(0f).Within(0.001f));
             Assert.That(rock.transform.eulerAngles.z, Is.EqualTo(0f).Within(0.001f));
             Assert.That(player.Unarmed.Available, Is.True);
-            yield return new WaitForSeconds(player.Tuning.rockFlightDuration * 0.48f);
+            float flightDuration = rock.LastThrowRange / player.Tuning.rockThrowSpeed;
+            yield return new WaitForSeconds(flightDuration * 0.48f);
             Assert.That(rock.IsFlying, Is.True);
             Assert.That(rock.FlightHeight, Is.GreaterThan(player.Tuning.rockThrowHeight * 0.75f));
             Assert.That(rock.Visual.localPosition.y, Is.GreaterThan(0.2f));
             Assert.That(rock.Shadow.gameObject.activeSelf, Is.True);
             Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.False);
             Assert.That(rock.transform.eulerAngles.z, Is.EqualTo(0f).Within(0.001f));
-            yield return new WaitForSeconds(player.Tuning.rockFlightDuration * 0.65f);
+            yield return new WaitForSeconds(flightDuration * 0.65f);
             Assert.That(rock.IsFlying, Is.False);
             Assert.That(rock.IsBuried, Is.True);
             Assert.That(rock.Body.linearVelocity, Is.EqualTo(Vector2.zero));
@@ -600,7 +613,7 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator MusketIsLethalShakesCameraAndReloadsFiveTimesSlower()
+        public IEnumerator MusketIsLethalShakesCameraAndHasFiveRounds()
         {
             player.enabled = false;
             player.Body.position = (Vector2)musket.transform.position + Vector2.down * 0.5f;
@@ -609,6 +622,8 @@ namespace AlreadyDead.Tests
             Assert.That(player.Interact(musket.transform.position), Is.True);
             Assert.That(musket.ShotInterval,
                 Is.EqualTo(player.Tuning.shotInterval * 5f).Within(0.001f));
+            Assert.That(musket.Capacity, Is.EqualTo(5));
+            Assert.That(musket.RemainingAmmo, Is.EqualTo(5));
 
             player.Body.position = new Vector2(70f, 70f);
             player.transform.position = player.Body.position;
@@ -618,6 +633,7 @@ namespace AlreadyDead.Tests
             player.AimAt(enemy.transform.position);
             Physics2D.SyncTransforms();
             Assert.That(player.TryPrimaryAttack(), Is.True);
+            Assert.That(musket.RemainingAmmo, Is.EqualTo(4));
             Assert.That(player.TryPrimaryAttack(), Is.False, "Musket has a long cooldown");
             Assert.That(player.View.ShakeRemaining, Is.GreaterThan(0f));
             yield return new WaitForSeconds(0.12f);
@@ -648,7 +664,7 @@ namespace AlreadyDead.Tests
             Assert.That(GameObject.Find("Club pixel swing trail"), Is.Not.Null);
             yield return new WaitForSeconds(player.Tuning.clubSwingDuration * 0.25f);
             Assert.That(club.ImpactsMade, Is.EqualTo(1));
-            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - player.Tuning.clubDamage));
+            Assert.That(enemy.Health, Is.Zero);
         }
 
         [UnityTest]
@@ -784,7 +800,7 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator ShortChargedSpearThrowDoesNotOneShotEnemy()
+        public IEnumerator ShortChargedSpearThrowAlsoKillsInOneHit()
         {
             player.enabled = false;
             enemy.enabled = false;
@@ -799,8 +815,8 @@ namespace AlreadyDead.Tests
             Assert.That(player.ReleaseSpearThrow(), Is.True);
             Assert.That(spear.LastThrowCharge01, Is.LessThan(1f));
             yield return new WaitForSeconds(0.4f);
-            Assert.That(enemy.Health, Is.EqualTo(player.Tuning.enemyMaxHealth - 2));
-            Assert.That(enemy.IsAlive, Is.True);
+            Assert.That(enemy.Health, Is.Zero);
+            Assert.That(enemy.IsAlive, Is.False);
         }
 
         [UnityTest]

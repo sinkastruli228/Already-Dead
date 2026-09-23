@@ -29,6 +29,8 @@ namespace AlreadyDead
         private float investigationEndsAt;
         private int nextWaypoint = 1;
         private float nextAttackTime;
+        private float spearWindupStartedAt;
+        private bool windingUpSpear;
         private float slowedUntil;
         private int health;
 
@@ -36,6 +38,7 @@ namespace AlreadyDead
         public bool IsAlive => health > 0;
         public int Health => health;
         public int AttacksMade { get; private set; }
+        public bool IsWindingUpSpear => windingUpSpear;
         public Transform Facing => facing;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public float SpeedMultiplier => Time.time < slowedUntil ? tuning.frostSlowMultiplier : 1f;
@@ -63,12 +66,13 @@ namespace AlreadyDead
             patrolA = patrolRoute[0];
             patrolB = patrolRoute[patrolRoute.Length > 1 ? 1 : 0];
             nextWaypoint = patrolRoute.Length > 1 ? 1 : 0;
-            health = tuning.enemyMaxHealth;
+            health = 1;
             Alerted = false;
+            windingUpSpear = false;
             hasDetour = false;
             hasInvestigation = false;
             deathSearch = false;
-            alert.enabled = false;
+            if (alert != null) alert.enabled = false;
             Face((patrolB - patrolA).normalized);
         }
 
@@ -81,7 +85,8 @@ namespace AlreadyDead
             body.gravityScale = 0f;
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            if (tuning != null) health = tuning.enemyMaxHealth;
+            if (tuning != null) health = 1;
+            if (alert != null) alert.enabled = false;
         }
 
         private void Update()
@@ -91,20 +96,45 @@ namespace AlreadyDead
             Vector2 position = Body.position;
             Vector2 toPlayer = (Vector2)player.transform.position - position;
             float distance = toPlayer.magnitude;
-            if (!Alerted && CanSeePlayer())
-            {
-                Alerted = true;
-                hasInvestigation = false;
-                deathSearch = false;
-                hasDetour = false;
-            }
-            if (alert != null) alert.enabled = Alerted || deathSearch;
+            if (!Alerted && CanSeePlayer()) AlertToPlayer();
 
             if (Alerted)
             {
                 float attackRange = tuning.enemyAttackRange + (loadout != null ? loadout.AttackRangeBonus : 0f);
-                if (distance <= attackRange && !Physics2D.Linecast(position,
-                        player.transform.position, tuning.wallMask))
+                bool clearShot = !Physics2D.Linecast(position, player.transform.position, tuning.wallMask);
+                if (windingUpSpear)
+                {
+                    if (!clearShot || loadout == null || !loadout.CanThrowSpear ||
+                        distance > loadout.SpearThrowRange)
+                    {
+                        CancelSpearWindup();
+                    }
+                    else
+                    {
+                        float duration = tuning.spearMaxChargeTime * 0.5f;
+                        float progress = Mathf.Clamp01((Time.time - spearWindupStartedAt) / duration);
+                        loadout.SetSpearWindup(progress);
+                        Face(toPlayer);
+                        if (progress >= 1f)
+                        {
+                            moveDirection = Vector2.zero;
+                            windingUpSpear = false;
+                            if (loadout.TryThrowSpear(position, toPlayer))
+                            {
+                                nextAttackTime = Time.time + tuning.enemyAttackInterval;
+                                AttacksMade++;
+                            }
+                            else loadout.SetSpearWindup(0f);
+                        }
+                        else
+                        {
+                            moveDirection = PathDirection(position, player.transform.position) *
+                                tuning.enemyPatrolSpeed * SpeedMultiplier;
+                        }
+                        return;
+                    }
+                }
+                if (distance <= attackRange && clearShot)
                 {
                     moveDirection = Vector2.zero;
                     Face(toPlayer);
@@ -115,6 +145,18 @@ namespace AlreadyDead
                         loadout?.PlayAttack();
                         player.Vitality.TakeHit(loadout != null ? loadout.AttackDamage : 1);
                     }
+                }
+                else if (loadout != null && loadout.CanThrowSpear &&
+                         distance > tuning.spearMinThrowRange &&
+                         distance <= loadout.SpearThrowRange && clearShot &&
+                         Time.time >= nextAttackTime)
+                {
+                    windingUpSpear = true;
+                    spearWindupStartedAt = Time.time;
+                    loadout.SetSpearWindup(0f);
+                    moveDirection = PathDirection(position, player.transform.position) *
+                        tuning.enemyPatrolSpeed * SpeedMultiplier;
+                    Face(toPlayer);
                 }
                 else
                 {
@@ -195,6 +237,15 @@ namespace AlreadyDead
             return !Physics2D.Linecast(from, player.transform.position, tuning.wallMask);
         }
 
+        private void AlertToPlayer()
+        {
+            if (!IsAlive || player == null || !player.IsAlive) return;
+            Alerted = true;
+            hasInvestigation = false;
+            deathSearch = false;
+            hasDetour = false;
+        }
+
         public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1, direction);
         public void ReceiveSpear(Vector2 direction, float force) => TakeDamage(2, direction);
         public void TakeMagicDamage(int amount, MagicElement element, Vector2 direction)
@@ -229,12 +280,19 @@ namespace AlreadyDead
 
         private void Stop()
         {
+            CancelSpearWindup();
             moveDirection = Vector2.zero;
             Alerted = false;
             hasDetour = false;
             hasInvestigation = false;
             deathSearch = false;
             if (alert != null) alert.enabled = false;
+        }
+
+        private void CancelSpearWindup()
+        {
+            windingUpSpear = false;
+            loadout?.SetSpearWindup(0f);
         }
 
         public bool CanInvestigate(Vector2 position, float radius) =>

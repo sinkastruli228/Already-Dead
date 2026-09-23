@@ -10,6 +10,10 @@ namespace AlreadyDead
         [SerializeField] private Transform muzzle;
         [SerializeField] private SpriteRenderer highlight;
         [SerializeField] private SpriteRenderer muzzleFlash;
+        [SerializeField] private SpriteRenderer groundView;
+        [SerializeField] private SpriteRenderer heldView;
+        [SerializeField] private bool automatic;
+        [SerializeField] private int capacity = 17;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
         private Rigidbody2D body;
@@ -23,6 +27,9 @@ namespace AlreadyDead
         public bool IsHeld => owner != null;
         public float Recoil => recoil;
         public int ShotsFired { get; private set; }
+        public int Capacity => capacity;
+        public int RemainingAmmo => Mathf.Max(0, capacity - ShotsFired);
+        public bool Automatic => automatic;
         public Vector2 LastShotDirection { get; private set; }
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public BoxCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<BoxCollider2D>();
@@ -40,6 +47,16 @@ namespace AlreadyDead
             primitiveMaterial = material;
         }
 
+        public void ConfigureFirearm(int rounds, bool firesAutomatically,
+            SpriteRenderer groundSprite, SpriteRenderer heldSprite)
+        {
+            capacity = Mathf.Max(1, rounds);
+            automatic = firesAutomatically;
+            groundView = groundSprite;
+            heldView = heldSprite;
+            SetHeldView(false);
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
@@ -52,6 +69,7 @@ namespace AlreadyDead
             hitbox.sharedMaterial = runtimeMaterial;
             SetHighlighted(false);
             muzzleFlash.enabled = false;
+            SetHeldView(false);
         }
 
         private void OnDestroy()
@@ -83,6 +101,7 @@ namespace AlreadyDead
             transform.localRotation = Quaternion.identity;
             recoil = 0f;
             visual.localPosition = Vector3.zero;
+            SetHeldView(true);
             SetHighlighted(false);
         }
 
@@ -91,8 +110,9 @@ namespace AlreadyDead
             // Start within the player's free space; sweep the WHOLE gun's radius to
             // prevent a hand or barrel intersecting a wall from spawning it through it.
             Vector2 origin = player.transform.position;
-            const float clearance = 0.43f;
-            const float desiredDistance = 0.8f;
+            float scale = Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
+            float clearance = Mathf.Max(0.43f, Hitbox.size.magnitude * scale * 0.5f);
+            float desiredDistance = Mathf.Max(0.8f, clearance + 0.1f);
             RaycastHit2D obstruction = Physics2D.CircleCast(origin, clearance, direction,
                 desiredDistance, tuning.wallMask);
             float distance = obstruction ? Mathf.Max(0f, obstruction.distance - 0.04f) : desiredDistance;
@@ -102,6 +122,7 @@ namespace AlreadyDead
             recoil = 0f;
             visual.localPosition = Vector3.zero;
             owner = null;
+            SetHeldView(false);
             Hitbox.enabled = true;
             Body.simulated = true;
             Body.position = transform.position;
@@ -117,6 +138,7 @@ namespace AlreadyDead
             transform.SetParent(null, true);
             transform.position = player.transform.position;
             owner = null;
+            SetHeldView(false);
             recoil = 0f;
             visual.localPosition = Vector3.zero;
             flashUntil = 0f;
@@ -132,8 +154,8 @@ namespace AlreadyDead
 
         public bool TryFire(Vector2 aimDirection, AimCamera camera)
         {
-            if (!IsHeld || Time.time < nextShotTime) return false;
-            nextShotTime = Time.time + tuning.shotInterval;
+            if (!IsHeld || RemainingAmmo == 0 || Time.time < nextShotTime) return false;
+            nextShotTime = Time.time + (automatic ? tuning.m4ShotInterval : tuning.shotInterval);
             float angle = Random.Range(-tuning.spreadHalfAngle, tuning.spreadHalfAngle);
             Vector2 shotDirection = Quaternion.Euler(0, 0, angle) * aimDirection.normalized;
             Vector2 origin = owner.transform.position;
@@ -155,6 +177,12 @@ namespace AlreadyDead
             muzzleFlash.enabled = true;
             camera.Kick();
             return true;
+        }
+
+        private void SetHeldView(bool held)
+        {
+            if (groundView != null) groundView.enabled = !held;
+            if (heldView != null) heldView.enabled = held;
         }
     }
 }

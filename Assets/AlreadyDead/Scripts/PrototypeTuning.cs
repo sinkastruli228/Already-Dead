@@ -20,7 +20,7 @@ namespace AlreadyDead
         [Min(0.01f)] public float punchShakeDuration = 0.08f;
 
         [Header("Camera")]
-        [Min(1f)] public float cameraSize = 6.5f;
+        [Min(1f)] public float cameraSize = 5.525f;
         [Range(0f, 0.8f)] public float lookAheadWeight = 0.28f;
         [Min(0f)] public float maxCameraOffset = 2.6f;
         [Min(0.01f)] public float cameraSmoothTime = 0.13f;
@@ -29,6 +29,7 @@ namespace AlreadyDead
 
         [Header("Pistol")]
         [Min(0.01f)] public float shotInterval = 0.16f;
+        [Min(0.01f)] public float m4ShotInterval = 0.075f;
         [Range(0f, 20f)] public float spreadHalfAngle = 4f;
         [Min(1f)] public float bulletSpeed = 42f;
         [Min(0.01f)] public float bulletRadius = 0.035f;
@@ -95,6 +96,10 @@ namespace AlreadyDead
         [Min(0.01f)] public float rockStrikeRadius = 0.24f;
         [Min(0f)] public float rockStrikeForce = 7f;
         [Min(0.1f)] public float rockThrowSpeed = 15f;
+        [Min(0.1f)] public float rockMaxChargeTime = 1.25f;
+        [Min(0.1f)] public float rockMinThrowSpeed = 6f;
+        [Min(0.1f)] public float rockMinThrowRange = 2.5f;
+        [Min(0.1f)] public float rockMaxThrowRange = 8.7f;
         [Min(0.1f)] public float rockFlightDuration = 0.58f;
         [Min(0f)] public float rockThrowHeight = 0.9f;
         [Range(0.1f, 1f)] public float rockShadowApexScale = 0.52f;
@@ -108,10 +113,10 @@ namespace AlreadyDead
         [Min(0f)] public float playerHitInvulnerability = 0.55f;
         [Min(1)] public int enemyMaxHealth = 3;
         [Min(0.1f)] public float enemyPatrolSpeed = 2.8f;
-        [Min(0.1f)] public float enemyChaseSpeed = 5f;
+        [Min(0.1f)] public float enemyChaseSpeed = 7.5f;
         [Min(0.01f)] public float enemyWaypointTolerance = 0.18f;
-        [Min(0.1f)] public float enemyVisionRange = 5f;
-        [Range(1f, 180f)] public float enemyVisionHalfAngle = 48f;
+        [Min(0.1f)] public float enemyVisionRange = 12f;
+        [Range(1f, 180f)] public float enemyVisionHalfAngle = 100f;
         [Min(0.1f)] public float enemyAttackRange = 0.9f;
         [Min(0.1f)] public float enemyAttackInterval = 0.85f;
 

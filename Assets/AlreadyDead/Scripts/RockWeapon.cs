@@ -26,6 +26,10 @@ namespace AlreadyDead
         private float nextStrikeTime;
         private float strikeStartedAt = float.NegativeInfinity;
         private float flightElapsed;
+        private float flightSpeed;
+        private float flightDuration;
+        private float chargeStartedAt;
+        private bool isCharging;
         private Vector2 strikeDirection = Vector2.right;
         private Vector2 flightDirection = Vector2.right;
         private bool impactApplied;
@@ -34,6 +38,11 @@ namespace AlreadyDead
 
         public bool IsHeld => owner != null;
         public bool IsFlying => isFlying;
+        public bool IsCharging => isCharging;
+        public float Charge01 => isCharging
+            ? Mathf.Clamp01((Time.time - chargeStartedAt) / tuning.rockMaxChargeTime) : 0f;
+        public float LastThrowCharge01 { get; private set; }
+        public float LastThrowRange { get; private set; }
         public bool IsBuried => isBuried;
         public float FlightHeight { get; private set; }
         public int StrikesMade { get; private set; }
@@ -121,9 +130,9 @@ namespace AlreadyDead
         {
             if (!isFlying) return;
 
-            float remainingTime = Mathf.Max(0f, tuning.rockFlightDuration - flightElapsed);
+            float remainingTime = Mathf.Max(0f, flightDuration - flightElapsed);
             float stepTime = Mathf.Min(Time.fixedDeltaTime, remainingTime);
-            float step = tuning.rockThrowSpeed * stepTime;
+            float step = flightSpeed * stepTime;
             RaycastHit2D obstruction = Physics2D.CircleCast(Body.position, Hitbox.radius,
                 flightDirection, step + 0.02f, tuning.wallMask | tuning.enemyMask);
             if (obstruction)
@@ -137,7 +146,7 @@ namespace AlreadyDead
             }
 
             flightElapsed += stepTime;
-            if (flightElapsed >= tuning.rockFlightDuration - 0.0001f)
+            if (flightElapsed >= flightDuration - 0.0001f)
             {
                 Body.position += flightDirection * step;
                 transform.position = Body.position;
@@ -145,7 +154,7 @@ namespace AlreadyDead
                 return;
             }
 
-            Body.linearVelocity = flightDirection * tuning.rockThrowSpeed;
+            Body.linearVelocity = flightDirection * flightSpeed;
             Body.angularVelocity = 0f;
             Body.rotation = 0f;
         }
@@ -165,6 +174,7 @@ namespace AlreadyDead
         public void Equip(Transform socket, TopDownPlayer player)
         {
             owner = player;
+            isCharging = false;
             isFlying = false;
             isBuried = false;
             FlightHeight = 0f;
@@ -186,7 +196,7 @@ namespace AlreadyDead
 
         public bool TryStrike(Vector2 direction)
         {
-            if (!IsHeld || Time.time < nextStrikeTime) return false;
+            if (!IsHeld || isCharging || Time.time < nextStrikeTime) return false;
             strikeDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.right;
             strikeStartedAt = Time.time;
             nextStrikeTime = Time.time + tuning.rockStrikeInterval;
@@ -196,9 +206,27 @@ namespace AlreadyDead
             return true;
         }
 
-        public void Throw(TopDownPlayer player, Vector2 direction)
+        public bool BeginCharge()
         {
-            if (owner != player) return;
+            if (!IsHeld || isCharging || Time.time - strikeStartedAt < tuning.rockStrikeDuration)
+                return false;
+            isCharging = true;
+            chargeStartedAt = Time.time;
+            return true;
+        }
+
+        public void CancelCharge() => isCharging = false;
+
+        public bool ReleaseThrow(TopDownPlayer player, Vector2 direction)
+        {
+            if (owner != player || !isCharging) return false;
+            LastThrowCharge01 = Charge01;
+            LastThrowRange = Mathf.Lerp(tuning.rockMinThrowRange,
+                tuning.rockMaxThrowRange, LastThrowCharge01);
+            flightSpeed = Mathf.Lerp(tuning.rockMinThrowSpeed,
+                tuning.rockThrowSpeed, LastThrowCharge01);
+            flightDuration = LastThrowRange / flightSpeed;
+            isCharging = false;
             direction = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.right;
             Vector2 origin = player.transform.position;
             float clearance = Hitbox.radius + 0.04f;
@@ -225,9 +253,17 @@ namespace AlreadyDead
             Body.simulated = true;
             Body.position = transform.position;
             Body.rotation = 0f;
-            Body.linearVelocity = direction * tuning.rockThrowSpeed;
+            Body.linearVelocity = direction * flightSpeed;
             Body.angularVelocity = 0f;
             Body.WakeUp();
+            return true;
+        }
+
+        // Kept for scripted throws and existing scene tests.
+        public void Throw(TopDownPlayer player, Vector2 direction)
+        {
+            if (!BeginCharge()) return;
+            ReleaseThrow(player, direction);
         }
 
         public void Drop(TopDownPlayer player)
@@ -236,6 +272,7 @@ namespace AlreadyDead
             transform.position = player.transform.position;
             transform.rotation = Quaternion.identity;
             owner = null;
+            isCharging = false;
             isFlying = false;
             isBuried = false;
             flightElapsed = 0f;
@@ -252,7 +289,7 @@ namespace AlreadyDead
 
         private void UpdateFlightVisual()
         {
-            float progress = Mathf.Clamp01(flightElapsed / tuning.rockFlightDuration);
+            float progress = Mathf.Clamp01(flightElapsed / flightDuration);
             float arc = 4f * progress * (1f - progress);
             FlightHeight = arc * tuning.rockThrowHeight;
             visual.localPosition = visualRest + Vector3.up * FlightHeight;

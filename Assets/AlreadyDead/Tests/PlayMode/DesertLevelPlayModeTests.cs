@@ -30,11 +30,17 @@ namespace AlreadyDead.Tests
             Assert.That(enemyBody.localScale.x, Is.EqualTo(0.18f * 1.33f).Within(0.001f));
             Transform details = GameObject.Find("Desert details / stones and dry shrubs").transform;
             Assert.That(details.GetComponentsInChildren<RockWeapon>().Length, Is.EqualTo(9));
-            Assert.That(Object.FindObjectsByType<PistolWeapon>().Length, Is.Zero);
+            PistolWeapon[] guns = Object.FindObjectsByType<PistolWeapon>();
+            Assert.That(guns.Length, Is.EqualTo(2));
+            Assert.That(System.Array.Exists(guns, gun => gun.Automatic && gun.Capacity == 25), Is.True);
+            Assert.That(System.Array.Exists(guns, gun => !gun.Automatic && gun.Capacity == 17), Is.True);
+            Assert.That(System.Array.Find(guns, gun => gun.Automatic).transform.localScale.x,
+                Is.EqualTo(1.3f).Within(0.001f));
             MusketWeapon[] muskets = Object.FindObjectsByType<MusketWeapon>();
             Assert.That(muskets.Length, Is.EqualTo(1));
-            Assert.That(muskets[0].transform.localScale.x, Is.EqualTo(1.6f).Within(0.001f));
-            Assert.That(muskets[0].transform.localScale.y, Is.EqualTo(1.6f).Within(0.001f));
+            Assert.That(muskets[0].RemainingAmmo, Is.EqualTo(5));
+            Assert.That(muskets[0].transform.localScale.x, Is.EqualTo(0.8f).Within(0.001f));
+            Assert.That(muskets[0].transform.localScale.y, Is.EqualTo(0.8f).Within(0.001f));
             Assert.That(Vector2.Distance(muskets[0].transform.position,
                 (Vector2)player.transform.position + Vector2.right * 1.2f), Is.LessThan(0.01f));
             Assert.That(Object.FindObjectsByType<MagicStaff>().Length, Is.Zero);
@@ -70,6 +76,69 @@ namespace AlreadyDead.Tests
             Assert.That(player.Interact(spear.transform.position), Is.True);
             Assert.That(player.HeldSpear, Is.SameAs(spear));
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator MusketShotDoesNotAlertAnEnemyBySound()
+        {
+            TopDownPlayer player = Object.FindAnyObjectByType<TopDownPlayer>();
+            player.enabled = false;
+            MusketWeapon musket = Object.FindAnyObjectByType<MusketWeapon>();
+            Assert.That(player.Interact(musket.transform.position), Is.True);
+
+            PatrolEnemy[] enemies = Object.FindObjectsByType<PatrolEnemy>();
+            Vector2 origin = new Vector2(70f, 70f);
+            player.Body.position = origin;
+            player.transform.position = origin;
+            enemies[0].Body.position = origin + Vector2.left * 11f;
+            enemies[0].transform.position = enemies[0].Body.position;
+            enemies[0].Facing.rotation = Quaternion.Euler(0f, 0f, 180f);
+            Physics2D.SyncTransforms();
+
+            Assert.That(enemies[0].CanSeePlayer(), Is.False);
+            Assert.That(enemies[0].Alerted, Is.False);
+            Assert.That(musket.TryFire(Vector2.right, null), Is.True);
+            Assert.That(enemies[0].Alerted, Is.False);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator SpearGuardWalksDuringWindupThenThrowsAtHalfCharge()
+        {
+            TopDownPlayer player = Object.FindAnyObjectByType<TopDownPlayer>();
+            player.enabled = false;
+            PatrolEnemy guard = GameObject.Find("Patrol / first spear guard").GetComponent<PatrolEnemy>();
+            EnemyWeaponLoadout loadout = guard.GetComponent<EnemyWeaponLoadout>();
+            SpearWeapon spear = loadout.Equipped.GetComponent<SpearWeapon>();
+            Vector3 restingGrip = spear.transform.localPosition;
+            guard.Body.position = new Vector2(70f, 70f);
+            guard.transform.position = guard.Body.position;
+            player.Body.position = new Vector2(75f, 70f);
+            player.transform.position = player.Body.position;
+            guard.Facing.rotation = Quaternion.identity;
+            Physics2D.SyncTransforms();
+
+            Assert.That(guard.CanSeePlayer(), Is.True);
+            yield return null;
+            Assert.That(guard.IsWindingUpSpear, Is.True);
+            Assert.That(loadout.Kind, Is.EqualTo(EnemyWeaponKind.Spear));
+            Assert.That(spear.transform.parent, Is.Not.Null);
+
+            yield return new WaitForSeconds(0.1f);
+            Assert.That(guard.IsWindingUpSpear, Is.True);
+            Assert.That(guard.Body.linearVelocity.magnitude,
+                Is.LessThanOrEqualTo(player.Tuning.enemyPatrolSpeed + 0.05f));
+            Assert.That(spear.transform.localPosition.x, Is.LessThan(restingGrip.x));
+
+            yield return new WaitForSeconds(player.Tuning.spearMaxChargeTime * 0.5f);
+            Assert.That(guard.IsWindingUpSpear, Is.False);
+            Assert.That(loadout.Kind, Is.EqualTo(EnemyWeaponKind.Empty));
+            Assert.That(spear.transform.parent, Is.Null);
+            Assert.That(spear.LastThrowCharge01, Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(spear.LastThrowSpeed, Is.EqualTo(18f).Within(0.001f));
+            Assert.That(spear.LastThrowRange, Is.EqualTo(8.5f).Within(0.001f));
+            yield return new WaitForSeconds(0.3f);
+            Assert.That(player.Vitality.IsAlive, Is.False);
         }
 
         [UnityTest]

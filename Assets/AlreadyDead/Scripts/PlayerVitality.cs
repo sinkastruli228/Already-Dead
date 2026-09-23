@@ -16,18 +16,18 @@ namespace AlreadyDead
         {
             tuning = settings;
             view = camera;
-            Health = tuning.playerMaxHealth;
+            Health = 1;
         }
 
         private void Awake()
         {
-            if (tuning != null) Health = tuning.playerMaxHealth;
+            if (tuning != null) Health = 1;
         }
 
         public bool TakeHit(int damage)
         {
             if (!IsAlive || Time.time < nextDamageTime) return false;
-            Health = Mathf.Max(0, Health - Mathf.Max(1, damage));
+            Health = 0;
             LastHitTime = Time.time;
             nextDamageTime = Time.time + tuning.playerHitInvulnerability;
             if (view != null) view.Kick(tuning.shotShakeStrength, tuning.shotShakeDuration);

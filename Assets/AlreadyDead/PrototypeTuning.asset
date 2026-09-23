@@ -22,13 +22,14 @@ MonoBehaviour:
   punchForce: 6
   punchShakeStrength: 0.045
   punchShakeDuration: 0.08
-  cameraSize: 6.5
+  cameraSize: 5.525
   lookAheadWeight: 0.28
   maxCameraOffset: 2.6
   cameraSmoothTime: 0.13
   shotShakeStrength: 0.12
   shotShakeDuration: 0.14
   shotInterval: 0.16
+  m4ShotInterval: 0.075
   spreadHalfAngle: 4
   bulletSpeed: 42
   bulletRadius: 0.035
@@ -83,19 +84,23 @@ MonoBehaviour:
   rockStrikeRadius: 0.24
   rockStrikeForce: 7
   rockThrowSpeed: 15
+  rockMaxChargeTime: 1.25
+  rockMinThrowSpeed: 6
+  rockMinThrowRange: 2.5
+  rockMaxThrowRange: 8.7
   rockFlightDuration: 0.58
   rockThrowHeight: 0.9
   rockShadowApexScale: 0.52
   legStepDistance: 0.16
   legStepRate: 7.5
-  playerMaxHealth: 5
+  playerMaxHealth: 1
   playerHitInvulnerability: 0.55
-  enemyMaxHealth: 3
+  enemyMaxHealth: 1
   enemyPatrolSpeed: 2.8
-  enemyChaseSpeed: 5
+  enemyChaseSpeed: 7.5
   enemyWaypointTolerance: 0.18
-  enemyVisionRange: 5
-  enemyVisionHalfAngle: 48
+  enemyVisionRange: 12
+  enemyVisionHalfAngle: 100
   enemyAttackRange: 0.9
   enemyAttackInterval: 0.85
   rockAttractionRadius: 7

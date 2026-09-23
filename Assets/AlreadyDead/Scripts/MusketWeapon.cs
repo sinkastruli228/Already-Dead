@@ -27,6 +27,8 @@ namespace AlreadyDead
         public bool GroundViewVisible => groundView != null && groundView.enabled;
         public bool HeldViewVisible => heldView != null && heldView.enabled;
         public int ShotsFired { get; private set; }
+        public int Capacity => 5;
+        public int RemainingAmmo => Mathf.Max(0, Capacity - ShotsFired);
         public float ShotInterval => tuning.shotInterval * tuning.musketCooldownMultiplier;
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public BoxCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<BoxCollider2D>();
@@ -140,7 +142,7 @@ namespace AlreadyDead
 
         public bool TryFire(Vector2 aimDirection, AimCamera camera)
         {
-            if (!IsHeld || Time.time < nextShotTime) return false;
+            if (!IsHeld || RemainingAmmo == 0 || Time.time < nextShotTime) return false;
             nextShotTime = Time.time + ShotInterval;
             Vector2 direction = aimDirection.sqrMagnitude > 0.001f ? aimDirection.normalized : Vector2.right;
             Vector2 origin = owner.transform.position;

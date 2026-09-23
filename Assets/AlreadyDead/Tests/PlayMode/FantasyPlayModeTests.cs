@@ -36,20 +36,12 @@ namespace AlreadyDead.Tests
         }
 
         [Test]
-        public void ElementsDamageAndControlFantasyEnemies()
+        public void MagicDamageKillsFantasyEnemiesInOneHit()
         {
             enemy = CreateEnemy(FantasyEnemyKind.Knight, new Vector2(70f, 70f));
             enemy.enabled = false;
-            int start = enemy.Health;
-
             enemy.TakeMagicDamage(1, MagicElement.Frost, Vector2.right);
-            Assert.That(enemy.Health, Is.EqualTo(start - 1));
-            Assert.That(enemy.SpeedMultiplier, Is.LessThan(0.5f), "Frost slows a knight");
-            Assert.That(enemy.Alerted, Is.True, "Taking damage alerts an enemy");
-
-            enemy.TakeMagicDamage(2, MagicElement.Fire, Vector2.right);
-            Assert.That(enemy.Health, Is.EqualTo(start - 3));
-            enemy.TakeMagicDamage(2, MagicElement.Lightning, Vector2.right);
+            Assert.That(enemy.Health, Is.Zero);
             Assert.That(enemy.IsAlive, Is.False);
             Assert.That(enemy.gameObject.activeSelf, Is.False);
         }
@@ -70,6 +62,7 @@ namespace AlreadyDead.Tests
             Object.Destroy(enemy.gameObject);
             enemy = null;
             yield return new WaitForSeconds(0.6f);
+            player.Vitality.Configure(tuning, player.View);
             player.Body.position = new Vector2(73f, 70f);
             player.transform.position = player.Body.position;
             enemy = CreateEnemy(FantasyEnemyKind.Mage, new Vector2(70f, 70f));
@@ -167,12 +160,11 @@ namespace AlreadyDead.Tests
             knight.Body.position = new Vector2(3f, -8f);
             knight.transform.position = knight.Body.position;
             Physics2D.SyncTransforms();
-            int initialHealth = knight.Health;
             mage.AimAt(new Vector2(3f, -8f));
             Assert.That(mage.TryPrimaryAttack(), Is.True);
             yield return new WaitForSeconds(0.35f);
             Assert.That(universal.CastsMade, Is.EqualTo(1));
-            Assert.That(knight.Health, Is.EqualTo(initialHealth - 2), "Fire cast reaches the enemy");
+            Assert.That(knight.Health, Is.Zero, "Fire cast reaches the enemy");
 
             yield return new WaitForSeconds(mage.Tuning.fireCastInterval + 0.02f);
             universal.SelectElement(MagicElement.Frost);

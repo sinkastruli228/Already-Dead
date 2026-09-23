@@ -64,7 +64,7 @@ namespace AlreadyDead
             mageElement = element;
             boltSprite = projectileSprite;
             boltMaterial = projectileMaterial;
-            health = Mathf.Max(1, tuning.enemyMaxHealth + (kind == FantasyEnemyKind.Knight ? 2 : 0));
+            health = 1;
             nextAttackTime = Time.time;
             Alerted = false;
             hasDetour = false;
@@ -82,7 +82,8 @@ namespace AlreadyDead
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             if (tuning != null)
-                health = Mathf.Max(1, tuning.enemyMaxHealth + (kind == FantasyEnemyKind.Knight ? 2 : 0));
+                health = 1;
+            if (alert != null) alert.enabled = false;
         }
 
         private void Update()
@@ -96,14 +97,7 @@ namespace AlreadyDead
             Vector2 position = Body.position;
             Vector2 toPlayer = (Vector2)player.transform.position - position;
             float distance = toPlayer.magnitude;
-            if (!Alerted && CanSeePlayer())
-            {
-                Alerted = true;
-                hasInvestigation = false;
-                deathSearch = false;
-                hasDetour = false;
-            }
-            if (alert != null) alert.enabled = Alerted || deathSearch;
+            if (!Alerted && CanSeePlayer()) AlertToPlayer();
 
             if (Time.time < stunnedUntil)
             {
@@ -190,12 +184,21 @@ namespace AlreadyDead
             if (!IsAlive || tuning == null || player == null || !player.IsAlive) return false;
             Vector2 from = Body.position;
             Vector2 to = (Vector2)player.transform.position - from;
-            float range = kind == FantasyEnemyKind.Mage ? tuning.enemyVisionRange * 1.35f : tuning.enemyVisionRange;
+            float range = tuning.enemyVisionRange;
             if (to.sqrMagnitude > range * range) return false;
             if (to.sqrMagnitude < 0.0001f) return true;
             if (facing != null && Vector2.Angle(facing.right, to) > tuning.enemyVisionHalfAngle)
                 return false;
             return !Physics2D.Linecast(from, player.transform.position, tuning.wallMask);
+        }
+
+        private void AlertToPlayer()
+        {
+            if (!IsAlive || player == null || !player.IsAlive) return;
+            Alerted = true;
+            hasInvestigation = false;
+            deathSearch = false;
+            hasDetour = false;
         }
 
         public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1, direction);

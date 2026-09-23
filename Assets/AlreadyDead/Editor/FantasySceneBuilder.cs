@@ -136,6 +136,12 @@ namespace AlreadyDead.Editor
             robe.sprite = FantasyPixelArt.Mage();
             robe.sharedMaterial = PixelMaterial(robe.sprite);
             robe.color = Color.white;
+            foreach (SpriteRenderer outline in body.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (outline == robe) continue;
+                outline.sprite = robe.sprite;
+                outline.sharedMaterial = robe.sharedMaterial;
+            }
             body.localScale = Vector3.one * (0.96f * PrototypeSceneBuilder.CharacterVisualScale);
             foreach (SpriteRenderer limb in player.Facing.GetComponentsInChildren<SpriteRenderer>())
             {
@@ -288,13 +294,9 @@ namespace AlreadyDead.Editor
                 Vector2.zero, Vector2.one * (0.98f * PrototypeSceneBuilder.CharacterVisualScale), Color.white, 11,
                 kind == FantasyEnemyKind.Knight ? FantasyPixelArt.Knight() : FantasyPixelArt.Mage()).transform;
             figure.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            SpriteRenderer alert = Draw("Alert", facing,
-                new Vector2(0f, 0.65f) * PrototypeSceneBuilder.CharacterVisualScale,
-                new Vector2(0.18f, 0.28f) * PrototypeSceneBuilder.CharacterVisualScale,
-                Hex(0xff645a), 20, square);
-            alert.enabled = false;
+            PrototypeSceneBuilder.AddPixelOutline(figure, 10);
             FantasyEnemy enemy = enemyObject.AddComponent<FantasyEnemy>();
-            enemy.Configure(tuning, player, facing, alert, first, second, kind, element, circle, primitiveMaterial);
+            enemy.Configure(tuning, player, facing, null, first, second, kind, element, circle, primitiveMaterial);
         }
 
         private static void EnsureGate(Scene scene, Vector2 position, string destination, Color color, string name)

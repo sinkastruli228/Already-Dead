@@ -86,6 +86,7 @@ namespace AlreadyDead
             Cursor.visible = previousCursorVisible;
             Cursor.lockState = previousCursorLock;
             HeldSpear?.CancelCharge();
+            HeldRock?.CancelCharge();
             SetHovered(null, null, null, null, null, null);
         }
 
@@ -96,7 +97,7 @@ namespace AlreadyDead
                 keyboard.escapeKey.wasPressedThisFrame)
                 cursorReleased = !cursorReleased;
 
-            Cursor.visible = !InputActive;
+            Cursor.visible = true;
             moveInput = Vector2.zero;
             fireRequested = false;
             interactRequested = false;
@@ -126,7 +127,8 @@ namespace AlreadyDead
             }
 
             if (!InputActive || Mouse.current == null) return;
-            fireRequested = Mouse.current.leftButton.wasPressedThisFrame;
+            fireRequested = Mouse.current.leftButton.wasPressedThisFrame ||
+                (HeldWeapon != null && HeldWeapon.Automatic && Mouse.current.leftButton.isPressed);
             interactRequested = Mouse.current.rightButton.wasPressedThisFrame;
             interactReleased = Mouse.current.rightButton.wasReleasedThisFrame;
         }
@@ -143,6 +145,7 @@ namespace AlreadyDead
             if (!InputActive)
             {
                 HeldSpear?.CancelCharge();
+                HeldRock?.CancelCharge();
                 SetHovered(null, null, null, null, null, null);
                 return;
             }
@@ -157,7 +160,11 @@ namespace AlreadyDead
             SelectNearest(AimWorld, ref pistol, ref spear, ref rock, ref staff, ref musket, ref club);
             SetHovered(pistol, spear, rock, staff, musket, club);
             if (interactRequested) Interact(AimWorld);
-            if (interactReleased) ReleaseSpearThrow();
+            if (interactReleased)
+            {
+                ReleaseSpearThrow();
+                ReleaseRockThrow();
+            }
             if (fireRequested) TryPrimaryAttack();
         }
 
@@ -455,12 +462,7 @@ namespace AlreadyDead
 
             if (HeldRock != null)
             {
-                RockWeapon thrown = HeldRock;
-                HeldRock = null;
-                thrown.Throw(this, AimDirection);
-                unarmed.SetAvailable(true);
-                SetHovered(null, null, null, null, null, null);
-                return true;
+                return HeldRock.BeginCharge();
             }
 
             if (HeldStaff != null)
@@ -480,6 +482,14 @@ namespace AlreadyDead
         {
             if (HeldSpear == null || !HeldSpear.ReleaseThrow(this, AimDirection)) return false;
             HeldSpear = null;
+            unarmed.SetAvailable(true);
+            return true;
+        }
+
+        public bool ReleaseRockThrow()
+        {
+            if (HeldRock == null || !HeldRock.ReleaseThrow(this, AimDirection)) return false;
+            HeldRock = null;
             unarmed.SetAvailable(true);
             return true;
         }

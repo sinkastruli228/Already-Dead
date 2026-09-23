@@ -15,9 +15,12 @@ namespace AlreadyDead
         private GameObject equipped;
         private Vector3 gripPosition;
         private float attackStartedAt = float.NegativeInfinity;
+        private float spearWindup01;
 
         public EnemyWeaponKind Kind { get; private set; }
         public GameObject Equipped => equipped;
+        public bool CanThrowSpear => Kind == EnemyWeaponKind.Spear && equipped != null;
+        public float SpearThrowRange => CanThrowSpear ? spear.HalfChargeThrowRange : 0f;
         public float AttackRangeBonus => Kind == EnemyWeaponKind.Spear ? 0.65f :
             Kind == EnemyWeaponKind.Club ? 0.18f : 0f;
         public int AttackDamage => Kind == EnemyWeaponKind.Spear || Kind == EnemyWeaponKind.Club ? 2 : 1;
@@ -57,6 +60,12 @@ namespace AlreadyDead
         private void Update()
         {
             if (equipped == null) return;
+            if (Kind == EnemyWeaponKind.Spear && spearWindup01 > 0f)
+            {
+                equipped.transform.localPosition = gripPosition + Vector3.left * (0.35f * spearWindup01);
+                equipped.transform.localRotation = Quaternion.Euler(0f, 0f, -35f * spearWindup01);
+                return;
+            }
             float progress = (Time.time - attackStartedAt) / 0.22f;
             float thrust = progress >= 0f && progress < 1f ? Mathf.Sin(progress * Mathf.PI) : 0f;
             equipped.transform.localPosition = gripPosition + Vector3.right * (0.3f * thrust);
@@ -66,8 +75,20 @@ namespace AlreadyDead
 
         public void PlayAttack() => attackStartedAt = Time.time;
 
+        public void SetSpearWindup(float progress) => spearWindup01 = Mathf.Clamp01(progress);
+
+        public bool TryThrowSpear(Vector2 origin, Vector2 direction)
+        {
+            if (!CanThrowSpear || !spear.ThrowFromEnemy(origin, direction)) return false;
+            spearWindup01 = 0f;
+            equipped = null;
+            Kind = EnemyWeaponKind.Empty;
+            return true;
+        }
+
         public void DropOnDeath()
         {
+            spearWindup01 = 0f;
             if (equipped == null) return;
             GameObject dropped = equipped;
             equipped = null;

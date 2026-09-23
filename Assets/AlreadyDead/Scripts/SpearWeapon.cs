@@ -39,6 +39,7 @@ namespace AlreadyDead
         private bool stabImpactApplied;
         private bool isCharging;
         private bool isFlying;
+        private bool enemyThrown;
 
         public bool IsHeld => owner != null;
         public bool IsCharging => isCharging;
@@ -52,6 +53,8 @@ namespace AlreadyDead
         public float LastThrowSpeed { get; private set; }
         public float LastThrowRange { get; private set; }
         public float LastThrowCharge01 { get; private set; }
+        public float HalfChargeThrowRange => Mathf.Lerp(tuning.spearMinThrowRange,
+            tuning.spearMaxThrowRange, 0.5f);
         public float FlightHeight { get; private set; }
         public float VibrationAmount { get; private set; }
         public Transform Visual => visual;
@@ -71,6 +74,9 @@ namespace AlreadyDead
                 return Mathf.Max(0.05f, (Hitbox.size.x * 0.5f + Mathf.Max(0f, Hitbox.offset.x)) * scale);
             }
         }
+
+        private int FlightMask => tuning.wallMask.value |
+            (enemyThrown ? 1 << 10 : tuning.enemyMask.value);
 
         public void Configure(PrototypeTuning settings, Transform model, Transform groundShadow, SpriteRenderer halo,
             Sprite sprite, Material material)
@@ -156,23 +162,18 @@ namespace AlreadyDead
         {
             if (!isFlying) return;
 
-            float step = LastThrowSpeed * Time.fixedDeltaTime;
+            float step = Mathf.Min(LastThrowSpeed * Time.fixedDeltaTime,
+                Mathf.Max(0f, flightRange - travelledDistance));
             float remaining = flightRange - travelledDistance;
-            if (remaining <= step)
-            {
-                Body.position += flightDirection * Mathf.Max(0f, remaining);
-                travelledDistance = flightRange;
-                StopFlight(true);
-                return;
-            }
+            if (step <= 0f) { StopFlight(true); return; }
 
             RaycastHit2D obstruction = Physics2D.CircleCast(Body.position, tuning.spearStabRadius,
-                flightDirection, ForwardExtent + step, tuning.wallMask | tuning.enemyMask);
+                flightDirection, ForwardExtent + step, FlightMask);
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                bool hitEnemy = HitEnemy(obstruction.collider);
-                if (!hitEnemy)
+                bool hitTarget = HitTarget(obstruction.collider);
+                if (!hitTarget)
                 {
                     ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                     AttractEnemiesIfWall(obstruction.collider);
@@ -182,14 +183,20 @@ namespace AlreadyDead
             }
 
             travelledDistance += step;
+            if (step >= remaining)
+            {
+                Body.position += flightDirection * step;
+                StopFlight(true);
+                return;
+            }
             Body.linearVelocity = flightDirection * LastThrowSpeed;
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!isFlying || ((tuning.wallMask | tuning.enemyMask) & (1 << collision.gameObject.layer)) == 0) return;
-            bool hitEnemy = HitEnemy(collision.collider);
-            if (!hitEnemy && collision.contactCount > 0)
+            if (!isFlying || (FlightMask & (1 << collision.gameObject.layer)) == 0) return;
+            bool hitTarget = HitTarget(collision.collider);
+            if (!hitTarget && collision.contactCount > 0)
             {
                 ContactPoint2D contact = collision.GetContact(0);
                 ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
@@ -253,15 +260,27 @@ namespace AlreadyDead
         public bool ReleaseThrow(TopDownPlayer player, Vector2 direction)
         {
             if (owner != player || !isCharging) return false;
-
             float charge = Charge01;
+            Launch(player.transform.position, direction, charge, false);
+            return true;
+        }
+
+        public bool ThrowFromEnemy(Vector2 origin, Vector2 direction)
+        {
+            if (owner != null || isFlying || direction.sqrMagnitude < 0.001f) return false;
+            Launch(origin, direction, 0.5f, true);
+            return true;
+        }
+
+        private void Launch(Vector2 origin, Vector2 direction, float charge, bool fromEnemy)
+        {
+            enemyThrown = fromEnemy;
             LastThrowCharge01 = charge;
             LastThrowSpeed = Mathf.Lerp(tuning.spearMinThrowSpeed, tuning.spearMaxThrowSpeed, charge);
             LastThrowRange = Mathf.Lerp(tuning.spearMinThrowRange, tuning.spearMaxThrowRange, charge);
             flightRange = LastThrowRange;
             travelledDistance = 0f;
             flightDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : Vector2.right;
-            Vector2 origin = player.transform.position;
 
             isCharging = false;
             transform.SetParent(null, true);
@@ -272,6 +291,7 @@ namespace AlreadyDead
             SetGroundedView(false);
             owner = null;
             Hitbox.enabled = true;
+            Hitbox.isTrigger = fromEnemy;
             Body.simulated = true;
             Body.position = origin;
             Body.rotation = transform.eulerAngles.z;
@@ -287,19 +307,18 @@ namespace AlreadyDead
             // The spear's tip is well ahead of its centre. Resolve nearby cover now,
             // before the first physics tick can place the long collider through a wall.
             RaycastHit2D obstruction = Physics2D.CircleCast(origin, tuning.spearStabRadius,
-                flightDirection, ForwardExtent, tuning.wallMask | tuning.enemyMask);
+                flightDirection, ForwardExtent, FlightMask);
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                bool hitEnemy = HitEnemy(obstruction.collider);
-                if (!hitEnemy)
+                bool hitTarget = HitTarget(obstruction.collider);
+                if (!hitTarget)
                 {
                     ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
                     AttractEnemiesIfWall(obstruction.collider);
                 }
                 StopFlight(true);
             }
-            return true;
         }
 
         public void Drop(TopDownPlayer player)
@@ -353,8 +372,15 @@ namespace AlreadyDead
             transform.position = Body.position;
         }
 
-        private bool HitEnemy(Collider2D collider)
+        private bool HitTarget(Collider2D collider)
         {
+            if (enemyThrown)
+            {
+                TopDownPlayer target = collider.GetComponentInParent<TopDownPlayer>();
+                if (target == null || !target.IsAlive) return false;
+                target.Vitality.TakeHit(1);
+                return true;
+            }
             PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();
             if (enemy != null)
             {
@@ -444,6 +470,8 @@ namespace AlreadyDead
         {
             bool wasFlying = isFlying;
             isFlying = false;
+            enemyThrown = false;
+            Hitbox.isTrigger = false;
             FlightHeight = 0f;
             if (!vibrate) SetGroundedView(false);
             if (body == null) return;

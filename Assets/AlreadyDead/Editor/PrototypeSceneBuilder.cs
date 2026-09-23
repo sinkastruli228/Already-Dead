@@ -30,6 +30,10 @@ namespace AlreadyDead.Editor
         private static Sprite spearGroundArt;
         private static Sprite musketSideArt;
         private static Sprite musketTopArt;
+        private static Sprite m4SideArt;
+        private static Sprite m4TopArt;
+        private static Sprite glockSideArt;
+        private static Sprite glockTopArt;
         private static Sprite clubArt;
         private static Sprite staffArt;
         private static Sprite thrownRockArt;
@@ -77,6 +81,10 @@ namespace AlreadyDead.Editor
             spearGroundArt = LoadSprite(WeaponPath + "/Spear/Spear_Ground.png", "Spear_Ground_0");
             musketSideArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Side.png");
             musketTopArt = LoadSprite(WeaponPath + "/Mushket/Mushket_Up.png");
+            m4SideArt = LoadSprite(WeaponPath + "/M4/M4_Side.png", "M4_Side_0");
+            m4TopArt = LoadSprite(WeaponPath + "/M4/M4_UP.png", "M4_UP_0");
+            glockSideArt = LoadSprite(WeaponPath + "/Glock/Glock_Side.png", "Glock_Side_0");
+            glockTopArt = LoadSprite(WeaponPath + "/Glock/Glock_UP.png", "Glock_UP_0");
             clubArt = LoadSprite(WeaponPath + "/Dubinka/Dubinka.png");
             staffArt = LoadSprite(WeaponPath + "/Stick/Stick.png");
             thrownRockArt = LoadSprite("Assets/Enviroment/Stone.png", "Stone_0");
@@ -113,6 +121,8 @@ namespace AlreadyDead.Editor
             view.Configure(tuning, player);
             camera.transform.position = player.transform.position + Vector3.back * 10f;
             BuildMusket((Vector2)player.transform.position + Vector2.right * 1.2f);
+            BuildPistol((Vector2)player.transform.position + Vector2.up * 1.25f, false);
+            BuildPistol((Vector2)player.transform.position + new Vector2(1.65f, 1.25f), true);
             // The supplied map is 924 x 794 pixels. Each enemy starts at a red dot;
             // waypoints follow the drawn patrol lines. The closest guard has a spear.
             BuildEnemy("Patrol / first spear guard", player, true,
@@ -128,7 +138,7 @@ namespace AlreadyDead.Editor
             BuildEnemy("Patrol / eastern passage", player, false,
                 Map(865, 501), Map(758, 501), Map(758, 74), Map(869, 74), Map(869, 439));
             BuildEnemy("Guard / lower east", player, false, Map(779, 685));
-            var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
+            var hud = new GameObject("Ammo + throw charge").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(FantasySceneBuilder.ScenePath) != null)
@@ -245,6 +255,12 @@ namespace AlreadyDead.Editor
         {
             BuildScene();
             BuildWindowsPlayer();
+        }
+
+        public static void BuildAllScenes()
+        {
+            BuildScene();
+            FantasySceneBuilder.BuildFantasyScene();
         }
 
         private static void ConfigureLayers()
@@ -369,7 +385,7 @@ namespace AlreadyDead.Editor
 
         private static RockWeapon BuildRock(Transform parent, Vector2 position, bool startsBuried = false)
         {
-            var go = new GameObject("Stone / RMB pickup + instant throw");
+            var go = new GameObject("Stone / hold RMB to throw");
             go.layer = 9;
             go.transform.SetParent(parent, false);
             go.transform.localPosition = position;
@@ -499,13 +515,8 @@ namespace AlreadyDead.Editor
             AddPixelOutline(leftArm, 8);
             AddPixelOutline(rightArm, 8);
             AddPixelOutline(bodyVisual, 10);
-            SpriteRenderer alert = Draw("Alert / spotted player", facing,
-                new Vector2(0f, 0.6f) * CharacterVisualScale,
-                new Vector2(0.16f, 0.24f) * CharacterVisualScale, Hex(0xff6755), 20);
-            alert.enabled = false;
-
             PatrolEnemy enemy = go.AddComponent<PatrolEnemy>();
-            enemy.ConfigureRoute(tuning, player, facing, alert, route);
+            enemy.ConfigureRoute(tuning, player, facing, null, route);
 
             RockWeapon carriedRock = BuildRock(facing,
                 new Vector2(0.48f, -0.19f) * CharacterVisualScale);
@@ -525,39 +536,44 @@ namespace AlreadyDead.Editor
             loadout.Configure(guaranteedSpear, carriedRock, carriedSpear, carriedClub);
         }
 
-        private static void BuildPistol(Vector2 position)
+        private static void BuildPistol(Vector2 position, bool m4)
         {
-            var go = new GameObject("Pistol / aim + RMB to pick up");
+            var go = new GameObject(m4 ? "M4 / 25 rounds automatic" : "Glock / 17 rounds");
             go.layer = 9;
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0, 0, 25);
+            if (m4) go.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
             Rigidbody2D body = go.AddComponent<Rigidbody2D>();
             body.gravityScale = 0f;
-            body.mass = 0.75f;
+            body.mass = m4 ? 1.2f : 0.75f;
             body.linearDamping = tuning.throwLinearDamping;
             body.angularDamping = tuning.throwAngularDamping;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
-            collider.size = new Vector2(0.68f, 0.34f);
+            collider.size = m4 ? new Vector2(1.55f, 0.42f) : new Vector2(0.85f, 0.5f);
             collider.sharedMaterial = gunMaterial;
             SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
-                new Vector2(1.15f, 1.15f), Hex(0xffcf71), 9, ring);
+                m4 ? new Vector2(1.8f, 0.65f) : new Vector2(1.1f, 0.7f),
+                Hex(0xffcf71), 9, ring);
             halo.enabled = false;
             Transform visual = new GameObject("Visual / recoil").transform;
             visual.SetParent(go.transform, false);
-            Draw("Grip", visual, new Vector2(-0.19f, -0.12f), new Vector2(0.18f, 0.3f), Hex(0x202a31), 13);
-            Draw("Slide", visual, Vector2.zero, new Vector2(0.68f, 0.2f), Hex(0xf4c16b), 14);
-            Draw("Barrel", visual, new Vector2(0.26f, 0), new Vector2(0.15f, 0.15f), Hex(0xe4e9dc), 15);
-            Draw("Rear sight", visual, new Vector2(-0.2f, 0), new Vector2(0.06f, 0.12f), Hex(0x3a4042), 15);
+            SpriteRenderer ground = Draw(m4 ? "M4 side / ground" : "Glock side / ground",
+                visual, Vector2.zero, Vector2.one * (m4 ? 0.16f : 0.18f), Color.white,
+                15, m4 ? m4SideArt : glockSideArt);
+            SpriteRenderer held = Draw(m4 ? "M4 top / held" : "Glock top / held",
+                visual, Vector2.zero, Vector2.one * (m4 ? 0.16f : 0.18f), Color.white,
+                15, m4 ? m4TopArt : glockTopArt);
             Transform muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(visual, false);
-            muzzle.localPosition = new Vector3(0.4f, 0, 0);
+            muzzle.localPosition = new Vector3(m4 ? 0.8f : 0.43f, 0, 0);
             SpriteRenderer flash = Draw("Muzzle flash", muzzle, new Vector2(0.14f, 0),
                 new Vector2(0.36f, 0.22f), Hex(0xffecad), 18, circle);
             flash.enabled = false;
             PistolWeapon pistol = go.AddComponent<PistolWeapon>();
             pistol.Configure(tuning, visual, muzzle, halo, flash, square, material);
+            pistol.ConfigureFirearm(m4 ? 25 : 17, m4, ground, held);
         }
 
         private static SpearWeapon BuildSpear(Vector2 position)
@@ -604,7 +620,7 @@ namespace AlreadyDead.Editor
             go.layer = 9;
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0f, 0f, 12f);
-            go.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
+            go.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
             Rigidbody2D body = go.AddComponent<Rigidbody2D>();
             body.gravityScale = 0f;
             body.mass = 1.2f;
@@ -695,18 +711,15 @@ namespace AlreadyDead.Editor
                 (expectedName == null ? string.Empty : " / " + expectedName));
         }
 
-        private static void AddPixelOutline(Transform source, int order)
+        internal static void AddPixelOutline(Transform source, int order)
         {
             SpriteRenderer sourceRenderer = source.GetComponent<SpriteRenderer>();
-            float pixel = 1f / sourceRenderer.sprite.pixelsPerUnit;
-            int index = 0;
-            for (int y = -2; y <= 2; y++)
-            for (int x = -2; x <= 2; x++)
+            for (int index = 0; index < 32; index++)
             {
-                if (x == 0 && y == 0) continue;
-                var outline = new GameObject("Black pixel outline " + index++);
+                float angle = index * Mathf.PI * 2f / 32f;
+                var outline = new GameObject("Black pixel outline " + index);
                 outline.transform.SetParent(source, false);
-                outline.transform.localPosition = new Vector3(x * pixel, y * pixel, 0f);
+                outline.transform.localPosition = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * 0.24f;
                 SpriteRenderer renderer = outline.AddComponent<SpriteRenderer>();
                 renderer.sprite = sourceRenderer.sprite;
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;
@@ -715,6 +728,7 @@ namespace AlreadyDead.Editor
                 renderer.flipX = sourceRenderer.flipX;
                 renderer.flipY = sourceRenderer.flipY;
             }
+            source.gameObject.AddComponent<ScreenPixelOutline>();
         }
 
         private static SpriteRenderer Draw(string name, Transform parent, Vector2 position, Vector2 size,
