@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace AlreadyDead
 {
@@ -77,6 +78,8 @@ namespace AlreadyDead
 
         private void Update()
         {
+            if (SceneManager.GetActiveScene().name == MainMenuController.MenuSceneName) return;
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
@@ -95,6 +98,7 @@ namespace AlreadyDead
 
         public void OpenPause()
         {
+            if (SceneManager.GetActiveScene().name == MainMenuController.MenuSceneName) return;
             if (paused) return;
             paused = true;
             Page = PauseMenuPage.Main;
