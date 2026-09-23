@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e120cf28df84a2b927da41f84f825ef, type: 3}
+  m_Name: PauseMenuAssets
+  m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PauseMenuAssets
+  background: {fileID: 2800000, guid: d3187d3d2eccc8e4d852e968f74fa619, type: 3}
+  continueButton: {fileID: 2800000, guid: ea0eefa7b30f60848b3a60f53f5fb0e8, type: 3}
+  settingsButton: {fileID: 2800000, guid: 9b514039797340f48861a9604d3c0063, type: 3}
+  exitButton: {fileID: 2800000, guid: db94659d3c837e84ebf9cde7a0b8655f, type: 3}
+  plainButton: {fileID: 2800000, guid: f67f801197cf0ea40860d33f32e1e09a, type: 3}
+  backButton: {fileID: 2800000, guid: 531265dac58936144bc9ef62ffc3a1e8, type: 3}
+  soundOn: {fileID: 2800000, guid: b0f3f2920f6f2754d9d0d25aa57cf822, type: 3}
+  soundOff: {fileID: 2800000, guid: 2763552449233524fb49a44b1fb7d1bb, type: 3}

@@ -41,7 +41,8 @@ namespace AlreadyDead
             HeldStaff != null || HeldMusket != null || HeldClub != null;
         public Vector2 AimDirection { get; private set; } = Vector2.right;
         public Vector2 AimWorld { get; private set; }
-        public bool MovementActive => IsAlive && !cursorReleased && (Application.isFocused || Application.isBatchMode);
+        public bool MovementActive => IsAlive && !cursorReleased && !PauseMenuController.IsPaused &&
+            (Application.isFocused || Application.isBatchMode);
         public bool InputActive => MovementActive && PointerInsideGame;
         public bool IsAlive => Vitality == null || Vitality.IsAlive;
         public PlayerVitality Vitality => vitality != null ? vitality : vitality = GetComponent<PlayerVitality>();
@@ -91,7 +92,8 @@ namespace AlreadyDead
         private void Update()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            if (PauseMenuController.Instance == null && keyboard != null &&
+                keyboard.escapeKey.wasPressedThisFrame)
                 cursorReleased = !cursorReleased;
 
             Cursor.visible = !InputActive;
@@ -99,7 +101,11 @@ namespace AlreadyDead
             fireRequested = false;
             interactRequested = false;
             interactReleased = false;
-            if (!MovementActive) return;
+            if (!MovementActive)
+            {
+                Body.linearVelocity = Vector2.zero;
+                return;
+            }
 
             if (keyboard != null)
             {

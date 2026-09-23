@@ -50,6 +50,10 @@ namespace AlreadyDead.Tests
             InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
             keyboard = InputSystem.AddDevice<Keyboard>();
             mouse = InputSystem.AddDevice<Mouse>();
+            PauseMenuController menu = PauseMenuController.EnsureExists();
+            if (menu.Paused) menu.ClosePause();
+            Time.timeScale = 1f;
+            AudioListener.pause = false;
             player = Object.FindAnyObjectByType<TopDownPlayer>();
             pistol = Object.FindAnyObjectByType<PistolWeapon>();
             spear = Object.FindAnyObjectByType<SpearWeapon>();
@@ -84,6 +88,8 @@ namespace AlreadyDead.Tests
         public IEnumerator CleanUpScene()
         {
             if (player != null) player.enabled = false;
+            if (PauseMenuController.Instance != null && PauseMenuController.Instance.Paused)
+                PauseMenuController.Instance.ClosePause();
             input?.TearDown();
             yield return null;
         }
@@ -980,11 +986,18 @@ namespace AlreadyDead.Tests
         }
 
         [UnityTest]
-        public IEnumerator EscapeReleasesAndRestoresControl()
+        public IEnumerator EscapeOpensPauseMenuAndRestoresControl()
         {
             Assert.That(player.InputActive, Is.True);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Escape, Key.W));
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSecondsRealtime(0.05f);
+            PauseMenuController menu = PauseMenuController.Instance;
+            Assert.That(menu, Is.Not.Null);
+            Assert.That(menu.Paused, Is.True);
+            Assert.That(menu.Page, Is.EqualTo(PauseMenuPage.Main));
+            Assert.That(menu.BackButtonVisible, Is.False);
+            Assert.That(Time.timeScale, Is.Zero);
+            Assert.That(AudioListener.pause, Is.True);
             Assert.That(player.InputActive, Is.False);
             Assert.That(player.Body.linearVelocity.magnitude, Is.LessThan(0.01f));
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
@@ -992,7 +1005,32 @@ namespace AlreadyDead.Tests
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Escape));
             yield return null;
             yield return null;
+            Assert.That(menu.Paused, Is.False);
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(AudioListener.pause, Is.False);
             Assert.That(player.InputActive, Is.True);
+        }
+
+        [Test]
+        public void SettingsShowsBackButtonAndSoundToggleChangesState()
+        {
+            PauseMenuController menu = PauseMenuController.EnsureExists();
+            Assert.That(menu.AssetsReady, Is.True);
+            menu.OpenPause();
+            menu.ShowSettings();
+            Assert.That(menu.Page, Is.EqualTo(PauseMenuPage.Settings));
+            Assert.That(menu.BackButtonVisible, Is.True);
+
+            bool initialSound = menu.SoundEnabled;
+            menu.ToggleSound();
+            Assert.That(menu.SoundEnabled, Is.Not.EqualTo(initialSound));
+            menu.ToggleSound();
+            Assert.That(menu.SoundEnabled, Is.EqualTo(initialSound));
+
+            menu.ShowMain();
+            Assert.That(menu.BackButtonVisible, Is.False);
+            menu.ClosePause();
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
         }
 
         [UnityTest]
