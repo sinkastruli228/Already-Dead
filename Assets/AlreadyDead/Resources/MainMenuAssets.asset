@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MainMenuAssets
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.MainMenuAssets
   background: {fileID: 2800000, guid: 17c44b9ad6189a049a20c1c84364da4e, type: 3}
-  logo: {fileID: 2800000, guid: e451ae065a7f6b84589375a925056b0e, type: 3}
+  logo: {fileID: 2800000, guid: de323597bcfe80d4097802eb4d68b18a, type: 3}
   continueButton: {fileID: 2800000, guid: ea0eefa7b30f60848b3a60f53f5fb0e8, type: 3}
   settingsButton: {fileID: 2800000, guid: 9b514039797340f48861a9604d3c0063, type: 3}
   exitButton: {fileID: 2800000, guid: db94659d3c837e84ebf9cde7a0b8655f, type: 3}
