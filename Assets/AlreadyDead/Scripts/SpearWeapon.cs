@@ -171,8 +171,12 @@ namespace AlreadyDead
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                if (!HitEnemy(obstruction.collider))
+                bool hitEnemy = HitEnemy(obstruction.collider);
+                if (!hitEnemy)
+                {
                     ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                    AttractEnemiesIfWall(obstruction.collider);
+                }
                 StopFlight(true);
                 return;
             }
@@ -189,6 +193,7 @@ namespace AlreadyDead
             {
                 ContactPoint2D contact = collision.GetContact(0);
                 ShotEffect.Impact(contact.point, contact.normal, primitiveSprite, primitiveMaterial);
+                AttractEnemiesIfWall(collision.collider);
             }
             StopFlight(true);
         }
@@ -286,8 +291,12 @@ namespace AlreadyDead
             if (obstruction)
             {
                 PlaceBefore(obstruction);
-                if (!HitEnemy(obstruction.collider))
+                bool hitEnemy = HitEnemy(obstruction.collider);
+                if (!hitEnemy)
+                {
                     ShotEffect.Impact(obstruction.point, obstruction.normal, primitiveSprite, primitiveMaterial);
+                    AttractEnemiesIfWall(obstruction.collider);
+                }
                 StopFlight(true);
             }
             return true;
@@ -359,6 +368,13 @@ namespace AlreadyDead
                 return true;
             }
             return false;
+        }
+
+        private void AttractEnemiesIfWall(Collider2D collider)
+        {
+            if (collider == null || (tuning.wallMask.value & (1 << collider.gameObject.layer)) == 0) return;
+            EnemyAttraction.Emit(Body.position, tuning.embeddedSpearAttractionRadius,
+                tuning.wallMask, true);
         }
 
         private void UpdateFlightVisual()

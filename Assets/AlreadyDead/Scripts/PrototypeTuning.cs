@@ -115,6 +115,14 @@ namespace AlreadyDead
         [Min(0.1f)] public float enemyAttackRange = 0.9f;
         [Min(0.1f)] public float enemyAttackInterval = 0.85f;
 
+        [Header("Enemy attraction")]
+        [Min(0.1f)] public float rockAttractionRadius = 7f;
+        [Min(0.1f)] public float embeddedSpearAttractionRadius = 9f;
+        [Min(0.1f)] public float enemyDeathAttractionRadius = 8f;
+        [Min(0f)] public float enemyInvestigationDuration = 1.5f;
+        [Min(0.1f)] public float enemyInvestigationDistance = 1.15f;
+        [Range(5f, 6f)] public float enemyDeathSearchDuration = 5.5f;
+
         [Header("Collision layers")]
         public LayerMask wallMask = 1 << 8;
         public LayerMask weaponMask = 1 << 9;

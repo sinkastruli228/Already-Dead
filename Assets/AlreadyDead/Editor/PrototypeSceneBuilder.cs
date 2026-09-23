@@ -15,6 +15,7 @@ namespace AlreadyDead.Editor
         private const string CharacterPath = "Assets/Character";
         private const string WeaponPath = "Assets/Waepon";
         private const string SettingsPath = "Assets/AlreadyDead/PrototypeTuning.asset";
+        public const float CharacterVisualScale = 1.33f;
         private static Sprite square;
         private static Sprite circle;
         private static Sprite ring;
@@ -420,24 +421,29 @@ namespace AlreadyDead.Editor
             collider.sharedMaterial = wallMaterial;
             Transform facing = new GameObject("Facing / local +X is forward").transform;
             facing.SetParent(go.transform, false);
-            Draw("Shadow", facing, new Vector2(0, -0.07f), new Vector2(0.94f, 0.94f),
+            Draw("Shadow", facing, new Vector2(0, -0.07f) * CharacterVisualScale,
+                new Vector2(0.94f, 0.94f) * CharacterVisualScale,
                 new Color(0.02f, 0.03f, 0.04f, 0.5f), 5, circle);
-            Transform leftLeg = Draw("Left leg / alternating step", facing, new Vector2(-0.12f, 0.12f),
-                new Vector2(0.18f, 0.18f), Color.white, 7, cavemanLeg).transform;
-            Transform rightLeg = Draw("Right leg / alternating step", facing, new Vector2(-0.12f, -0.12f),
-                new Vector2(0.18f, 0.18f), Color.white, 7, cavemanLeg).transform;
+            Transform leftLeg = Draw("Left leg / alternating step", facing,
+                new Vector2(-0.12f, 0.12f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale, Color.white, 7, cavemanLeg).transform;
+            Transform rightLeg = Draw("Right leg / alternating step", facing,
+                new Vector2(-0.12f, -0.12f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale, Color.white, 7, cavemanLeg).transform;
             leftLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightLeg.localRotation = Quaternion.Euler(0f, 0f, -90f);
             // Mirror only left/right. flipY would swap the brown forward edge to the rear
             // after the source sprite (+Y forward) is rotated onto gameplay +X.
             rightLeg.GetComponent<SpriteRenderer>().flipX = true;
             Transform cavemanBody = Draw("Caveman body / sprite forward is up", facing, Vector2.zero,
-                new Vector2(0.18f, 0.18f), Color.white, 11, cavemanIdle).transform;
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale, Color.white, 11, cavemanIdle).transform;
             cavemanBody.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            Transform leftFist = Draw("Left arm / punch", facing, new Vector2(0.04f, 0.22f),
-                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanArm).transform;
-            Transform rightFist = Draw("Right arm / punch + weapon grip", facing, new Vector2(0.04f, -0.22f),
-                new Vector2(0.18f, 0.18f), Color.white, 9, cavemanArm).transform;
+            Transform leftFist = Draw("Left arm / punch", facing,
+                new Vector2(0.04f, 0.22f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale, Color.white, 9, cavemanArm).transform;
+            Transform rightFist = Draw("Right arm / punch + weapon grip", facing,
+                new Vector2(0.04f, -0.22f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale, Color.white, 9, cavemanArm).transform;
             leftFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightFist.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightFist.GetComponent<SpriteRenderer>().flipX = true;
@@ -448,7 +454,7 @@ namespace AlreadyDead.Editor
             AddPixelOutline(cavemanBody, 10);
             Transform socket = new GameObject("Weapon socket").transform;
             socket.SetParent(facing, false);
-            socket.localPosition = new Vector3(0.38f, -0.22f, 0f);
+            socket.localPosition = new Vector3(0.38f, -0.22f, 0f) * CharacterVisualScale;
             UnarmedCombat unarmed = go.AddComponent<UnarmedCombat>();
             unarmed.Configure(tuning, leftFist, rightFist, camera, square, material);
             PlayerLimbAnimator limbs = go.AddComponent<PlayerLimbAnimator>();
@@ -477,35 +483,43 @@ namespace AlreadyDead.Editor
 
             Transform facing = new GameObject("Facing / vision forward +X").transform;
             facing.SetParent(go.transform, false);
-            Draw("Shadow", facing, new Vector2(0f, -0.07f), new Vector2(0.88f, 0.88f),
+            Draw("Shadow", facing, new Vector2(0f, -0.07f) * CharacterVisualScale,
+                new Vector2(0.88f, 0.88f) * CharacterVisualScale,
                 new Color(0.08f, 0.04f, 0.03f, 0.45f), 5, circle);
             Transform bodyVisual = Draw("Raider body", facing, Vector2.zero,
-                new Vector2(0.18f, 0.18f), Hex(0xc78064), 11, cavemanIdle).transform;
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale,
+                Hex(0xc78064), 11, cavemanIdle).transform;
             bodyVisual.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            Transform leftArm = Draw("Left arm", facing, new Vector2(0.02f, 0.23f),
-                new Vector2(0.18f, 0.18f), Hex(0xc78064), 9, cavemanArm).transform;
-            Transform rightArm = Draw("Right arm", facing, new Vector2(0.02f, -0.23f),
-                new Vector2(0.18f, 0.18f), Hex(0xc78064), 9, cavemanArm).transform;
+            Transform leftArm = Draw("Left arm", facing,
+                new Vector2(0.02f, 0.23f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale,
+                Hex(0xc78064), 9, cavemanArm).transform;
+            Transform rightArm = Draw("Right arm", facing,
+                new Vector2(0.02f, -0.23f) * CharacterVisualScale,
+                new Vector2(0.18f, 0.18f) * CharacterVisualScale,
+                Hex(0xc78064), 9, cavemanArm).transform;
             leftArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightArm.localRotation = Quaternion.Euler(0f, 0f, -90f);
             rightArm.GetComponent<SpriteRenderer>().flipX = true;
             AddPixelOutline(leftArm, 8);
             AddPixelOutline(rightArm, 8);
             AddPixelOutline(bodyVisual, 10);
-            SpriteRenderer alert = Draw("Alert / spotted player", facing, new Vector2(0f, 0.6f),
-                new Vector2(0.16f, 0.24f), Hex(0xff6755), 20);
+            SpriteRenderer alert = Draw("Alert / spotted player", facing,
+                new Vector2(0f, 0.6f) * CharacterVisualScale,
+                new Vector2(0.16f, 0.24f) * CharacterVisualScale, Hex(0xff6755), 20);
             alert.enabled = false;
 
             PatrolEnemy enemy = go.AddComponent<PatrolEnemy>();
             enemy.ConfigureRoute(tuning, player, facing, alert, route);
 
-            RockWeapon carriedRock = BuildRock(facing, new Vector2(0.48f, -0.19f));
+            RockWeapon carriedRock = BuildRock(facing,
+                new Vector2(0.48f, -0.19f) * CharacterVisualScale);
             SpearWeapon carriedSpear = BuildSpear(Vector2.zero);
             ClubWeapon carriedClub = BuildClub(Vector2.zero);
             carriedSpear.transform.SetParent(facing, false);
             carriedClub.transform.SetParent(facing, false);
-            carriedSpear.transform.localPosition = new Vector3(0.53f, -0.2f, 0f);
-            carriedClub.transform.localPosition = new Vector3(0.5f, -0.2f, 0f);
+            carriedSpear.transform.localPosition = new Vector3(0.53f, -0.2f, 0f) * CharacterVisualScale;
+            carriedClub.transform.localPosition = new Vector3(0.5f, -0.2f, 0f) * CharacterVisualScale;
             carriedRock.name = "Carried rock / drops on defeat";
             carriedSpear.name = "Carried spear / drops on defeat";
             carriedClub.name = "Carried club / drops on defeat";

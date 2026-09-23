@@ -3,7 +3,8 @@ using UnityEngine;
 namespace AlreadyDead
 {
     [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
-    public sealed class PatrolEnemy : MonoBehaviour, IPunchReceiver, ISpearReceiver, IMagicDamageable
+    public sealed class PatrolEnemy : MonoBehaviour, IPunchReceiver, ISpearReceiver, IMagicDamageable,
+        IEnemyAttractionListener
     {
         [SerializeField] private PrototypeTuning tuning;
         [SerializeField] private TopDownPlayer player;
@@ -19,6 +20,13 @@ namespace AlreadyDead
         private Vector2 moveDirection;
         private Vector2 detourTarget;
         private bool hasDetour;
+        private Vector2 investigationTarget;
+        private bool hasInvestigation;
+        private bool reachedInvestigation;
+        private bool deathSearch;
+        private Vector2 deathSearchFacing = Vector2.right;
+        private float investigationExpiresAt;
+        private float investigationEndsAt;
         private int nextWaypoint = 1;
         private float nextAttackTime;
         private float slowedUntil;
@@ -32,6 +40,9 @@ namespace AlreadyDead
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public float SpeedMultiplier => Time.time < slowedUntil ? tuning.frostSlowMultiplier : 1f;
         public Vector2[] PatrolRoute => patrolRoute;
+        public bool Investigating => hasInvestigation;
+        public Vector2 InvestigationTarget => investigationTarget;
+        public bool SearchingAfterDeath => deathSearch;
 
         public void Configure(PrototypeTuning settings, TopDownPlayer target, Transform visual,
             SpriteRenderer indicator, Vector2 first, Vector2 second)
@@ -55,6 +66,8 @@ namespace AlreadyDead
             health = tuning.enemyMaxHealth;
             Alerted = false;
             hasDetour = false;
+            hasInvestigation = false;
+            deathSearch = false;
             alert.enabled = false;
             Face((patrolB - patrolA).normalized);
         }
@@ -78,8 +91,14 @@ namespace AlreadyDead
             Vector2 position = Body.position;
             Vector2 toPlayer = (Vector2)player.transform.position - position;
             float distance = toPlayer.magnitude;
-            if (!Alerted && CanSeePlayer()) Alerted = true;
-            if (alert != null) alert.enabled = Alerted;
+            if (!Alerted && CanSeePlayer())
+            {
+                Alerted = true;
+                hasInvestigation = false;
+                deathSearch = false;
+                hasDetour = false;
+            }
+            if (alert != null) alert.enabled = Alerted || deathSearch;
 
             if (Alerted)
             {
@@ -99,10 +118,50 @@ namespace AlreadyDead
                 }
                 else
                 {
-                    moveDirection = ChaseDirection(position, toPlayer) * tuning.enemyChaseSpeed * SpeedMultiplier;
+                    moveDirection = PathDirection(position, player.transform.position) *
+                        tuning.enemyChaseSpeed * SpeedMultiplier;
                     Face(moveDirection);
                 }
                 return;
+            }
+
+            if (hasInvestigation)
+            {
+                Vector2 investigationPath = investigationTarget - position;
+                if (investigationPath.magnitude <= Mathf.Max(tuning.enemyInvestigationDistance,
+                        tuning.enemyWaypointTolerance))
+                {
+                    moveDirection = Vector2.zero;
+                    Face(investigationPath);
+                    if (!reachedInvestigation)
+                    {
+                        reachedInvestigation = true;
+                        investigationEndsAt = Time.time + (deathSearch
+                            ? tuning.enemyDeathSearchDuration : tuning.enemyInvestigationDuration);
+                    }
+                    if (Time.time < investigationEndsAt)
+                    {
+                        if (deathSearch) ScanForPlayer();
+                        return;
+                    }
+                    hasInvestigation = false;
+                    deathSearch = false;
+                    hasDetour = false;
+                }
+                else if (Time.time < investigationExpiresAt)
+                {
+                    moveDirection = PathDirection(position, investigationTarget) *
+                        (deathSearch ? tuning.enemyChaseSpeed * 0.75f : tuning.enemyPatrolSpeed) *
+                        SpeedMultiplier;
+                    Face(moveDirection);
+                    return;
+                }
+                else
+                {
+                    hasInvestigation = false;
+                    deathSearch = false;
+                    hasDetour = false;
+                }
             }
 
             if (patrolRoute == null || patrolRoute.Length == 0)
@@ -153,9 +212,14 @@ namespace AlreadyDead
             if (health > 0)
             {
                 Alerted = true;
+                hasInvestigation = false;
+                deathSearch = false;
+                hasDetour = false;
                 return;
             }
             BloodEffect.SpawnKill(Body.position, direction);
+            EnemyAttraction.EmitDeath(Body.position, tuning.enemyDeathAttractionRadius,
+                tuning.wallMask);
             loadout?.DropOnDeath();
             Stop();
             hitbox.enabled = false;
@@ -168,7 +232,60 @@ namespace AlreadyDead
             moveDirection = Vector2.zero;
             Alerted = false;
             hasDetour = false;
+            hasInvestigation = false;
+            deathSearch = false;
             if (alert != null) alert.enabled = false;
+        }
+
+        public bool CanInvestigate(Vector2 position, float radius) =>
+            IsAlive && tuning != null && !Alerted && !deathSearch &&
+            Vector2.Distance(Body.position, position) <= radius;
+
+        public bool CanReactToDeath(Vector2 position, float radius) =>
+            IsAlive && tuning != null && !Alerted &&
+            Vector2.Distance(Body.position, position) <= radius;
+
+        public void Investigate(Vector2 position, float radius)
+        {
+            if (!CanInvestigate(position, radius)) return;
+
+            investigationTarget = position;
+            hasInvestigation = true;
+            reachedInvestigation = false;
+            deathSearch = false;
+            hasDetour = false;
+            Face(position - Body.position);
+            float travelTime = Vector2.Distance(Body.position, position) /
+                Mathf.Max(0.1f, tuning.enemyPatrolSpeed);
+            investigationExpiresAt = Time.time + travelTime * 1.5f +
+                tuning.enemyInvestigationDuration + 1f;
+        }
+
+        public void InvestigateDeath(Vector2 position, float radius)
+        {
+            if (!CanReactToDeath(position, radius)) return;
+
+            investigationTarget = position;
+            hasInvestigation = true;
+            reachedInvestigation = false;
+            deathSearch = true;
+            hasDetour = false;
+            deathSearchFacing = position - Body.position;
+            if (deathSearchFacing.sqrMagnitude < 0.0001f) deathSearchFacing = facing.right;
+            deathSearchFacing.Normalize();
+            Face(deathSearchFacing);
+            float travelTime = Vector2.Distance(Body.position, position) /
+                Mathf.Max(0.1f, tuning.enemyChaseSpeed * 0.75f);
+            investigationExpiresAt = Time.time + travelTime * 1.5f +
+                tuning.enemyDeathSearchDuration + 1f;
+        }
+
+        private void ScanForPlayer()
+        {
+            float elapsed = tuning.enemyDeathSearchDuration -
+                Mathf.Max(0f, investigationEndsAt - Time.time);
+            float sweep = Mathf.Sin(elapsed * 2.4f) * 78f;
+            Face(Quaternion.Euler(0f, 0f, sweep) * deathSearchFacing);
         }
 
         private void Face(Vector2 direction)
@@ -177,12 +294,13 @@ namespace AlreadyDead
             facing.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
         }
 
-        private Vector2 ChaseDirection(Vector2 position, Vector2 toPlayer)
+        private Vector2 PathDirection(Vector2 position, Vector2 target)
         {
-            if (toPlayer.sqrMagnitude < 0.0001f) return Vector2.zero;
-            Vector2 direct = toPlayer.normalized;
+            Vector2 toTarget = target - position;
+            if (toTarget.sqrMagnitude < 0.0001f) return Vector2.zero;
+            Vector2 direct = toTarget.normalized;
             RaycastHit2D wall = Physics2D.CircleCast(position, hitbox.radius, direct,
-                toPlayer.magnitude, tuning.wallMask);
+                toTarget.magnitude, tuning.wallMask);
             if (!wall)
             {
                 hasDetour = false;
@@ -217,7 +335,7 @@ namespace AlreadyDead
                 if (length < 0.3f) continue;
                 if (Physics2D.CircleCast(position, hitbox.radius, path / length,
                         length, tuning.wallMask)) continue;
-                float cost = length + Vector2.Distance(corner, player.transform.position);
+                float cost = length + Vector2.Distance(corner, target);
                 if (cost >= bestCost) continue;
                 bestCost = cost;
                 best = path / length;

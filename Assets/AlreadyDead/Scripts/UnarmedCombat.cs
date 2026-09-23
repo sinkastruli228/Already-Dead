@@ -15,7 +15,7 @@ namespace AlreadyDead
         [SerializeField] private AimCamera aimCamera;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
-        [SerializeField] private Vector3 weaponArmLocalPosition = new Vector3(0.21f, -0.22f, 0f);
+        [SerializeField] private Vector3 weaponArmLocalPosition = new Vector3(0.2793f, -0.2926f, 0f);
         [SerializeField] private float weaponArmAngle = -90f;
 
         private Vector3 leftRest;

@@ -124,6 +124,10 @@ namespace AlreadyDead.Tests
             FantasyEnemy[] enemies = Object.FindObjectsByType<FantasyEnemy>(FindObjectsSortMode.None);
             Assert.That(System.Array.Exists(enemies, foe => foe.Kind == FantasyEnemyKind.Knight), Is.True);
             Assert.That(System.Array.Exists(enemies, foe => foe.Kind == FantasyEnemyKind.Mage), Is.True);
+            Transform playerFigure = GameObject.Find("Caveman body / sprite forward is up").transform;
+            Transform enemyFigure = GameObject.Find("Armored knight").transform;
+            Assert.That(playerFigure.localScale.x, Is.EqualTo(0.96f * 1.33f).Within(0.001f));
+            Assert.That(enemyFigure.localScale.x, Is.EqualTo(0.98f * 1.33f).Within(0.001f));
         }
 
         [UnityTest]

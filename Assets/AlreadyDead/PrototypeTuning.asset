@@ -98,6 +98,12 @@ MonoBehaviour:
   enemyVisionHalfAngle: 48
   enemyAttackRange: 0.9
   enemyAttackInterval: 0.85
+  rockAttractionRadius: 7
+  embeddedSpearAttractionRadius: 9
+  enemyDeathAttractionRadius: 8
+  enemyInvestigationDuration: 1.5
+  enemyInvestigationDistance: 1.15
+  enemyDeathSearchDuration: 5.5
   wallMask:
     serializedVersion: 2
     m_Bits: 256

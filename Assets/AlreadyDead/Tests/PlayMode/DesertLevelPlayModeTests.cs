@@ -22,7 +22,12 @@ namespace AlreadyDead.Tests
             TopDownPlayer player = Object.FindAnyObjectByType<TopDownPlayer>();
             Assert.That(Vector2.Distance(player.transform.position, new Vector2(-9f, -8.15625f)),
                 Is.LessThan(0.01f));
-            Assert.That(Object.FindObjectsByType<PatrolEnemy>().Length, Is.EqualTo(11));
+            PatrolEnemy[] enemies = Object.FindObjectsByType<PatrolEnemy>();
+            Assert.That(enemies.Length, Is.EqualTo(11));
+            Transform playerBody = GameObject.Find("Caveman body / sprite forward is up").transform;
+            Transform enemyBody = GameObject.Find("Raider body").transform;
+            Assert.That(playerBody.localScale.x, Is.EqualTo(0.18f * 1.33f).Within(0.001f));
+            Assert.That(enemyBody.localScale.x, Is.EqualTo(0.18f * 1.33f).Within(0.001f));
             Transform details = GameObject.Find("Desert details / stones and dry shrubs").transform;
             Assert.That(details.GetComponentsInChildren<RockWeapon>().Length, Is.EqualTo(9));
             Assert.That(Object.FindObjectsByType<PistolWeapon>().Length, Is.Zero);

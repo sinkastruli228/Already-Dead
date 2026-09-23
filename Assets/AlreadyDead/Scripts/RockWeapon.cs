@@ -272,6 +272,9 @@ namespace AlreadyDead
 
         private void Land()
         {
+            if (isFlying)
+                EnemyAttraction.Emit(Body.position, tuning.rockAttractionRadius,
+                    tuning.wallMask, true);
             PlaceBuried();
         }
 

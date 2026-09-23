@@ -454,7 +454,11 @@ namespace AlreadyDead.Tests
             Assert.That(player.HeldWeapon, Is.Null);
             Assert.That(player.HeldRock, Is.SameAs(rock));
             Assert.That(pistol.Body.linearVelocity, Is.EqualTo(Vector2.zero));
+            enemy.enabled = false;
+            enemy.Body.position = (Vector2)player.transform.position + new Vector2(7f, 2f);
+            enemy.transform.position = enemy.Body.position;
             player.AimAt((Vector2)player.transform.position + Vector2.right * 5f);
+            Physics2D.SyncTransforms();
             Assert.That(player.Interact(Vector2.zero), Is.True);
             Assert.That(player.HeldRock, Is.Null);
             Assert.That(rock.IsHeld, Is.False);
@@ -482,8 +486,9 @@ namespace AlreadyDead.Tests
                 "The flying stone is replaced by the grounded sprite");
             Assert.That(rock.Shadow.gameObject.activeSelf, Is.False);
             Assert.That(rock.BuriedMark.gameObject.activeSelf, Is.True);
+            Assert.That(enemy.Investigating, Is.True, "A landing stone attracts nearby enemies");
+            Assert.That(Vector2.Distance(enemy.InvestigationTarget, rock.transform.position), Is.LessThan(0.05f));
             Vector2 landedPosition = rock.transform.position;
-            enemy.enabled = false;
             enemy.Body.position = landedPosition + Vector2.left * 0.7f;
             enemy.transform.position = enemy.Body.position;
             enemy.Body.linearVelocity = Vector2.right * 12f;
@@ -823,6 +828,9 @@ namespace AlreadyDead.Tests
         {
             player.enabled = false;
             Assert.That(player.Interact(spear.transform.position), Is.True);
+            enemy.enabled = false;
+            enemy.Body.position = new Vector2(3.2f, 5f);
+            enemy.transform.position = enemy.Body.position;
             player.Body.position = new Vector2(3.2f, 3f);
             player.transform.position = new Vector3(3.2f, 3f, 0f);
             player.AimAt(new Vector2(8f, 3f));
@@ -839,6 +847,150 @@ namespace AlreadyDead.Tests
             Assert.That(spear.GroundedVisual.GetComponent<SpriteRenderer>().sprite.name,
                 Does.StartWith("Spear_Ground"));
             Assert.That(spear.Shadow.localScale.x, Is.LessThan(1f));
+            Assert.That(enemy.Investigating, Is.True, "A spear embedded in a wall attracts nearby enemies");
+            Assert.That(Vector2.Distance(enemy.InvestigationTarget, spear.transform.position), Is.LessThan(0.05f));
+        }
+
+        [Test]
+        public void NearbyEnemyDeathAttractsAListener()
+        {
+            player.enabled = false;
+            PatrolEnemy witness = null;
+            foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
+                if (candidate != enemy && !candidate.Alerted)
+                {
+                    witness = candidate;
+                    break;
+                }
+            Assert.That(witness, Is.Not.Null);
+
+            enemy.enabled = false;
+            witness.enabled = false;
+            enemy.Body.position = new Vector2(40f, 40f);
+            enemy.transform.position = enemy.Body.position;
+            witness.Body.position = enemy.Body.position + Vector2.right * 2f;
+            witness.transform.position = witness.Body.position;
+            Physics2D.SyncTransforms();
+
+            enemy.TakeDamage(enemy.Health);
+
+            Assert.That(witness.Investigating, Is.True);
+            Assert.That(witness.SearchingAfterDeath, Is.True);
+            Assert.That(witness.InvestigationTarget, Is.EqualTo(new Vector2(40f, 40f)));
+        }
+
+        [UnityTest]
+        public IEnumerator DeathOverridesDistractionsAndKeepsNpcSearchingForFiveSeconds()
+        {
+            player.enabled = false;
+            PatrolEnemy witness = null;
+            foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
+                if (candidate != enemy && !candidate.Alerted)
+                {
+                    witness = candidate;
+                    break;
+                }
+            Assert.That(witness, Is.Not.Null);
+
+            Vector2 deathPosition = new Vector2(40f, 40f);
+            enemy.enabled = false;
+            witness.enabled = true;
+            enemy.Body.position = deathPosition;
+            enemy.transform.position = enemy.Body.position;
+            witness.Body.position = deathPosition + Vector2.right * 0.8f;
+            witness.transform.position = witness.Body.position;
+            Physics2D.SyncTransforms();
+
+            Vector2 firstDistraction = witness.Body.position + Vector2.up * 0.2f;
+            EnemyAttraction.Emit(firstDistraction, 10f, player.Tuning.wallMask, true);
+            Assert.That(witness.InvestigationTarget, Is.EqualTo(firstDistraction));
+
+            enemy.TakeDamage(enemy.Health);
+            Assert.That(witness.SearchingAfterDeath, Is.True);
+            Assert.That(witness.InvestigationTarget, Is.EqualTo(deathPosition),
+                "Death replaces the current low-priority distraction");
+
+            EnemyAttraction.Emit(deathPosition + Vector2.left * 3f, 10f,
+                player.Tuning.wallMask, true);
+            Assert.That(witness.InvestigationTarget, Is.EqualTo(deathPosition),
+                "Rocks and spears cannot interrupt a death search");
+
+            yield return null;
+            yield return new WaitForSeconds(5f);
+            Assert.That(witness.SearchingAfterDeath, Is.True);
+            yield return new WaitForSeconds(0.7f);
+            Assert.That(witness.SearchingAfterDeath, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator OnlyNearestEnemyInvestigatesAndStopsShortFacingTheNoise()
+        {
+            player.enabled = false;
+            PatrolEnemy farther = null;
+            foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
+                if (candidate != enemy && !candidate.Alerted)
+                {
+                    farther = candidate;
+                    break;
+                }
+            Assert.That(farther, Is.Not.Null);
+
+            Vector2 noise = new Vector2(40f, 40f);
+            enemy.enabled = true;
+            farther.enabled = false;
+            enemy.Body.position = noise + Vector2.right * 2f;
+            enemy.transform.position = enemy.Body.position;
+            farther.Body.position = noise + Vector2.right * 4f;
+            farther.transform.position = farther.Body.position;
+            Physics2D.SyncTransforms();
+
+            EnemyAttraction.Emit(noise, 10f, player.Tuning.wallMask, true);
+
+            Assert.That(enemy.Investigating, Is.True);
+            Assert.That(farther.Investigating, Is.False);
+            Assert.That(Vector2.Dot(enemy.Facing.right, Vector2.left), Is.GreaterThan(0.99f),
+                "The listener immediately looks toward the noise");
+            yield return new WaitForSeconds(0.55f);
+            float remaining = Vector2.Distance(enemy.Body.position, noise);
+            Assert.That(remaining, Is.GreaterThan(player.Tuning.enemyInvestigationDistance - 0.12f));
+            Assert.That(remaining, Is.LessThan(player.Tuning.enemyInvestigationDistance + 0.2f));
+            Assert.That(Vector2.Dot(enemy.Facing.right,
+                (noise - enemy.Body.position).normalized), Is.GreaterThan(0.99f));
+        }
+
+        [Test]
+        public void WallsBlockAttentionAndNextVisibleEnemyResponds()
+        {
+            player.enabled = false;
+            PatrolEnemy visible = null;
+            foreach (PatrolEnemy candidate in Object.FindObjectsByType<PatrolEnemy>())
+                if (candidate != enemy && !candidate.Alerted)
+                {
+                    visible = candidate;
+                    break;
+                }
+            Assert.That(visible, Is.Not.Null);
+
+            Vector2 noise = new Vector2(50f, 50f);
+            enemy.enabled = false;
+            visible.enabled = false;
+            enemy.Body.position = noise + Vector2.right;
+            enemy.transform.position = enemy.Body.position;
+            visible.Body.position = noise + Vector2.up * 2f;
+            visible.transform.position = visible.Body.position;
+
+            var wall = new GameObject("Attention test wall");
+            wall.layer = 8;
+            wall.transform.position = noise + Vector2.right * 0.5f;
+            BoxCollider2D wallCollider = wall.AddComponent<BoxCollider2D>();
+            wallCollider.size = new Vector2(0.25f, 0.8f);
+            Physics2D.SyncTransforms();
+
+            EnemyAttraction.Emit(noise, 10f, player.Tuning.wallMask, true);
+
+            Assert.That(enemy.Investigating, Is.False, "A wall blocks the closer enemy's hearing");
+            Assert.That(visible.Investigating, Is.True, "The nearest unobstructed enemy responds");
+            Object.DestroyImmediate(wall);
         }
 
         [UnityTest]

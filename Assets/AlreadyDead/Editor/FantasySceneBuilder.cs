@@ -136,7 +136,7 @@ namespace AlreadyDead.Editor
             robe.sprite = FantasyPixelArt.Mage();
             robe.sharedMaterial = PixelMaterial(robe.sprite);
             robe.color = Color.white;
-            body.localScale = Vector3.one * 0.96f;
+            body.localScale = Vector3.one * (0.96f * PrototypeSceneBuilder.CharacterVisualScale);
             foreach (SpriteRenderer limb in player.Facing.GetComponentsInChildren<SpriteRenderer>())
             {
                 if (limb.name.Contains("arm")) limb.color = Hex(0x534075);
@@ -280,14 +280,18 @@ namespace AlreadyDead.Editor
             collider.radius = 0.38f;
             Transform facing = new GameObject("Facing / vision +X").transform;
             facing.SetParent(enemyObject.transform, false);
-            Draw("Shadow", facing, new Vector2(0f, -0.08f), new Vector2(0.9f, 0.9f),
+            Draw("Shadow", facing,
+                new Vector2(0f, -0.08f) * PrototypeSceneBuilder.CharacterVisualScale,
+                new Vector2(0.9f, 0.9f) * PrototypeSceneBuilder.CharacterVisualScale,
                 new Color(0f, 0.1f, 0.05f, 0.48f), 8, circle);
             Transform figure = Draw(kind == FantasyEnemyKind.Knight ? "Armored knight" : "Rival mage", facing,
-                Vector2.zero, Vector2.one * 0.98f, Color.white, 11,
+                Vector2.zero, Vector2.one * (0.98f * PrototypeSceneBuilder.CharacterVisualScale), Color.white, 11,
                 kind == FantasyEnemyKind.Knight ? FantasyPixelArt.Knight() : FantasyPixelArt.Mage()).transform;
             figure.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            SpriteRenderer alert = Draw("Alert", facing, new Vector2(0f, 0.65f),
-                new Vector2(0.18f, 0.28f), Hex(0xff645a), 20, square);
+            SpriteRenderer alert = Draw("Alert", facing,
+                new Vector2(0f, 0.65f) * PrototypeSceneBuilder.CharacterVisualScale,
+                new Vector2(0.18f, 0.28f) * PrototypeSceneBuilder.CharacterVisualScale,
+                Hex(0xff645a), 20, square);
             alert.enabled = false;
             FantasyEnemy enemy = enemyObject.AddComponent<FantasyEnemy>();
             enemy.Configure(tuning, player, facing, alert, first, second, kind, element, circle, primitiveMaterial);
