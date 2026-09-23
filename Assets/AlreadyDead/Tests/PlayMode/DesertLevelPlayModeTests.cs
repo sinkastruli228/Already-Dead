@@ -23,7 +23,7 @@ namespace AlreadyDead.Tests
             Assert.That(Vector2.Distance(player.transform.position, new Vector2(-9f, -8.15625f)),
                 Is.LessThan(0.01f));
             PatrolEnemy[] enemies = Object.FindObjectsByType<PatrolEnemy>();
-            Assert.That(enemies.Length, Is.EqualTo(11));
+            Assert.That(enemies.Length, Is.EqualTo(7));
             Transform playerBody = GameObject.Find("Caveman body / sprite forward is up").transform;
             Transform enemyBody = GameObject.Find("Raider body").transform;
             Assert.That(playerBody.localScale.x, Is.EqualTo(0.18f * 1.33f).Within(0.001f));
@@ -31,7 +31,12 @@ namespace AlreadyDead.Tests
             Transform details = GameObject.Find("Desert details / stones and dry shrubs").transform;
             Assert.That(details.GetComponentsInChildren<RockWeapon>().Length, Is.EqualTo(9));
             Assert.That(Object.FindObjectsByType<PistolWeapon>().Length, Is.Zero);
-            Assert.That(Object.FindObjectsByType<MusketWeapon>().Length, Is.Zero);
+            MusketWeapon[] muskets = Object.FindObjectsByType<MusketWeapon>();
+            Assert.That(muskets.Length, Is.EqualTo(1));
+            Assert.That(muskets[0].transform.localScale.x, Is.EqualTo(1.6f).Within(0.001f));
+            Assert.That(muskets[0].transform.localScale.y, Is.EqualTo(1.6f).Within(0.001f));
+            Assert.That(Vector2.Distance(muskets[0].transform.position,
+                (Vector2)player.transform.position + Vector2.right * 1.2f), Is.LessThan(0.01f));
             Assert.That(Object.FindObjectsByType<MagicStaff>().Length, Is.Zero);
 
             FantasyLevelGate gate = Object.FindAnyObjectByType<FantasyLevelGate>();

@@ -112,6 +112,7 @@ namespace AlreadyDead.Editor
             TopDownPlayer player = BuildPlayer(view);
             view.Configure(tuning, player);
             camera.transform.position = player.transform.position + Vector3.back * 10f;
+            BuildMusket((Vector2)player.transform.position + Vector2.right * 1.2f);
             // The supplied map is 924 x 794 pixels. Each enemy starts at a red dot;
             // waypoints follow the drawn patrol lines. The closest guard has a spear.
             BuildEnemy("Patrol / first spear guard", player, true,
@@ -122,17 +123,11 @@ namespace AlreadyDead.Editor
                 Map(108, 475), Map(197, 475));
             BuildEnemy("Patrol / north west", player, false,
                 Map(342, 107), Map(610, 107));
-            BuildEnemy("Patrol / north east", player, false,
-                Map(641, 105), Map(641, 392));
-            BuildEnemy("Patrol / central west", player, false,
-                Map(344, 439), Map(344, 155));
             BuildEnemy("Patrol / central south", player, false,
                 Map(639, 439), Map(384, 439));
             BuildEnemy("Patrol / eastern passage", player, false,
                 Map(865, 501), Map(758, 501), Map(758, 74), Map(869, 74), Map(869, 439));
             BuildEnemy("Guard / lower east", player, false, Map(779, 685));
-            BuildEnemy("Guard / eastern turn", player, false, Map(836, 638));
-            BuildEnemy("Guard / south east", player, false, Map(840, 705));
             var hud = new GameObject("HUD + crosshair").AddComponent<PrototypeHud>();
             hud.Configure(player);
 
@@ -609,6 +604,7 @@ namespace AlreadyDead.Editor
             go.layer = 9;
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0f, 0f, 12f);
+            go.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
             Rigidbody2D body = go.AddComponent<Rigidbody2D>();
             body.gravityScale = 0f;
             body.mass = 1.2f;

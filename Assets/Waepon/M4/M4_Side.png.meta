@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b3ecd2ecc2140d14b97d7ab353903a22
+guid: fd9c3783c99ca984da3bbbd3eb03e852
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1375522098972894066
-    second: Mushket_Side_0
+      213: -9157708335938212229
+    second: M4_Side_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -141,13 +141,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Mushket_Side_0
+      name: M4_Side_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1500
-        height: 359
+        width: 1000
+        height: 385
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -156,8 +156,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 273aaf9af06d61310800000000000000
-      internalID: 1375522098972894066
+      spriteID: b7ee4cfb9c849e080800000000000000
+      internalID: -9157708335938212229
       vertices: []
       indices: 
       edges: []
@@ -176,7 +176,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Mushket_Side_0: 1375522098972894066
+      M4_Side_0: -9157708335938212229
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
