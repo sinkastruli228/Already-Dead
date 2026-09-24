@@ -14,6 +14,8 @@ namespace AlreadyDead
         [SerializeField] private SpriteRenderer heldView;
         [SerializeField] private bool automatic;
         [SerializeField] private int capacity = 17;
+        [SerializeField] private bool revolver;
+        [SerializeField] private float revolverReloadSeconds = 4f;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
         private Rigidbody2D body;
@@ -23,13 +25,20 @@ namespace AlreadyDead
         private float recoil;
         private float flashUntil;
         private PhysicsMaterial2D runtimeMaterial;
+        private int cylinderAmmo;
+        private float reloadStartedAt;
+        private bool reloading;
 
         public bool IsHeld => owner != null;
         public float Recoil => recoil;
         public int ShotsFired { get; private set; }
         public int Capacity => capacity;
-        public int RemainingAmmo => Mathf.Max(0, capacity - ShotsFired);
+        public int RemainingAmmo => revolver ? cylinderAmmo : Mathf.Max(0, capacity - ShotsFired);
         public bool Automatic => automatic;
+        public bool IsRevolver => revolver;
+        public bool IsReloading => reloading;
+        public float ReloadProgress01 => reloading
+            ? Mathf.Clamp01((Time.time - reloadStartedAt) / revolverReloadSeconds) : 0f;
         public Vector2 LastShotDirection { get; private set; }
         public Rigidbody2D Body => body != null ? body : body = GetComponent<Rigidbody2D>();
         public BoxCollider2D Hitbox => hitbox != null ? hitbox : hitbox = GetComponent<BoxCollider2D>();
@@ -52,15 +61,24 @@ namespace AlreadyDead
         {
             capacity = Mathf.Max(1, rounds);
             automatic = firesAutomatically;
+            cylinderAmmo = capacity;
             groundView = groundSprite;
             heldView = heldSprite;
             SetHeldView(false);
+        }
+
+        public void ConfigureRevolver(SpriteRenderer groundSprite, SpriteRenderer heldSprite)
+        {
+            ConfigureFirearm(6, false, groundSprite, heldSprite);
+            revolver = true;
+            revolverReloadSeconds = 4f;
         }
 
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
             hitbox = GetComponent<BoxCollider2D>();
+            if (revolver) cylinderAmmo = capacity;
             body.gravityScale = 0f;
             body.linearDamping = tuning.throwLinearDamping;
             body.angularDamping = tuning.throwAngularDamping;
@@ -79,6 +97,11 @@ namespace AlreadyDead
 
         private void Update()
         {
+            if (reloading && Time.time - reloadStartedAt >= revolverReloadSeconds)
+            {
+                cylinderAmmo = capacity;
+                reloading = false;
+            }
             recoil = Mathf.MoveTowards(recoil, 0f, tuning.recoilReturnSpeed * Time.deltaTime);
             visual.localPosition = Vector3.left * recoil;
             muzzleFlash.enabled = IsHeld && Time.time < flashUntil;
@@ -154,7 +177,12 @@ namespace AlreadyDead
 
         public bool TryFire(Vector2 aimDirection, AimCamera camera)
         {
-            if (!IsHeld || RemainingAmmo == 0 || Time.time < nextShotTime) return false;
+            if (!IsHeld || reloading || Time.time < nextShotTime) return false;
+            if (RemainingAmmo == 0)
+            {
+                TryReload();
+                return false;
+            }
             nextShotTime = Time.time + (automatic ? tuning.m4ShotInterval : tuning.shotInterval);
             float angle = Random.Range(-tuning.spreadHalfAngle, tuning.spreadHalfAngle);
             Vector2 shotDirection = Quaternion.Euler(0, 0, angle) * aimDirection.normalized;
@@ -171,11 +199,20 @@ namespace AlreadyDead
 
             LastShotDirection = shotDirection;
             ShotsFired++;
+            if (revolver && --cylinderAmmo == 0) TryReload();
             recoil = tuning.recoilDistance;
             visual.localPosition = Vector3.left * recoil;
             flashUntil = Time.time + 0.045f;
             muzzleFlash.enabled = true;
             camera.Kick();
+            return true;
+        }
+
+        public bool TryReload()
+        {
+            if (!revolver || !IsHeld || reloading || cylinderAmmo >= capacity) return false;
+            reloadStartedAt = Time.time;
+            reloading = true;
             return true;
         }
 

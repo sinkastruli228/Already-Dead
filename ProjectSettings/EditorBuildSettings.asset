@@ -17,5 +17,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/AlreadyDead/Tests/Scenes/WeaponSandbox.unity
     guid: 40b0463909fd4e438c5c0749e5b8f220
+  - enabled: 1
+    path: Assets/Scenes/BuildingParkingScene.unity
+    guid: 830297dd01cbd52478f08cc188cc096d
+  - enabled: 1
+    path: Assets/Scenes/SaloonScene.unity
+    guid: b7ce1d5116565104fa30659d660610a0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

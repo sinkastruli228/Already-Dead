@@ -4295,7 +4295,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9070ecd510d1b814eade12b4cada21d1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PrototypeHud
   player: {fileID: 1884232661}
 --- !u!4 &82513363
@@ -9328,6 +9328,63 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1001 &170437270
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -8.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9081540369385315319, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_Name
+      value: SwingDoor / push to open / blocks sight while closed
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
 --- !u!1 &171035013
 GameObject:
   m_ObjectHideFlags: 0
@@ -13428,7 +13485,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72d3bd82ec9340bca0bb1975665b2ea6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -14744,7 +14801,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72d3bd82ec9340bca0bb1975665b2ea6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -39026,7 +39083,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72d3bd82ec9340bca0bb1975665b2ea6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -56842,7 +56899,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28d5af4a39844564b8f3997795345ff5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.AimCamera
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -69491,7 +69548,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a024b70686d54e45a76f9f33376261c7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.MagicStaff
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   selectedElement: 0
@@ -82041,7 +82098,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3e1b8478a8b41c4a37c2e63d51c690d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyLevelGate
   destinationScene: SampleScene
 --- !u!58 &1606281718
@@ -91553,7 +91610,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72d3bd82ec9340bca0bb1975665b2ea6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -98125,7 +98182,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f2e67a9a95e90041b85e14b9efb97eb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.TopDownPlayer
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   facing: {fileID: 1059685543}
@@ -98143,7 +98200,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 52431cf282ce4ab4a2f3644a42410d68, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.UnarmedCombat
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   leftFist: {fileID: 2065890700}
@@ -98179,7 +98236,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9cd9eb14e2bc46f293ec564e8567b89b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PlayerVitality
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   view: {fileID: 1116410795}
@@ -98193,7 +98250,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad14e81220d54c8aa7659c3f3fd8ab22, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PlayerLimbAnimator
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   body: {fileID: 1884232667}
@@ -109847,7 +109904,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72d3bd82ec9340bca0bb1975665b2ea6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1884232661}
@@ -114163,3 +114220,4 @@ SceneRoots:
   - {fileID: 284709017}
   - {fileID: 768512894}
   - {fileID: 1606281719}
+  - {fileID: 170437270}

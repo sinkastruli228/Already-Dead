@@ -67,11 +67,11 @@ namespace AlreadyDead
         [Range(1, 8)] public int lightningMaxTargets = 4;
 
         [Header("Throw (XY plane, no gravity)")]
-        [Min(0f)] public float throwSpeed = 12f;
+        [Min(0f)] public float throwSpeed = 17.5f;
         [Min(0f)] public float throwSpin = 650f;
-        [Min(0f)] public float throwLinearDamping = 1.9f;
-        [Min(0f)] public float throwAngularDamping = 2.4f;
-        [Range(0f, 1f)] public float throwBounce = 0.55f;
+        [Min(0f)] public float throwLinearDamping = 1.6f;
+        [Min(0f)] public float throwAngularDamping = 5f;
+        [Range(0f, 1f)] public float throwBounce = 0.9f;
 
         [Header("Spear")]
         [Min(0.05f)] public float spearStabInterval = 0.42f;

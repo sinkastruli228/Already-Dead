@@ -1,6 +1,6 @@
 {
   "name": "AlreadyDead.Runtime",
   "rootNamespace": "AlreadyDead",
-  "references": ["Unity.InputSystem"],
+  "references": ["Unity.InputSystem", "Unity.RenderPipelines.Universal.2D.Runtime"],
   "autoReferenced": true
 }

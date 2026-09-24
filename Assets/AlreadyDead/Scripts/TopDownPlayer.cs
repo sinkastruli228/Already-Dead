@@ -115,8 +115,14 @@ namespace AlreadyDead
                     (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0)), 1f);
                 if (keyboard.rKey.wasPressedThisFrame)
                 {
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                    return;
+                    if (HeldWeapon != null && HeldWeapon.IsRevolver &&
+                        !keyboard.leftShiftKey.isPressed && !keyboard.rightShiftKey.isPressed)
+                        HeldWeapon.TryReload();
+                    else
+                    {
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                        return;
+                    }
                 }
                 if (HeldStaff != null)
                 {

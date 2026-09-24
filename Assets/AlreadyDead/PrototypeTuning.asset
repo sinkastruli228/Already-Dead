@@ -59,11 +59,11 @@ MonoBehaviour:
   lightningRange: 8
   lightningChainRange: 2.7
   lightningMaxTargets: 4
-  throwSpeed: 12
+  throwSpeed: 17.5
   throwSpin: 650
-  throwLinearDamping: 1.9
-  throwAngularDamping: 2.4
-  throwBounce: 0.55
+  throwLinearDamping: 1.6
+  throwAngularDamping: 5
+  throwBounce: 0.9
   spearStabInterval: 0.42
   spearStabDuration: 0.24
   spearStabReach: 2.1

@@ -1,7 +1,7 @@
 {
   "name": "AlreadyDead.Editor",
   "rootNamespace": "AlreadyDead.Editor",
-  "references": ["AlreadyDead.Runtime"],
+  "references": ["AlreadyDead.Runtime", "Unity.2D.Tilemap.Editor", "Unity.RenderPipelines.Universal.2D.Runtime"],
   "includePlatforms": ["Editor"],
   "autoReferenced": true
 }

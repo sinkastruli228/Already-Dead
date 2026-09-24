@@ -51,7 +51,9 @@ namespace AlreadyDead
 
         private void DrawThrowCharge()
         {
-            float charge = player.HeldSpear != null && player.HeldSpear.IsCharging
+            float charge = player.HeldWeapon != null && player.HeldWeapon.IsReloading
+                ? player.HeldWeapon.ReloadProgress01
+                : player.HeldSpear != null && player.HeldSpear.IsCharging
                 ? player.HeldSpear.Charge01
                 : player.HeldRock != null && player.HeldRock.IsCharging
                     ? player.HeldRock.Charge01 : -1f;

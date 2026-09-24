@@ -34,6 +34,8 @@ namespace AlreadyDead.Editor
         private static Sprite m4TopArt;
         private static Sprite glockSideArt;
         private static Sprite glockTopArt;
+        private static Sprite revolverSideArt;
+        private static Sprite revolverTopArt;
         private static Sprite clubArt;
         private static Sprite staffArt;
         private static Sprite thrownRockArt;
@@ -574,6 +576,82 @@ namespace AlreadyDead.Editor
             PistolWeapon pistol = go.AddComponent<PistolWeapon>();
             pistol.Configure(tuning, visual, muzzle, halo, flash, square, material);
             pistol.ConfigureFirearm(m4 ? 25 : 17, m4, ground, held);
+        }
+
+        // Reuse the gameplay gun setup when adding a loadout to a hand-edited scene.
+        // This initializes only the shared art references; it never rebuilds a scene.
+        internal static void BuildPistolInOpenScene(Vector2 position, bool m4)
+        {
+            tuning = AssetDatabase.LoadAssetAtPath<PrototypeTuning>(SettingsPath);
+            square = LoadSprite(ArtPath + "/Square.png");
+            circle = LoadSprite(ArtPath + "/Circle.png");
+            ring = LoadSprite(ArtPath + "/Ring.png");
+            m4SideArt = LoadSprite(WeaponPath + "/M4/M4_Side.png", "M4_Side_0");
+            m4TopArt = LoadSprite(WeaponPath + "/M4/M4_UP.png", "M4_UP_0");
+            glockSideArt = LoadSprite(WeaponPath + "/Glock/Glock_Side.png", "Glock_Side_0");
+            glockTopArt = LoadSprite(WeaponPath + "/Glock/Glock_UP.png", "Glock_UP_0");
+            material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
+            gunMaterial = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(
+                ArtPath + "/ThrownPistol.physicsMaterial2D");
+            if (tuning == null || material == null || gunMaterial == null)
+                throw new System.InvalidOperationException("Prototype weapon assets are missing.");
+            pixelMaterials = new Dictionary<Sprite, Material>();
+            BuildPistol(position, m4);
+        }
+
+        // A reusable revolver uses the same pickup, throw and projectile rules as the other guns.
+        internal static PistolWeapon BuildRevolverInOpenScene(Vector2 position)
+        {
+            tuning = AssetDatabase.LoadAssetAtPath<PrototypeTuning>(SettingsPath);
+            square = LoadSprite(ArtPath + "/Square.png");
+            circle = LoadSprite(ArtPath + "/Circle.png");
+            ring = LoadSprite(ArtPath + "/Ring.png");
+            revolverSideArt = LoadSprite(WeaponPath + "/Revolver/Revolver_Side.png", "Revolver_Side_0");
+            revolverTopArt = LoadSprite(WeaponPath + "/Revolver/Revolver_UP.png", "Revolver_UP_0");
+            material = AssetDatabase.LoadAssetAtPath<Material>(ArtPath + "/Primitive.mat");
+            gunMaterial = AssetDatabase.LoadAssetAtPath<PhysicsMaterial2D>(
+                ArtPath + "/ThrownPistol.physicsMaterial2D");
+            Material lit = AssetDatabase.LoadAssetAtPath<Material>(
+                "Assets/AlreadyDead/BuildingKit/Pixel Lit.mat");
+            if (tuning == null || material == null || gunMaterial == null || lit == null)
+                throw new System.InvalidOperationException("Revolver dependencies are missing.");
+            pixelMaterials = new Dictionary<Sprite, Material>();
+
+            var go = new GameObject("Revolver / 6 rounds + 4s reload");
+            go.layer = 9;
+            go.transform.position = position;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, 25f);
+            Rigidbody2D body = go.AddComponent<Rigidbody2D>();
+            body.gravityScale = 0f;
+            body.mass = 0.8f;
+            body.linearDamping = tuning.throwLinearDamping;
+            body.angularDamping = tuning.throwAngularDamping;
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(0.85f, 0.5f);
+            collider.sharedMaterial = gunMaterial;
+            SpriteRenderer halo = Draw("Pickup highlight", go.transform, Vector2.zero,
+                new Vector2(1.1f, 0.7f), Hex(0xffcf71), 9, ring);
+            halo.enabled = false;
+            Transform visual = new GameObject("Visual / recoil").transform;
+            visual.SetParent(go.transform, false);
+            SpriteRenderer ground = Draw("Revolver side / ground", visual, Vector2.zero,
+                Vector2.one * 0.18f, Color.white, 15, revolverSideArt);
+            SpriteRenderer held = Draw("Revolver top / held", visual, Vector2.zero,
+                Vector2.one * 0.18f, Color.white, 15, revolverTopArt);
+            ground.sharedMaterial = lit;
+            held.sharedMaterial = lit;
+            Transform muzzle = new GameObject("Muzzle").transform;
+            muzzle.SetParent(visual, false);
+            muzzle.localPosition = new Vector3(0.43f, 0f, 0f);
+            SpriteRenderer flash = Draw("Muzzle flash", muzzle, new Vector2(0.14f, 0f),
+                new Vector2(0.36f, 0.22f), Hex(0xffecad), 18, circle);
+            flash.enabled = false;
+            PistolWeapon revolver = go.AddComponent<PistolWeapon>();
+            revolver.Configure(tuning, visual, muzzle, halo, flash, square, material);
+            revolver.ConfigureRevolver(ground, held);
+            return revolver;
         }
 
         private static SpearWeapon BuildSpear(Vector2 position)

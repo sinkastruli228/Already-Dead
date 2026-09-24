@@ -2788,7 +2788,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd6f2a415a1c47dd8c9d2d44c4018e91, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.MusketWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   recoilRoot: {fileID: 1741984494}
@@ -5223,7 +5223,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 761546500}
@@ -7175,7 +7175,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28d5af4a39844564b8f3997795345ff5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.AimCamera
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1688119944}
@@ -8896,6 +8896,63 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1001 &170437270
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1226329765961263702, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9081540369385315319, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
+      propertyPath: m_Name
+      value: SwingDoor / push to open / blocks sight while closed
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 127c2581be7004545bc85e70003d61d3, type: 3}
 --- !u!1 &170944958
 GameObject:
   m_ObjectHideFlags: 0
@@ -10643,7 +10700,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9070ecd510d1b814eade12b4cada21d1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PrototypeHud
   player: {fileID: 1688119944}
 --- !u!4 &203978179
@@ -12254,7 +12311,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a024b70686d54e45a76f9f33376261c7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.MagicStaff
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   selectedElement: 0
@@ -12951,7 +13008,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 2024103384}
@@ -13750,7 +13807,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1251159412}
@@ -16601,7 +16658,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 498338813}
@@ -27809,7 +27866,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1623799645}
@@ -30122,7 +30179,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b84ca59f85214978a25d0d1977969acf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PatrolEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1688119944}
@@ -32295,13 +32352,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c62604ea0411345a9be4d0ffa9e6f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PistolWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 413483678}
   muzzle: {fileID: 1829703484}
   highlight: {fileID: 718298071}
   muzzleFlash: {fileID: 1011248967}
+  groundView: {fileID: 0}
+  heldView: {fileID: 0}
+  automatic: 0
+  capacity: 17
   primitiveSprite: {fileID: 21300000, guid: 8ca0ee603227f234ea5fcc8f8363a0e6, type: 3}
   primitiveMaterial: {fileID: 2100000, guid: a905a80315bef58459c91d8efe0ed28c, type: 2}
 --- !u!61 &611412101
@@ -32441,7 +32502,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 605908988}
@@ -36164,7 +36225,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1867982272}
@@ -42186,7 +42247,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 133385725}
@@ -46661,7 +46722,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1236304452}
@@ -52693,7 +52754,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f42e99d7b9c4c6fa8f087239583c4e1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.SpearWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 2060958207}
@@ -53425,7 +53486,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1129590555}
@@ -55968,7 +56029,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1982075816}
@@ -57223,7 +57284,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 2080308014}
@@ -58690,7 +58751,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3e1b8478a8b41c4a37c2e63d51c690d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.FantasyLevelGate
   destinationScene: FantasyScene
 --- !u!58 &1117203918
@@ -59326,7 +59387,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 312084980}
@@ -65480,7 +65541,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1006101809}
@@ -79557,7 +79618,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b84ca59f85214978a25d0d1977969acf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PatrolEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1688119944}
@@ -88028,7 +88089,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2f2e67a9a95e90041b85e14b9efb97eb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.TopDownPlayer
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   facing: {fileID: 662495615}
@@ -88046,7 +88107,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 52431cf282ce4ab4a2f3644a42410d68, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.UnarmedCombat
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   leftFist: {fileID: 388445108}
@@ -88082,7 +88143,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9cd9eb14e2bc46f293ec564e8567b89b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PlayerVitality
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   view: {fileID: 125316024}
@@ -88096,7 +88157,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ad14e81220d54c8aa7659c3f3fd8ab22, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PlayerLimbAnimator
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   body: {fileID: 1688119950}
@@ -90361,7 +90422,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1736396358}
@@ -92341,7 +92402,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1577090324}
@@ -95375,7 +95436,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1620924637}
@@ -98194,7 +98255,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 346896663}
@@ -99049,7 +99110,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1197099666}
@@ -101219,7 +101280,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 1797753935}
@@ -102834,7 +102895,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f58c3882e4a45e0ab1ad31ee0460d5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.RockWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   visual: {fileID: 113763254}
@@ -106082,7 +106143,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f624d84c2564eaba7370694ac6809d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.ClubWeapon
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   swingRoot: {fileID: 79676382}
@@ -109085,7 +109146,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b84ca59f85214978a25d0d1977969acf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PatrolEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1688119944}
@@ -109386,7 +109447,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b84ca59f85214978a25d0d1977969acf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: AlreadyDead.Runtime::AlreadyDead.PatrolEnemy
   tuning: {fileID: 11400000, guid: dc9c0198dbb2b9e46950a472d5df2841, type: 2}
   player: {fileID: 1688119944}
@@ -112072,3 +112133,4 @@ SceneRoots:
   - {fileID: 570905465}
   - {fileID: 203978179}
   - {fileID: 1117203919}
+  - {fileID: 170437270}
