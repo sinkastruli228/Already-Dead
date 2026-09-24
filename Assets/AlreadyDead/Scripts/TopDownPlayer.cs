@@ -97,6 +97,13 @@ namespace AlreadyDead
                 keyboard.escapeKey.wasPressedThisFrame)
                 cursorReleased = !cursorReleased;
 
+            // Restart input must be handled before MovementActive rejects a dead player.
+            if (!IsAlive && keyboard != null && keyboard.rKey.wasPressedThisFrame)
+            {
+                RestartLevel();
+                return;
+            }
+
             Cursor.visible = true;
             moveInput = Vector2.zero;
             fireRequested = false;
@@ -120,7 +127,7 @@ namespace AlreadyDead
                         HeldWeapon.TryReload();
                     else
                     {
-                        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                        RestartLevel();
                         return;
                     }
                 }
@@ -137,6 +144,12 @@ namespace AlreadyDead
                 (HeldWeapon != null && HeldWeapon.Automatic && Mouse.current.leftButton.isPressed);
             interactRequested = Mouse.current.rightButton.wasPressedThisFrame;
             interactReleased = Mouse.current.rightButton.wasReleasedThisFrame;
+        }
+
+        private static void RestartLevel()
+        {
+            if (PauseMenuController.IsPaused) PauseMenuController.Instance.ClosePause();
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
 
         private void FixedUpdate()

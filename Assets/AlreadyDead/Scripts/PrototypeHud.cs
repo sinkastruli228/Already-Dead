@@ -7,15 +7,40 @@ namespace AlreadyDead
     {
         [SerializeField] private TopDownPlayer player;
         private GUIStyle ammoStyle;
+        private GUIStyle deathStyle;
 
         public void Configure(TopDownPlayer target) => player = target;
 
         private void OnGUI()
         {
-            if (player == null || !player.IsAlive || PauseMenuController.IsPaused) return;
+            if (player == null || PauseMenuController.IsPaused) return;
             GUI.depth = -9000;
+            if (!player.IsAlive)
+            {
+                DrawDeathPrompt();
+                return;
+            }
             DrawAmmo();
             DrawThrowCharge();
+        }
+
+        private void DrawDeathPrompt()
+        {
+            Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.55f));
+            if (deathStyle == null)
+            {
+                deathStyle = new GUIStyle(GUI.skin.label)
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                    fontStyle = FontStyle.Bold,
+                    wordWrap = true,
+                    normal = { textColor = Color.white }
+                };
+                Font cupe = Resources.Load<Font>("CUPE");
+                if (cupe != null) deathStyle.font = cupe;
+            }
+            deathStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.height / 18f, 24f, 54f));
+            GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), "YOU DIED\nR - RESTART", deathStyle);
         }
 
         private void DrawAmmo()

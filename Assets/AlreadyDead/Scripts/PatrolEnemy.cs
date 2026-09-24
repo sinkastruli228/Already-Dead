@@ -28,6 +28,14 @@ namespace AlreadyDead
         private float investigationExpiresAt;
         private float investigationEndsAt;
         private int nextWaypoint = 1;
+        private bool wandering;
+        private bool hasWanderTarget;
+        private Vector2 wanderTarget;
+        private Vector2 previousWanderPosition;
+        private float wanderDecisionAt;
+        private float wanderStuckFor;
+        private float wanderSpeedFactor = 1f;
+        private int wanderObstacleMask;
         private float nextAttackTime;
         private float spearWindupStartedAt;
         private bool windingUpSpear;
@@ -46,6 +54,8 @@ namespace AlreadyDead
         public bool Investigating => hasInvestigation;
         public Vector2 InvestigationTarget => investigationTarget;
         public bool SearchingAfterDeath => deathSearch;
+        public bool Wandering => wandering;
+        public Vector2 WanderTarget => wanderTarget;
 
         public void Configure(PrototypeTuning settings, TopDownPlayer target, Transform visual,
             SpriteRenderer indicator, Vector2 first, Vector2 second)
@@ -72,8 +82,24 @@ namespace AlreadyDead
             hasDetour = false;
             hasInvestigation = false;
             deathSearch = false;
+            wandering = false;
+            hasWanderTarget = false;
             if (alert != null) alert.enabled = false;
             Face((patrolB - patrolA).normalized);
+        }
+
+        // Saloon enemies roam through open space instead of repeating their scene route.
+        // The route is retained for enemies in other scenes and for manual placement.
+        public void EnableWandering()
+        {
+            wandering = true;
+            hasWanderTarget = false;
+            wanderDecisionAt = Time.time + Random.Range(0.15f, 1.2f);
+            wanderStuckFor = 0f;
+            previousWanderPosition = Body.position;
+            wanderObstacleMask = tuning.wallMask.value;
+            int furnitureLayer = LayerMask.NameToLayer("Furniture");
+            if (furnitureLayer >= 0) wanderObstacleMask |= 1 << furnitureLayer;
         }
 
         private void Awake()
@@ -206,6 +232,12 @@ namespace AlreadyDead
                 }
             }
 
+            if (wandering)
+            {
+                UpdateWandering(position);
+                return;
+            }
+
             if (patrolRoute == null || patrolRoute.Length == 0)
                 patrolRoute = new[] { patrolA, patrolB };
             Vector2 waypoint = patrolRoute[nextWaypoint];
@@ -219,6 +251,72 @@ namespace AlreadyDead
             moveDirection = path.sqrMagnitude > 0.0001f
                 ? path.normalized * tuning.enemyPatrolSpeed * SpeedMultiplier : Vector2.zero;
             Face(path);
+        }
+
+        private void UpdateWandering(Vector2 position)
+        {
+            if (!hasWanderTarget)
+            {
+                moveDirection = Vector2.zero;
+                if (Time.time >= wanderDecisionAt) ChooseWanderTarget(position);
+                return;
+            }
+
+            Vector2 path = wanderTarget - position;
+            float distance = path.magnitude;
+            if (distance <= Mathf.Max(0.28f, tuning.enemyWaypointTolerance))
+            {
+                PauseWandering();
+                return;
+            }
+            Vector2 direction = path / distance;
+            if (Physics2D.CircleCast(position, hitbox.radius * 0.9f, direction,
+                    distance, wanderObstacleMask))
+            {
+                PauseWandering();
+                return;
+            }
+
+            wanderStuckFor = Vector2.Distance(position, previousWanderPosition) < 0.004f
+                ? wanderStuckFor + Time.deltaTime : 0f;
+            previousWanderPosition = position;
+            if (wanderStuckFor >= 0.7f)
+            {
+                PauseWandering();
+                return;
+            }
+            moveDirection = direction * (tuning.enemyPatrolSpeed * wanderSpeedFactor * SpeedMultiplier);
+            Face(direction);
+        }
+
+        private void ChooseWanderTarget(Vector2 position)
+        {
+            for (int attempt = 0; attempt < 20; attempt++)
+            {
+                Vector2 direction = Random.insideUnitCircle.normalized;
+                if (direction.sqrMagnitude < 0.5f) continue;
+                float distance = Random.Range(1.4f, 4.8f);
+                Vector2 target = position + direction * distance;
+                if (Physics2D.OverlapCircle(target, hitbox.radius + 0.12f,
+                        wanderObstacleMask) ||
+                    Physics2D.CircleCast(position, hitbox.radius * 0.9f, direction,
+                        distance, wanderObstacleMask)) continue;
+                wanderTarget = target;
+                hasWanderTarget = true;
+                wanderStuckFor = 0f;
+                wanderSpeedFactor = Random.Range(0.6f, 0.95f);
+                previousWanderPosition = position;
+                return;
+            }
+            wanderDecisionAt = Time.time + Random.Range(0.5f, 1.3f);
+        }
+
+        private void PauseWandering()
+        {
+            hasWanderTarget = false;
+            moveDirection = Vector2.zero;
+            wanderStuckFor = 0f;
+            wanderDecisionAt = Time.time + Random.Range(0.6f, 2.2f);
         }
 
         private void FixedUpdate()
@@ -244,6 +342,7 @@ namespace AlreadyDead
             hasInvestigation = false;
             deathSearch = false;
             hasDetour = false;
+            hasWanderTarget = false;
         }
 
         public void ReceivePunch(Vector2 direction, float force) => TakeDamage(1, direction);
@@ -266,6 +365,7 @@ namespace AlreadyDead
                 hasInvestigation = false;
                 deathSearch = false;
                 hasDetour = false;
+                hasWanderTarget = false;
                 return;
             }
             BloodEffect.SpawnKill(Body.position, direction);
@@ -312,6 +412,7 @@ namespace AlreadyDead
             reachedInvestigation = false;
             deathSearch = false;
             hasDetour = false;
+            hasWanderTarget = false;
             Face(position - Body.position);
             float travelTime = Vector2.Distance(Body.position, position) /
                 Mathf.Max(0.1f, tuning.enemyPatrolSpeed);
@@ -328,6 +429,7 @@ namespace AlreadyDead
             reachedInvestigation = false;
             deathSearch = true;
             hasDetour = false;
+            hasWanderTarget = false;
             deathSearchFacing = position - Body.position;
             if (deathSearchFacing.sqrMagnitude < 0.0001f) deathSearchFacing = facing.right;
             deathSearchFacing.Normalize();

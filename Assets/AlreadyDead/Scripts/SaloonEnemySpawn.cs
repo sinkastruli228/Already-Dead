@@ -24,11 +24,15 @@ namespace AlreadyDead
 
         private void Start()
         {
-            if (hasSceneRoute) return;
-            TopDownPlayer player = FindFirstObjectByType<TopDownPlayer>();
-            Vector2 first = transform.position;
-            GetComponent<PatrolEnemy>().ConfigureRoute(tuning, player, facing, null,
-                new[] { first, first + Vector2.right * 1.2f });
+            PatrolEnemy enemy = GetComponent<PatrolEnemy>();
+            if (!hasSceneRoute)
+            {
+                TopDownPlayer player = FindFirstObjectByType<TopDownPlayer>();
+                Vector2 first = transform.position;
+                enemy.ConfigureRoute(tuning, player, facing, null,
+                    new[] { first, first + Vector2.right * 1.2f });
+            }
+            enemy.EnableWandering();
         }
     }
 }
