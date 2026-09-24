@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace AlreadyDead
 {
@@ -15,6 +17,10 @@ namespace AlreadyDead
         private float shakeRemaining;
         private float shakeStrength;
         private float shakeDuration;
+        private VolumeProfile imageEffectsProfile;
+        private LensDistortion lensDistortion;
+        private const float BaseDistortion = -0.14f;
+        private const float ShotDistortion = -0.12f;
         public float ShakeRemaining => shakeRemaining;
         public Camera View => view != null ? view : view = GetComponent<Camera>();
 
@@ -29,6 +35,42 @@ namespace AlreadyDead
             View.orthographicSize = tuning.cameraSize;
             smoothPosition = player.transform.position;
             transform.position = new Vector3(smoothPosition.x, smoothPosition.y, -10f);
+            ConfigureImageEffects();
+        }
+
+        private void ConfigureImageEffects()
+        {
+            UniversalAdditionalCameraData cameraData = View.GetUniversalAdditionalCameraData();
+            cameraData.renderPostProcessing = true;
+            cameraData.volumeLayerMask |= 1 << gameObject.layer;
+            Volume volume = GetComponent<Volume>();
+            if (volume == null)
+            {
+                volume = gameObject.AddComponent<Volume>();
+                imageEffectsProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+                volume.profile = imageEffectsProfile;
+            }
+            else imageEffectsProfile = volume.profile;
+            volume.isGlobal = true;
+            volume.priority = 10f;
+            volume.weight = 1f;
+            volume.enabled = true;
+
+            if (!imageEffectsProfile.TryGet(out FilmGrain grain))
+                grain = imageEffectsProfile.Add<FilmGrain>(true);
+            grain.type.Override(FilmGrainLookup.Thin1);
+            grain.intensity.Override(0.48f);
+            grain.response.Override(1f);
+
+            if (!imageEffectsProfile.TryGet(out lensDistortion))
+                lensDistortion = imageEffectsProfile.Add<LensDistortion>(true);
+            lensDistortion.intensity.Override(BaseDistortion);
+            lensDistortion.scale.Override(1f);
+        }
+
+        private void OnDestroy()
+        {
+            if (imageEffectsProfile != null) Destroy(imageEffectsProfile);
         }
 
         public Vector2 ScreenToWorld(Vector2 pixel)
@@ -59,6 +101,9 @@ namespace AlreadyDead
                 shake = new Vector2(Mathf.PerlinNoise(Time.time * 55f, 0.1f) - 0.5f,
                     Mathf.PerlinNoise(0.7f, Time.time * 55f) - 0.5f) * (2f * shakeStrength * envelope);
             }
+            if (lensDistortion != null)
+                lensDistortion.intensity.value = BaseDistortion + ShotDistortion *
+                    (shakeRemaining > 0f ? shakeRemaining / shakeDuration : 0f);
 
             // Clamp the final position, including follow lag and shot shake.
             Vector2 offset = Vector2.ClampMagnitude(smoothPosition + shake - center, tuning.maxCameraOffset);

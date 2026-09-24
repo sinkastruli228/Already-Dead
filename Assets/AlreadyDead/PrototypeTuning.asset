@@ -26,7 +26,7 @@ MonoBehaviour:
   lookAheadWeight: 0.28
   maxCameraOffset: 2.6
   cameraSmoothTime: 0.13
-  shotShakeStrength: 0.12
+  shotShakeStrength: 0.15
   shotShakeDuration: 0.14
   shotInterval: 0.16
   m4ShotInterval: 0.075

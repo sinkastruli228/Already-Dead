@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace AlreadyDead
 {
@@ -22,6 +23,7 @@ namespace AlreadyDead
         private float nextShotTime;
         private float recoil;
         private float flashUntil;
+        private Light2D shotLight;
 
         public bool IsHeld => owner != null;
         public bool GroundViewVisible => groundView != null && groundView.enabled;
@@ -62,6 +64,7 @@ namespace AlreadyDead
             SetHighlighted(false);
             SetHeldView(false);
             if (muzzleFlash != null) muzzleFlash.enabled = false;
+            shotLight = FirearmVisuals.PrepareMuzzle(muzzleFlash, muzzle, 8.4f);
         }
 
         private void OnDestroy()
@@ -74,6 +77,7 @@ namespace AlreadyDead
             recoil = Mathf.MoveTowards(recoil, 0f, tuning.recoilReturnSpeed * Time.deltaTime);
             if (recoilRoot != null) recoilRoot.localPosition = Vector3.left * recoil;
             if (muzzleFlash != null) muzzleFlash.enabled = IsHeld && Time.time < flashUntil;
+            FirearmVisuals.UpdateMuzzleLight(shotLight, IsHeld, flashUntil, 0.075f, 14f);
         }
 
         public void SetHighlighted(bool value)

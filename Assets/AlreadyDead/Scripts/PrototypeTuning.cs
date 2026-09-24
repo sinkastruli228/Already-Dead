@@ -24,7 +24,7 @@ namespace AlreadyDead
         [Range(0f, 0.8f)] public float lookAheadWeight = 0.28f;
         [Min(0f)] public float maxCameraOffset = 2.6f;
         [Min(0.01f)] public float cameraSmoothTime = 0.13f;
-        [Min(0f)] public float shotShakeStrength = 0.12f;
+        [Min(0f)] public float shotShakeStrength = 0.15f;
         [Min(0.01f)] public float shotShakeDuration = 0.14f;
 
         [Header("Pistol")]

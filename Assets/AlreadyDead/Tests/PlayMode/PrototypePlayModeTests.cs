@@ -1023,6 +1023,35 @@ namespace AlreadyDead.Tests
             Assert.That(Object.FindObjectsByType<ShotEffect>().Length, Is.GreaterThan(0));
         }
 
+        [Test]
+        public void RevolverBulletRicochetsFiveTimesThenVanishesAtTheNextWall()
+        {
+            player.enabled = false;
+            var left = new GameObject("Ricochet test / left wall");
+            var right = new GameObject("Ricochet test / right wall");
+            left.layer = 8;
+            right.layer = 8;
+            left.transform.position = new Vector2(99f, 100f);
+            right.transform.position = new Vector2(101f, 100f);
+            left.AddComponent<BoxCollider2D>().size = new Vector2(0.2f, 4f);
+            right.AddComponent<BoxCollider2D>().size = new Vector2(0.2f, 4f);
+            Physics2D.SyncTransforms();
+
+            Projectile bullet = Projectile.Spawn(new Vector2(100f, 100f), Vector2.right,
+                player.Tuning, null, null, maxRicochets: 5);
+            for (int i = 0; i < 100 && bullet.RicochetsRemaining > 0; i++)
+                bullet.Step(0.01f);
+            Assert.That(bullet.RicochetsRemaining, Is.Zero);
+            Assert.That(bullet.gameObject.activeSelf, Is.True,
+                "The fifth ricochet still leaves the bullet in flight");
+            for (int i = 0; i < 100 && bullet.gameObject.activeSelf; i++)
+                bullet.Step(0.01f);
+            Assert.That(bullet.gameObject.activeSelf, Is.False,
+                "The next wall collision consumes the revolver bullet");
+            Object.DestroyImmediate(left);
+            Object.DestroyImmediate(right);
+        }
+
         [UnityTest]
         public IEnumerator CameraFollowsCursorAndNeverExceedsMaximumOffset()
         {

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace AlreadyDead
 {
@@ -16,6 +17,8 @@ namespace AlreadyDead
         [SerializeField] private int capacity = 17;
         [SerializeField] private bool revolver;
         [SerializeField] private float revolverReloadSeconds = 4f;
+        [SerializeField] private bool infiniteAmmo;
+        [SerializeField, Min(0)] private int extraRicochets;
         [SerializeField] private Sprite primitiveSprite;
         [SerializeField] private Material primitiveMaterial;
         private Rigidbody2D body;
@@ -25,6 +28,7 @@ namespace AlreadyDead
         private float recoil;
         private float flashUntil;
         private PhysicsMaterial2D runtimeMaterial;
+        private Light2D shotLight;
         private int cylinderAmmo;
         private float reloadStartedAt;
         private bool reloading;
@@ -33,9 +37,12 @@ namespace AlreadyDead
         public float Recoil => recoil;
         public int ShotsFired { get; private set; }
         public int Capacity => capacity;
-        public int RemainingAmmo => revolver ? cylinderAmmo : Mathf.Max(0, capacity - ShotsFired);
+        public int RemainingAmmo => infiniteAmmo ? int.MaxValue :
+            revolver ? cylinderAmmo : Mathf.Max(0, capacity - ShotsFired);
         public bool Automatic => automatic;
         public bool IsRevolver => revolver;
+        public bool HasInfiniteAmmo => infiniteAmmo;
+        public int RicochetCount => revolver ? 5 : extraRicochets;
         public bool IsReloading => reloading;
         public float ReloadProgress01 => reloading
             ? Mathf.Clamp01((Time.time - reloadStartedAt) / revolverReloadSeconds) : 0f;
@@ -74,6 +81,12 @@ namespace AlreadyDead
             revolverReloadSeconds = 4f;
         }
 
+        public void ConfigureSpecialAmmo(bool unlimited, int ricochets)
+        {
+            infiniteAmmo = unlimited;
+            extraRicochets = Mathf.Max(0, ricochets);
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
@@ -87,6 +100,7 @@ namespace AlreadyDead
             hitbox.sharedMaterial = runtimeMaterial;
             SetHighlighted(false);
             muzzleFlash.enabled = false;
+            shotLight = FirearmVisuals.PrepareMuzzle(muzzleFlash, muzzle, 6.3f);
             SetHeldView(false);
         }
 
@@ -105,6 +119,7 @@ namespace AlreadyDead
             recoil = Mathf.MoveTowards(recoil, 0f, tuning.recoilReturnSpeed * Time.deltaTime);
             visual.localPosition = Vector3.left * recoil;
             muzzleFlash.enabled = IsHeld && Time.time < flashUntil;
+            FirearmVisuals.UpdateMuzzleLight(shotLight, IsHeld, flashUntil, 0.045f, 11.2f);
         }
 
         public void SetHighlighted(bool value)
@@ -195,7 +210,10 @@ namespace AlreadyDead
             if (blocked)
                 ShotEffect.Impact(blocked.point, blocked.normal, primitiveSprite, primitiveMaterial);
             else
-                Projectile.Spawn(barrel, shotDirection, tuning, primitiveSprite, primitiveMaterial);
+                Projectile.Spawn(barrel, shotDirection, tuning, primitiveSprite, primitiveMaterial,
+                    projectileName: revolver ? "Revolver bullet / five ricochets" :
+                        extraRicochets > 0 ? "M4 ricochet bullet" : "Pistol bullet",
+                    maxRicochets: RicochetCount);
 
             LastShotDirection = shotDirection;
             ShotsFired++;

@@ -45,10 +45,12 @@ namespace AlreadyDead
 
         private void DrawAmmo()
         {
+            bool unlimited = false;
             int remaining;
             int capacity;
             if (player.HeldWeapon != null)
             {
+                unlimited = player.HeldWeapon.HasInfiniteAmmo;
                 remaining = player.HeldWeapon.RemainingAmmo;
                 capacity = player.HeldWeapon.Capacity;
             }
@@ -71,7 +73,7 @@ namespace AlreadyDead
                 if (cupe != null) ammoStyle.font = cupe;
             }
             GUI.Label(new Rect(Screen.width - 190f, 20f, 160f, 48f),
-                remaining + "/" + capacity, ammoStyle);
+                unlimited ? "INF/INF" : remaining + "/" + capacity, ammoStyle);
         }
 
         private void DrawThrowCharge()
