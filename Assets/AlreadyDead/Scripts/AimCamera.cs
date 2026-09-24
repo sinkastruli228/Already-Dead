@@ -19,6 +19,8 @@ namespace AlreadyDead
         private float shakeDuration;
         private VolumeProfile imageEffectsProfile;
         private LensDistortion lensDistortion;
+        private Transform deathFocus;
+        private float deathZoomVelocity;
         private const float BaseDistortion = -0.14f;
         private const float ShotDistortion = -0.12f;
         public float ShakeRemaining => shakeRemaining;
@@ -84,10 +86,31 @@ namespace AlreadyDead
                 tuning.maxCameraOffset);
         }
 
+        public void FocusOnDeath(Transform killer)
+        {
+            deathFocus = killer;
+            smoothVelocity = Vector2.zero;
+        }
+
         private void LateUpdate()
         {
             if (player == null) return;
             Vector2 center = player.transform.position;
+            if (!player.IsAlive)
+            {
+                Vector2 other = deathFocus != null ? (Vector2)deathFocus.position : center;
+                Vector2 focus = (center + other) * 0.5f;
+                smoothPosition = Vector2.SmoothDamp(smoothPosition, focus, ref smoothVelocity,
+                    0.35f, Mathf.Infinity, Time.deltaTime);
+                float halfWidth = Mathf.Abs(center.x - other.x) * 0.5f + 3.4f;
+                float halfHeight = Mathf.Abs(center.y - other.y) * 0.5f + 3.4f;
+                float targetSize = Mathf.Max(tuning.cameraSize, halfHeight,
+                    halfWidth / Mathf.Max(0.5f, View.aspect));
+                View.orthographicSize = Mathf.SmoothDamp(View.orthographicSize,
+                    targetSize, ref deathZoomVelocity, 0.35f, Mathf.Infinity, Time.deltaTime);
+                transform.position = new Vector3(smoothPosition.x, smoothPosition.y, -10f);
+                return;
+            }
             Vector2 look = player.InputActive && Mouse.current != null
                 ? LookOffset(center, ScreenToWorld(Mouse.current.position.ReadValue())) : Vector2.zero;
             smoothPosition = Vector2.SmoothDamp(smoothPosition, center + look, ref smoothVelocity,

@@ -617,7 +617,7 @@ namespace AlreadyDead.Editor
                 throw new System.InvalidOperationException("Revolver dependencies are missing.");
             pixelMaterials = new Dictionary<Sprite, Material>();
 
-            var go = new GameObject("Revolver / 6 rounds + 4s reload");
+            var go = new GameObject("Revolver / 6 rounds + 2s reload");
             go.layer = 9;
             go.transform.position = position;
             go.transform.rotation = Quaternion.Euler(0f, 0f, 25f);

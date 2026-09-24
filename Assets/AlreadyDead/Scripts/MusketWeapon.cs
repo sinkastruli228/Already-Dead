@@ -155,7 +155,11 @@ namespace AlreadyDead
             RaycastHit2D blocked = Physics2D.CircleCast(origin, tuning.bulletRadius,
                 barrelDelta.normalized, barrelDelta.magnitude, tuning.wallMask);
             if (blocked)
+            {
+                PushDoor2D door = blocked.collider.GetComponentInParent<PushDoor2D>();
+                if (door != null) door.PushFrom(origin, direction, 2.4f);
                 ShotEffect.Impact(blocked.point, blocked.normal, primitiveSprite, primitiveMaterial);
+            }
             else
                 Projectile.Spawn(barrel, direction, tuning, primitiveSprite, primitiveMaterial,
                     tuning.musketDamage, "Musket bullet / lethal");

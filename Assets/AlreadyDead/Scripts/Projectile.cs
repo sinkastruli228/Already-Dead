@@ -12,12 +12,14 @@ namespace AlreadyDead
         private Material primitiveMaterial;
         private int maxRicochets;
         private int ricochetsRemaining;
+        private bool hostile;
+        private Transform attacker;
         public Vector2 Direction => direction;
         public int RicochetsRemaining => ricochetsRemaining;
 
         public static Projectile Spawn(Vector2 origin, Vector2 heading, PrototypeTuning settings,
             Sprite sprite, Material material, int hitDamage = 1, string projectileName = "Pistol bullet",
-            int maxRicochets = 0)
+            int maxRicochets = 0, bool hostileToPlayer = false, Transform source = null)
         {
             var go = new GameObject(projectileName);
             go.transform.position = origin;
@@ -38,6 +40,8 @@ namespace AlreadyDead
             bullet.direction = heading.normalized;
             bullet.maxRicochets = Mathf.Max(0, maxRicochets);
             bullet.ricochetsRemaining = bullet.maxRicochets;
+            bullet.hostile = hostileToPlayer;
+            bullet.attacker = source;
             bullet.remaining = bullet.maxRicochets > 0
                 ? Mathf.Max(12f, settings.bulletLifetime) : settings.bulletLifetime;
             bullet.damage = Mathf.Max(1, hitDamage);
@@ -57,15 +61,28 @@ namespace AlreadyDead
             }
             float distance = tuning.bulletSpeed * Mathf.Min(seconds, remaining);
             // Swept collision, not just overlaps: fast bullets cannot skip thin walls.
+            int mask = (int)tuning.wallMask | (hostile ? 1 << 10 : (int)tuning.enemyMask);
             RaycastHit2D hit = Physics2D.CircleCast(transform.position, tuning.bulletRadius,
-                direction, distance, tuning.wallMask | tuning.enemyMask);
+                direction, distance, mask);
             if (hit)
             {
-                PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
-                if (enemy != null) enemy.TakeDamage(damage, direction);
-                else if (hit.collider.GetComponentInParent<FantasyEnemy>() is FantasyEnemy fantasyEnemy)
-                    fantasyEnemy.TakeDamage(damage, direction);
-                else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+                PushDoor2D door = hit.collider.GetComponentInParent<PushDoor2D>();
+                if (door != null)
+                    door.PushFrom(transform.position, direction, 1.8f);
+                if (hostile)
+                {
+                    TopDownPlayer player = hit.collider.GetComponentInParent<TopDownPlayer>();
+                    if (player != null) player.Vitality.TakeHit(damage, attacker);
+                    else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+                }
+                else
+                {
+                    PatrolEnemy enemy = hit.collider.GetComponentInParent<PatrolEnemy>();
+                    if (enemy != null) enemy.TakeDamage(damage, direction);
+                    else if (hit.collider.GetComponentInParent<FantasyEnemy>() is FantasyEnemy fantasyEnemy)
+                        fantasyEnemy.TakeDamage(damage, direction);
+                    else ShotEffect.Impact(hit.point, hit.normal, primitiveSprite, primitiveMaterial);
+                }
                 gameObject.SetActive(false);
                 Destroy(gameObject);
                 return;
@@ -110,6 +127,8 @@ namespace AlreadyDead
                 }
 
                 Vector2 normal = hit.normal.sqrMagnitude > 0.0001f ? hit.normal : -direction;
+                PushDoor2D door = hit.collider.GetComponentInParent<PushDoor2D>();
+                if (door != null) door.PushFrom(position, direction, 1.8f);
                 ShotEffect.Impact(hit.point, normal, primitiveSprite, primitiveMaterial);
                 if (ricochetsRemaining == 0)
                 {

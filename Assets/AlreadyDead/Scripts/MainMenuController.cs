@@ -97,9 +97,18 @@ namespace AlreadyDead
 
         public void ContinueGame()
         {
+            StartScene(GameplaySceneName);
+        }
+
+        public void StartCavemen() => StartScene("SampleScene");
+        public void StartHospital() => StartScene("BuildingParkingScene");
+        public void StartSaloon() => StartScene("SaloonScene");
+
+        private static void StartScene(string sceneName)
+        {
             Time.timeScale = 1f;
             AudioListener.pause = false;
-            SceneManager.LoadScene(GameplaySceneName);
+            SceneManager.LoadScene(sceneName);
         }
 
         public void ShowSettings()
@@ -183,19 +192,31 @@ namespace AlreadyDead
 
         private void DrawMainPage()
         {
-            float width = Screen.width * 0.28f;
-            float height = width * assets.continueButton.height / assets.continueButton.width;
-            float x = Screen.width * 0.052f;
-            float firstY = Screen.height * 0.44f;
-            float step = Screen.height * 0.18f;
+            float square = Mathf.Min(Screen.width * 0.17f, Screen.height * 0.25f);
+            float gap = square * 0.18f;
+            float left = (Screen.width - square * 3f - gap * 2f) * 0.5f;
+            float top = Screen.height * 0.47f;
+            var squareStyle = new GUIStyle(GUI.skin.button)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(square * 0.13f, 18f, 30f)),
+                fontStyle = FontStyle.Bold,
+                wordWrap = true
+            };
+            if (GUI.Button(new Rect(left, top, square, square), "ПЕЩЕРНЫЕ", squareStyle))
+                StartCavemen();
+            if (GUI.Button(new Rect(left + square + gap, top, square, square), "БОЛЬНИЦА", squareStyle))
+                StartHospital();
+            if (GUI.Button(new Rect(left + (square + gap) * 2f, top, square, square), "САЛУН", squareStyle))
+                StartSaloon();
 
-            Rect continueRect = new Rect(x, firstY, width, height);
-            Rect settingsRect = new Rect(x, firstY + step, width, height);
-            Rect exitRect = new Rect(x, firstY + step * 2f, width, height);
-
-            if (TextureButton(continueRect, assets.continueButton)) ContinueGame();
-            if (TextureButton(settingsRect, assets.settingsButton)) ShowSettings();
-            if (TextureButton(exitRect, assets.exitButton)) RequestQuit();
+            float width = Screen.width * 0.20f;
+            float height = width * assets.settingsButton.height / assets.settingsButton.width;
+            float controlsY = Mathf.Min(Screen.height - height - 12f, top + square + gap);
+            if (TextureButton(new Rect(Screen.width * 0.25f - width * 0.5f,
+                    controlsY, width, height), assets.settingsButton)) ShowSettings();
+            if (TextureButton(new Rect(Screen.width * 0.75f - width * 0.5f,
+                    controlsY, width, height), assets.exitButton)) RequestQuit();
         }
 
         private void DrawSettingsPage()

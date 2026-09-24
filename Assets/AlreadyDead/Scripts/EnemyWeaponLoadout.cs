@@ -36,6 +36,12 @@ namespace AlreadyDead
 
         private void Awake()
         {
+            if (GetComponent<EnemyRevolver>() != null || GetComponent<EnemyGlock>() != null)
+            {
+                Kind = EnemyWeaponKind.Empty;
+                equipped = null;
+                return;
+            }
             Kind = guaranteedSpear ? EnemyWeaponKind.Spear :
                 (EnemyWeaponKind)Random.Range(0, 4);
             equipped = Kind switch
@@ -79,7 +85,7 @@ namespace AlreadyDead
 
         public bool TryThrowSpear(Vector2 origin, Vector2 direction)
         {
-            if (!CanThrowSpear || !spear.ThrowFromEnemy(origin, direction)) return false;
+            if (!CanThrowSpear || !spear.ThrowFromEnemy(origin, direction, transform)) return false;
             spearWindup01 = 0f;
             equipped = null;
             Kind = EnemyWeaponKind.Empty;

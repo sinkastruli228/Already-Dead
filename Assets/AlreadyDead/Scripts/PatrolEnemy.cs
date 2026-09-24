@@ -17,6 +17,8 @@ namespace AlreadyDead
         private Rigidbody2D body;
         private CircleCollider2D hitbox;
         private EnemyWeaponLoadout loadout;
+        private EnemyRevolver revolver;
+        private EnemyGlock glock;
         private Vector2 moveDirection;
         private Vector2 detourTarget;
         private bool hasDetour;
@@ -37,6 +39,7 @@ namespace AlreadyDead
         private float wanderSpeedFactor = 1f;
         private int wanderObstacleMask;
         private float nextAttackTime;
+        private float alertedAt = float.NegativeInfinity;
         private float spearWindupStartedAt;
         private bool windingUpSpear;
         private float slowedUntil;
@@ -78,6 +81,7 @@ namespace AlreadyDead
             nextWaypoint = patrolRoute.Length > 1 ? 1 : 0;
             health = 1;
             Alerted = false;
+            alertedAt = float.NegativeInfinity;
             windingUpSpear = false;
             hasDetour = false;
             hasInvestigation = false;
@@ -107,6 +111,8 @@ namespace AlreadyDead
             body = GetComponent<Rigidbody2D>();
             hitbox = GetComponent<CircleCollider2D>();
             loadout = GetComponent<EnemyWeaponLoadout>();
+            revolver = GetComponent<EnemyRevolver>();
+            glock = GetComponent<EnemyGlock>();
             nextWaypoint = patrolRoute != null && patrolRoute.Length > 1 ? 1 : 0;
             body.gravityScale = 0f;
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
@@ -126,6 +132,38 @@ namespace AlreadyDead
 
             if (Alerted)
             {
+                if (glock != null)
+                {
+                    bool clearGlockShot = !Physics2D.Linecast(position,
+                        player.transform.position, tuning.wallMask);
+                    moveDirection = PathDirection(position, player.transform.position) *
+                        tuning.enemyChaseSpeed * SpeedMultiplier;
+                    Face(toPlayer);
+                    if (distance <= EnemyGlock.FireRange && clearGlockShot &&
+                        Time.time - alertedAt >= 0.2f)
+                    {
+                        if (glock.TryFire(toPlayer)) AttacksMade++;
+                    }
+                    return;
+                }
+                if (revolver != null)
+                {
+                    bool revolverShotClear = !Physics2D.Linecast(position,
+                        player.transform.position, tuning.wallMask);
+                    if (distance <= EnemyRevolver.FireRange && revolverShotClear)
+                    {
+                        moveDirection = Vector2.zero;
+                        Face(toPlayer);
+                        if (revolver.TryFire(toPlayer)) AttacksMade++;
+                    }
+                    else
+                    {
+                        moveDirection = PathDirection(position, player.transform.position) *
+                            tuning.enemyChaseSpeed * SpeedMultiplier;
+                        Face(moveDirection);
+                    }
+                    return;
+                }
                 float attackRange = tuning.enemyAttackRange + (loadout != null ? loadout.AttackRangeBonus : 0f);
                 bool clearShot = !Physics2D.Linecast(position, player.transform.position, tuning.wallMask);
                 if (windingUpSpear)
@@ -169,7 +207,8 @@ namespace AlreadyDead
                         nextAttackTime = Time.time + tuning.enemyAttackInterval;
                         AttacksMade++;
                         loadout?.PlayAttack();
-                        player.Vitality.TakeHit(loadout != null ? loadout.AttackDamage : 1);
+                        player.Vitality.TakeHit(loadout != null ? loadout.AttackDamage : 1,
+                            transform);
                     }
                 }
                 else if (loadout != null && loadout.CanThrowSpear &&
@@ -270,11 +309,18 @@ namespace AlreadyDead
                 return;
             }
             Vector2 direction = path / distance;
-            if (Physics2D.CircleCast(position, hitbox.radius * 0.9f, direction,
-                    distance, wanderObstacleMask))
+            RaycastHit2D wanderObstacle = Physics2D.CircleCast(position, hitbox.radius * 0.9f,
+                direction, distance, wanderObstacleMask);
+            if (wanderObstacle)
             {
-                PauseWandering();
-                return;
+                PushDoor2D door = wanderObstacle.collider.GetComponentInParent<PushDoor2D>();
+                if (door == null)
+                {
+                    PauseWandering();
+                    return;
+                }
+                if (wanderObstacle.distance < 1.3f)
+                    door.PushFrom(position, direction, 0.16f);
             }
 
             wanderStuckFor = Vector2.Distance(position, previousWanderPosition) < 0.004f
@@ -298,9 +344,11 @@ namespace AlreadyDead
                 float distance = Random.Range(1.4f, 4.8f);
                 Vector2 target = position + direction * distance;
                 if (Physics2D.OverlapCircle(target, hitbox.radius + 0.12f,
-                        wanderObstacleMask) ||
-                    Physics2D.CircleCast(position, hitbox.radius * 0.9f, direction,
-                        distance, wanderObstacleMask)) continue;
+                        wanderObstacleMask)) continue;
+                RaycastHit2D obstacle = Physics2D.CircleCast(position,
+                    hitbox.radius * 0.9f, direction, distance, wanderObstacleMask);
+                if (obstacle && obstacle.collider.GetComponentInParent<PushDoor2D>() == null)
+                    continue;
                 wanderTarget = target;
                 hasWanderTarget = true;
                 wanderStuckFor = 0f;
@@ -339,6 +387,7 @@ namespace AlreadyDead
         {
             if (!IsAlive || player == null || !player.IsAlive) return;
             Alerted = true;
+            alertedAt = Time.time;
             hasInvestigation = false;
             deathSearch = false;
             hasDetour = false;
@@ -372,6 +421,7 @@ namespace AlreadyDead
             EnemyAttraction.EmitDeath(Body.position, tuning.enemyDeathAttractionRadius,
                 tuning.wallMask);
             loadout?.DropOnDeath();
+            glock?.DropOnDeath();
             Stop();
             hitbox.enabled = false;
             Body.simulated = false;
@@ -456,53 +506,9 @@ namespace AlreadyDead
 
         private Vector2 PathDirection(Vector2 position, Vector2 target)
         {
-            Vector2 toTarget = target - position;
-            if (toTarget.sqrMagnitude < 0.0001f) return Vector2.zero;
-            Vector2 direct = toTarget.normalized;
-            RaycastHit2D wall = Physics2D.CircleCast(position, hitbox.radius, direct,
-                toTarget.magnitude, tuning.wallMask);
-            if (!wall)
-            {
-                hasDetour = false;
-                return direct;
-            }
-
-            if (hasDetour)
-            {
-                Vector2 path = detourTarget - position;
-                float length = path.magnitude;
-                if (length > 0.2f && !Physics2D.CircleCast(position, hitbox.radius,
-                        path / length, length, tuning.wallMask))
-                    return path / length;
-                hasDetour = false;
-            }
-
-            Bounds bounds = wall.collider.bounds;
-            float clearance = hitbox.radius + 0.2f;
-            Vector2[] corners =
-            {
-                new Vector2(bounds.min.x - clearance, bounds.min.y - clearance),
-                new Vector2(bounds.min.x - clearance, bounds.max.y + clearance),
-                new Vector2(bounds.max.x + clearance, bounds.min.y - clearance),
-                new Vector2(bounds.max.x + clearance, bounds.max.y + clearance)
-            };
-            Vector2 best = Vector2.zero;
-            float bestCost = float.PositiveInfinity;
-            foreach (Vector2 corner in corners)
-            {
-                Vector2 path = corner - position;
-                float length = path.magnitude;
-                if (length < 0.3f) continue;
-                if (Physics2D.CircleCast(position, hitbox.radius, path / length,
-                        length, tuning.wallMask)) continue;
-                float cost = length + Vector2.Distance(corner, target);
-                if (cost >= bestCost) continue;
-                bestCost = cost;
-                best = path / length;
-                detourTarget = corner;
-            }
-            hasDetour = best != Vector2.zero;
-            return hasDetour ? best : direct;
+            int mask = (int)tuning.wallMask | (1 << 12);
+            return EnemyNavigation2D.Direction(position, target, hitbox.radius,
+                mask, ref hasDetour, ref detourTarget);
         }
     }
 }

@@ -294,12 +294,12 @@ namespace AlreadyDead
             AttacksMade++;
             if (kind == FantasyEnemyKind.Knight)
             {
-                player.Vitality.TakeHit(1);
+                player.Vitality.TakeHit(1, transform);
             }
             else
             {
                 FantasyEnemyBolt.Spawn(Body.position + direction * 0.48f, direction,
-                    tuning, player, mageElement, boltSprite, boltMaterial);
+                    tuning, player, mageElement, boltSprite, boltMaterial, transform);
             }
         }
 
@@ -312,51 +312,9 @@ namespace AlreadyDead
 
         private Vector2 PathDirection(Vector2 position, Vector2 target)
         {
-            Vector2 toTarget = target - position;
-            if (toTarget.sqrMagnitude < 0.0001f) return Vector2.zero;
-            Vector2 direct = toTarget.normalized;
-            RaycastHit2D wall = Physics2D.CircleCast(position, hitbox.radius, direct,
-                toTarget.magnitude, tuning.wallMask);
-            if (!wall)
-            {
-                hasDetour = false;
-                return direct;
-            }
-
-            if (hasDetour)
-            {
-                Vector2 path = detourTarget - position;
-                float length = path.magnitude;
-                if (length > 0.2f && !Physics2D.CircleCast(position, hitbox.radius,
-                        path / length, length, tuning.wallMask)) return path / length;
-                hasDetour = false;
-            }
-
-            Bounds bounds = wall.collider.bounds;
-            float clearance = hitbox.radius + 0.2f;
-            Vector2[] corners =
-            {
-                new Vector2(bounds.min.x - clearance, bounds.min.y - clearance),
-                new Vector2(bounds.min.x - clearance, bounds.max.y + clearance),
-                new Vector2(bounds.max.x + clearance, bounds.min.y - clearance),
-                new Vector2(bounds.max.x + clearance, bounds.max.y + clearance)
-            };
-            Vector2 best = Vector2.zero;
-            float bestCost = float.PositiveInfinity;
-            foreach (Vector2 corner in corners)
-            {
-                Vector2 path = corner - position;
-                float length = path.magnitude;
-                if (length < 0.3f || Physics2D.CircleCast(position, hitbox.radius,
-                        path / length, length, tuning.wallMask)) continue;
-                float cost = length + Vector2.Distance(corner, target);
-                if (cost >= bestCost) continue;
-                bestCost = cost;
-                best = path / length;
-                detourTarget = corner;
-            }
-            hasDetour = best != Vector2.zero;
-            return hasDetour ? best : direct;
+            int mask = (int)tuning.wallMask | (1 << 12);
+            return EnemyNavigation2D.Direction(position, target, hitbox.radius,
+                mask, ref hasDetour, ref detourTarget);
         }
     }
 
@@ -366,9 +324,11 @@ namespace AlreadyDead
         private TopDownPlayer target;
         private Vector2 direction;
         private float remaining;
+        private Transform attacker;
 
         public static FantasyEnemyBolt Spawn(Vector2 origin, Vector2 heading, PrototypeTuning settings,
-            TopDownPlayer player, MagicElement element, Sprite sprite, Material material)
+            TopDownPlayer player, MagicElement element, Sprite sprite, Material material,
+            Transform source = null)
         {
             var go = new GameObject("Mage bolt / " + element);
             go.transform.position = origin;
@@ -385,6 +345,7 @@ namespace AlreadyDead
             FantasyEnemyBolt bolt = go.AddComponent<FantasyEnemyBolt>();
             bolt.tuning = settings;
             bolt.target = player;
+            bolt.attacker = source;
             bolt.direction = heading.normalized;
             bolt.remaining = 1.6f;
             return bolt;
@@ -406,7 +367,7 @@ namespace AlreadyDead
             if (hit)
             {
                 if (hit.collider.GetComponentInParent<TopDownPlayer>() == target)
-                    target.Vitality.TakeHit(1);
+                    target.Vitality.TakeHit(1, attacker);
                 Destroy(gameObject);
                 return;
             }

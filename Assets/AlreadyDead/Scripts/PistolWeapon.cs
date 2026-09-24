@@ -16,7 +16,7 @@ namespace AlreadyDead
         [SerializeField] private bool automatic;
         [SerializeField] private int capacity = 17;
         [SerializeField] private bool revolver;
-        [SerializeField] private float revolverReloadSeconds = 4f;
+        [SerializeField] private float revolverReloadSeconds = 2f;
         [SerializeField] private bool infiniteAmmo;
         [SerializeField, Min(0)] private int extraRicochets;
         [SerializeField] private Sprite primitiveSprite;
@@ -24,6 +24,7 @@ namespace AlreadyDead
         private Rigidbody2D body;
         private BoxCollider2D hitbox;
         private TopDownPlayer owner;
+        private bool enemyCarried;
         private float nextShotTime;
         private float recoil;
         private float flashUntil;
@@ -78,8 +79,11 @@ namespace AlreadyDead
         {
             ConfigureFirearm(6, false, groundSprite, heldSprite);
             revolver = true;
-            revolverReloadSeconds = 4f;
+            revolverReloadSeconds = 2f;
         }
+
+        public void SetRevolverReloadSeconds(float seconds) =>
+            revolverReloadSeconds = Mathf.Max(0.1f, seconds);
 
         public void ConfigureSpecialAmmo(bool unlimited, int ricochets)
         {
@@ -118,8 +122,9 @@ namespace AlreadyDead
             }
             recoil = Mathf.MoveTowards(recoil, 0f, tuning.recoilReturnSpeed * Time.deltaTime);
             visual.localPosition = Vector3.left * recoil;
-            muzzleFlash.enabled = IsHeld && Time.time < flashUntil;
-            FirearmVisuals.UpdateMuzzleLight(shotLight, IsHeld, flashUntil, 0.045f, 11.2f);
+            bool carried = IsHeld || enemyCarried;
+            muzzleFlash.enabled = carried && Time.time < flashUntil;
+            FirearmVisuals.UpdateMuzzleLight(shotLight, carried, flashUntil, 0.045f, 11.2f);
         }
 
         public void SetHighlighted(bool value)
@@ -129,6 +134,7 @@ namespace AlreadyDead
 
         public void Equip(Transform socket, TopDownPlayer player)
         {
+            enemyCarried = false;
             owner = player;
             Body.linearVelocity = Vector2.zero;
             Body.angularVelocity = 0f;
@@ -208,7 +214,11 @@ namespace AlreadyDead
             RaycastHit2D blocked = Physics2D.CircleCast(origin, tuning.bulletRadius, barrelDelta.normalized,
                 barrelDelta.magnitude, tuning.wallMask);
             if (blocked)
+            {
+                PushDoor2D door = blocked.collider.GetComponentInParent<PushDoor2D>();
+                if (door != null) door.PushFrom(origin, shotDirection, 1.8f);
                 ShotEffect.Impact(blocked.point, blocked.normal, primitiveSprite, primitiveMaterial);
+            }
             else
                 Projectile.Spawn(barrel, shotDirection, tuning, primitiveSprite, primitiveMaterial,
                     projectileName: revolver ? "Revolver bullet / five ricochets" :
@@ -224,6 +234,64 @@ namespace AlreadyDead
             muzzleFlash.enabled = true;
             camera.Kick();
             return true;
+        }
+
+        public void HoldForEnemy()
+        {
+            enemyCarried = true;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            Body.simulated = false;
+            Hitbox.enabled = false;
+            SetHeldView(true);
+            SetHighlighted(false);
+        }
+
+        public bool TryFireFromEnemy(Vector2 origin, Vector2 aimDirection)
+        {
+            if (!enemyCarried || revolver || RemainingAmmo == 0 ||
+                Time.time < nextShotTime || aimDirection.sqrMagnitude < 0.0001f) return false;
+
+            nextShotTime = Time.time + (automatic ? tuning.m4ShotInterval : 0.5f);
+            Vector2 shotDirection = Quaternion.Euler(0f, 0f,
+                Random.Range(-3f, 3f)) * aimDirection.normalized;
+            Vector2 barrel = muzzle.position;
+            Vector2 reach = barrel - origin;
+            RaycastHit2D blocked = Physics2D.CircleCast(origin, tuning.bulletRadius,
+                reach.normalized, reach.magnitude, tuning.wallMask);
+            if (blocked)
+            {
+                PushDoor2D door = blocked.collider.GetComponentInParent<PushDoor2D>();
+                if (door != null) door.PushFrom(origin, shotDirection, 1.8f);
+                ShotEffect.Impact(blocked.point, blocked.normal, primitiveSprite, primitiveMaterial);
+            }
+            else
+                Projectile.Spawn(barrel, shotDirection, tuning, primitiveSprite, primitiveMaterial,
+                    projectileName: automatic ? "Enemy M4 bullet" : "Enemy Glock bullet",
+                    hostileToPlayer: true, source: GetComponentInParent<PatrolEnemy>()?.transform);
+
+            ShotsFired++;
+            flashUntil = Time.time + 0.045f;
+            muzzleFlash.enabled = true;
+            return true;
+        }
+
+        public void DropFromEnemy(Vector2 position)
+        {
+            if (!enemyCarried) return;
+            enemyCarried = false;
+            transform.SetParent(null, true);
+            transform.position = position;
+            SetHeldView(false);
+            flashUntil = 0f;
+            muzzleFlash.enabled = false;
+            Hitbox.enabled = true;
+            Body.simulated = true;
+            Body.position = position;
+            Body.rotation = transform.eulerAngles.z;
+            Body.linearVelocity = Vector2.zero;
+            Body.angularVelocity = 0f;
+            SetHighlighted(false);
         }
 
         public bool TryReload()

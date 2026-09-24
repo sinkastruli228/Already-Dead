@@ -24,13 +24,14 @@ namespace AlreadyDead
             if (tuning != null) Health = 1;
         }
 
-        public bool TakeHit(int damage)
+        public bool TakeHit(int damage, Transform attacker = null)
         {
             if (!IsAlive || Time.time < nextDamageTime) return false;
             Health = 0;
             LastHitTime = Time.time;
             nextDamageTime = Time.time + tuning.playerHitInvulnerability;
             if (view != null) view.Kick(tuning.shotShakeStrength, tuning.shotShakeDuration);
+            DeathSceneEffect.Begin(transform, attacker, view != null ? view.View : Camera.main);
             return true;
         }
     }

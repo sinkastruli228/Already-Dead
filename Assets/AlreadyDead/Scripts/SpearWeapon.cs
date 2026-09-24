@@ -24,6 +24,7 @@ namespace AlreadyDead
         private Rigidbody2D body;
         private BoxCollider2D hitbox;
         private TopDownPlayer owner;
+        private Transform enemyAttacker;
         private Vector3 visualRest;
         private Vector3 shadowRestScale;
         private SpriteRenderer[] shadowRenderers;
@@ -265,9 +266,10 @@ namespace AlreadyDead
             return true;
         }
 
-        public bool ThrowFromEnemy(Vector2 origin, Vector2 direction)
+        public bool ThrowFromEnemy(Vector2 origin, Vector2 direction, Transform attacker = null)
         {
             if (owner != null || isFlying || direction.sqrMagnitude < 0.001f) return false;
+            enemyAttacker = attacker;
             Launch(origin, direction, 0.5f, true);
             return true;
         }
@@ -378,7 +380,7 @@ namespace AlreadyDead
             {
                 TopDownPlayer target = collider.GetComponentInParent<TopDownPlayer>();
                 if (target == null || !target.IsAlive) return false;
-                target.Vitality.TakeHit(1);
+                target.Vitality.TakeHit(1, enemyAttacker);
                 return true;
             }
             PatrolEnemy enemy = collider.GetComponentInParent<PatrolEnemy>();

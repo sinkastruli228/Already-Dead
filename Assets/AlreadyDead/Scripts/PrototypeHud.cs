@@ -8,6 +8,8 @@ namespace AlreadyDead
         [SerializeField] private TopDownPlayer player;
         private GUIStyle ammoStyle;
         private GUIStyle deathStyle;
+        private GUIStyle deadStyle;
+        private GUIStyle restartStyle;
 
         public void Configure(TopDownPlayer target) => player = target;
 
@@ -26,21 +28,44 @@ namespace AlreadyDead
 
         private void DrawDeathPrompt()
         {
-            Fill(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.55f));
             if (deathStyle == null)
             {
                 deathStyle = new GUIStyle(GUI.skin.label)
                 {
                     alignment = TextAnchor.MiddleCenter,
                     fontStyle = FontStyle.Bold,
-                    wordWrap = true,
-                    normal = { textColor = Color.white }
+                    normal = { textColor = Color.black }
                 };
                 Font cupe = Resources.Load<Font>("CUPE");
                 if (cupe != null) deathStyle.font = cupe;
+                deadStyle = new GUIStyle(deathStyle);
+                deadStyle.normal.textColor = new Color(0.82f, 0.08f, 0.09f);
+                restartStyle = new GUIStyle(deathStyle);
             }
-            deathStyle.fontSize = Mathf.RoundToInt(Mathf.Clamp(Screen.height / 18f, 24f, 54f));
-            GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), "YOU DIED\nR - RESTART", deathStyle);
+            float appear = Mathf.Clamp01((Time.time - player.Vitality.LastHitTime - 0.45f) / 0.55f);
+            Color previous = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, appear);
+            int size = Mathf.RoundToInt(Mathf.Clamp(
+                Mathf.Min(Screen.height / 16f, Screen.width / 20f), 28f, 64f));
+            deathStyle.fontSize = size;
+            deadStyle.fontSize = size;
+            restartStyle.fontSize = Mathf.RoundToInt(size * 0.32f);
+            Camera camera = player.View != null ? player.View.View : Camera.main;
+            Vector3 point = camera != null
+                ? camera.WorldToScreenPoint(player.transform.position)
+                : new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 1f);
+            float x = point.x;
+            float y = Screen.height - point.y;
+            float gap = size * 0.9f;
+            Vector2 youSize = deathStyle.CalcSize(new GUIContent("YOU ARE"));
+            Vector2 deadSize = deadStyle.CalcSize(new GUIContent("DEAD"));
+            GUI.Label(new Rect(x - gap - youSize.x, y - youSize.y * 0.5f,
+                youSize.x, youSize.y), "YOU ARE", deathStyle);
+            GUI.Label(new Rect(x + gap, y - deadSize.y * 0.5f,
+                deadSize.x, deadSize.y), "DEAD", deadStyle);
+            GUI.Label(new Rect(x - size * 2.2f, y + size * 1.45f,
+                size * 4.4f, size * 0.5f), "R - RESTART", restartStyle);
+            GUI.color = previous;
         }
 
         private void DrawAmmo()

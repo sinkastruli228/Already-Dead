@@ -23,6 +23,11 @@ namespace AlreadyDead
 
         private void Awake()
         {
+            if (GetComponent<EnemyRevolver>() != null)
+            {
+                if (display != null) display.enabled = false;
+                return;
+            }
             Equip(Random.Range(0, 2) == 0 ? PropKind.Knife : PropKind.Beer);
         }
 

@@ -354,12 +354,14 @@ namespace AlreadyDead.Editor
             // Keep all three existing pickups available beside the player spawn.
             MoveRoot(scene, "Glock / 17 rounds", -2f, -20.5f);
             MoveRoot(scene, "M4 / 25 rounds automatic", 2f, -20.5f);
-            MoveRoot(scene, "Revolver / 6 rounds + 4s reload", 0f, -22f);
+            MoveRoot(scene, "Revolver / 6 rounds + 2s reload", 0f, -22f);
         }
 
         private static void MoveRoot(Scene scene, string name, float x, float y)
         {
             Transform root = FindRoot(scene, name);
+            if (root == null && name == "Revolver / 6 rounds + 2s reload")
+                root = FindRoot(scene, "Revolver / 6 rounds + 4s reload");
             if (root == null) throw new InvalidOperationException("Existing Saloon weapon missing: " + name);
             root.position = new Vector3(x, y, root.position.z);
         }

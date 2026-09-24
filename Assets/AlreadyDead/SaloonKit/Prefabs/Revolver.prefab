@@ -63,7 +63,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0.21643962, w: 0.976296}
   m_LocalPosition: {x: 0, y: -14.5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1254343939529319969}
@@ -165,7 +165,9 @@ MonoBehaviour:
   automatic: 0
   capacity: 6
   revolver: 1
-  revolverReloadSeconds: 4
+  revolverReloadSeconds: 2
+  infiniteAmmo: 0
+  extraRicochets: 0
   primitiveSprite: {fileID: 21300000, guid: 8ca0ee603227f234ea5fcc8f8363a0e6, type: 3}
   primitiveMaterial: {fileID: 2100000, guid: a905a80315bef58459c91d8efe0ed28c, type: 2}
 --- !u!1 &612080681412776088
