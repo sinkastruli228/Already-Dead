@@ -145,11 +145,8 @@ namespace AlreadyDead
         public void RequestQuit()
         {
             QuitRequested = true;
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            ClosePause();
+            SceneManager.LoadScene(MainMenuController.MenuSceneName);
         }
 
         private void RestoreGameplayState()

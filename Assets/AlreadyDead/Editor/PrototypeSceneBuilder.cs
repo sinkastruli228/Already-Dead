@@ -160,9 +160,9 @@ namespace AlreadyDead.Editor
             }
             if (!hasPrototype) buildScenes.Insert(0, new EditorBuildSettingsScene(ScenePath, true));
             EditorBuildSettings.scenes = buildScenes.ToArray();
-            PlayerSettings.defaultScreenWidth = 1440;
-            PlayerSettings.defaultScreenHeight = 900;
-            PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+            PlayerSettings.defaultScreenWidth = 1920;
+            PlayerSettings.defaultScreenHeight = 1080;
+            PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
             PlayerSettings.resizableWindow = true;
             AssetDatabase.SaveAssets();
             Debug.Log("ALREADY_DEAD_SCENE_READY: " + ScenePath);

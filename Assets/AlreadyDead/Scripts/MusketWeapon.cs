@@ -169,6 +169,7 @@ namespace AlreadyDead
             recoilRoot.localPosition = Vector3.left * recoil;
             flashUntil = Time.time + 0.075f;
             if (muzzleFlash != null) muzzleFlash.enabled = true;
+            GameAudio.PlayShot();
             if (camera != null)
                 camera.Kick(tuning.shotShakeStrength * tuning.musketShakeMultiplier,
                     tuning.shotShakeDuration * 1.35f);

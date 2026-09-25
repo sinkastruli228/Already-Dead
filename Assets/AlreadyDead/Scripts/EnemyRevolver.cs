@@ -71,9 +71,14 @@ namespace AlreadyDead
             rounds--;
             ShotsFired++;
             nextShotTime = Time.time + 0.65f;
-            if (rounds == 0) reloadUntil = Time.time + 2f;
+            if (rounds == 0)
+            {
+                reloadUntil = Time.time + 2f;
+                GameAudio.PlayReload();
+            }
             flashUntil = Time.time + 0.045f;
             if (muzzleFlash != null) muzzleFlash.enabled = true;
+            GameAudio.PlayShot();
             return true;
         }
     }

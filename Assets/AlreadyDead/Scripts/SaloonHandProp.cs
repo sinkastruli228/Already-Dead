@@ -11,14 +11,19 @@ namespace AlreadyDead
         [SerializeField] private SpriteRenderer display;
         [SerializeField] private Sprite knife;
         [SerializeField] private Sprite beer;
+        [SerializeField] private bool forceKnife;
+
+        private float swingStartedAt = float.NegativeInfinity;
 
         public PropKind Kind { get; private set; }
 
-        public void Configure(SpriteRenderer renderer, Sprite knifeSprite, Sprite beerSprite)
+        public void Configure(SpriteRenderer renderer, Sprite knifeSprite, Sprite beerSprite,
+            bool alwaysKnife = false)
         {
             display = renderer;
             knife = knifeSprite;
             beer = beerSprite;
+            forceKnife = alwaysKnife;
         }
 
         private void Awake()
@@ -28,8 +33,19 @@ namespace AlreadyDead
                 if (display != null) display.enabled = false;
                 return;
             }
-            Equip(Random.Range(0, 2) == 0 ? PropKind.Knife : PropKind.Beer);
+            Equip(forceKnife || Random.Range(0, 2) == 0 ? PropKind.Knife : PropKind.Beer);
         }
+
+        private void Update()
+        {
+            if (display == null || Kind != PropKind.Knife) return;
+            float progress = (Time.time - swingStartedAt) / 0.22f;
+            float swing = progress >= 0f && progress < 1f
+                ? Mathf.Sin(progress * Mathf.PI) * 65f : 0f;
+            display.transform.localRotation = Quaternion.Euler(0f, 0f, -90f + swing);
+        }
+
+        public void PlayAttack() => swingStartedAt = Time.time;
 
         public void Equip(PropKind kind)
         {
@@ -42,7 +58,7 @@ namespace AlreadyDead
             display.transform.localRotation = Quaternion.Euler(0f, 0f,
                 kind == PropKind.Knife ? -90f : 0f);
             display.transform.localScale = Vector3.one *
-                (kind == PropKind.Knife ? 0.13f : 0.14f);
+                (kind == PropKind.Knife ? 0.182f : 0.14f);
         }
     }
 }

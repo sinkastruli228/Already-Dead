@@ -232,6 +232,7 @@ namespace AlreadyDead
             visual.localPosition = Vector3.left * recoil;
             flashUntil = Time.time + 0.045f;
             muzzleFlash.enabled = true;
+            GameAudio.PlayShot();
             camera.Kick();
             return true;
         }
@@ -273,6 +274,7 @@ namespace AlreadyDead
             ShotsFired++;
             flashUntil = Time.time + 0.045f;
             muzzleFlash.enabled = true;
+            GameAudio.PlayShot();
             return true;
         }
 
@@ -299,6 +301,7 @@ namespace AlreadyDead
             if (!revolver || !IsHeld || reloading || cylinderAmmo >= capacity) return false;
             reloadStartedAt = Time.time;
             reloading = true;
+            GameAudio.PlayReload();
             return true;
         }
 

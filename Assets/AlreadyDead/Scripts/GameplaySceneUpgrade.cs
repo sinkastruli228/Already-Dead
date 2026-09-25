@@ -165,6 +165,7 @@ namespace AlreadyDead
             go.transform.localScale = Vector3.one * scale;
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite;
+            renderer.sharedMaterial = projectileMaterial;
             renderer.sortingOrder = order;
             return renderer;
         }

@@ -19,6 +19,7 @@ namespace AlreadyDead
         private EnemyWeaponLoadout loadout;
         private EnemyRevolver revolver;
         private EnemyGlock glock;
+        private SaloonHandProp handProp;
         private Vector2 moveDirection;
         private Vector2 detourTarget;
         private bool hasDetour;
@@ -39,7 +40,8 @@ namespace AlreadyDead
         private float wanderSpeedFactor = 1f;
         private int wanderObstacleMask;
         private float nextAttackTime;
-        private float alertedAt = float.NegativeInfinity;
+        private const float FirearmAimDelay = 0.2f;
+        private float firearmAimStartedAt = float.NegativeInfinity;
         private float spearWindupStartedAt;
         private bool windingUpSpear;
         private float slowedUntil;
@@ -81,7 +83,7 @@ namespace AlreadyDead
             nextWaypoint = patrolRoute.Length > 1 ? 1 : 0;
             health = 1;
             Alerted = false;
-            alertedAt = float.NegativeInfinity;
+            firearmAimStartedAt = float.NegativeInfinity;
             windingUpSpear = false;
             hasDetour = false;
             hasInvestigation = false;
@@ -113,7 +115,9 @@ namespace AlreadyDead
             loadout = GetComponent<EnemyWeaponLoadout>();
             revolver = GetComponent<EnemyRevolver>();
             glock = GetComponent<EnemyGlock>();
+            handProp = GetComponent<SaloonHandProp>();
             nextWaypoint = patrolRoute != null && patrolRoute.Length > 1 ? 1 : 0;
+            firearmAimStartedAt = float.NegativeInfinity;
             body.gravityScale = 0f;
             body.constraints |= RigidbodyConstraints2D.FreezeRotation;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
@@ -139,8 +143,7 @@ namespace AlreadyDead
                     moveDirection = PathDirection(position, player.transform.position) *
                         tuning.enemyChaseSpeed * SpeedMultiplier;
                     Face(toPlayer);
-                    if (distance <= EnemyGlock.FireRange && clearGlockShot &&
-                        Time.time - alertedAt >= 0.2f)
+                    if (CanFireAfterAim(distance <= EnemyGlock.FireRange && clearGlockShot))
                     {
                         if (glock.TryFire(toPlayer)) AttacksMade++;
                     }
@@ -150,11 +153,13 @@ namespace AlreadyDead
                 {
                     bool revolverShotClear = !Physics2D.Linecast(position,
                         player.transform.position, tuning.wallMask);
-                    if (distance <= EnemyRevolver.FireRange && revolverShotClear)
+                    bool canFireRevolver = distance <= EnemyRevolver.FireRange && revolverShotClear;
+                    bool aimComplete = CanFireAfterAim(canFireRevolver);
+                    if (canFireRevolver)
                     {
                         moveDirection = Vector2.zero;
                         Face(toPlayer);
-                        if (revolver.TryFire(toPlayer)) AttacksMade++;
+                        if (aimComplete && revolver.TryFire(toPlayer)) AttacksMade++;
                     }
                     else
                     {
@@ -164,7 +169,8 @@ namespace AlreadyDead
                     }
                     return;
                 }
-                float attackRange = tuning.enemyAttackRange + (loadout != null ? loadout.AttackRangeBonus : 0f);
+                float attackRange = tuning.enemyAttackRange + (loadout != null ? loadout.AttackRangeBonus : 0f)
+                    + (handProp != null && handProp.Kind == SaloonHandProp.PropKind.Knife ? 0.18f : 0f);
                 bool clearShot = !Physics2D.Linecast(position, player.transform.position, tuning.wallMask);
                 if (windingUpSpear)
                 {
@@ -207,6 +213,7 @@ namespace AlreadyDead
                         nextAttackTime = Time.time + tuning.enemyAttackInterval;
                         AttacksMade++;
                         loadout?.PlayAttack();
+                        handProp?.PlayAttack();
                         player.Vitality.TakeHit(loadout != null ? loadout.AttackDamage : 1,
                             transform);
                     }
@@ -387,7 +394,7 @@ namespace AlreadyDead
         {
             if (!IsAlive || player == null || !player.IsAlive) return;
             Alerted = true;
-            alertedAt = Time.time;
+            firearmAimStartedAt = float.NegativeInfinity;
             hasInvestigation = false;
             deathSearch = false;
             hasDetour = false;
@@ -433,6 +440,7 @@ namespace AlreadyDead
             CancelSpearWindup();
             moveDirection = Vector2.zero;
             Alerted = false;
+            firearmAimStartedAt = float.NegativeInfinity;
             hasDetour = false;
             hasInvestigation = false;
             deathSearch = false;
@@ -443,6 +451,18 @@ namespace AlreadyDead
         {
             windingUpSpear = false;
             loadout?.SetSpearWindup(0f);
+        }
+
+        private bool CanFireAfterAim(bool shotAvailable)
+        {
+            if (!shotAvailable)
+            {
+                firearmAimStartedAt = float.NegativeInfinity;
+                return false;
+            }
+            if (float.IsNegativeInfinity(firearmAimStartedAt))
+                firearmAimStartedAt = Time.time;
+            return Time.time - firearmAimStartedAt >= FirearmAimDelay;
         }
 
         public bool CanInvestigate(Vector2 position, float radius) =>

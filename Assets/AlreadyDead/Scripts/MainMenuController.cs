@@ -7,6 +7,7 @@ namespace AlreadyDead
     public enum MainMenuPage
     {
         Main,
+        Levels,
         Settings
     }
 
@@ -36,10 +37,30 @@ namespace AlreadyDead
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => instance = null;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void StartFullscreen()
+        {
+#if !UNITY_EDITOR
+            Resolution display = Screen.currentResolution;
+            int scale = Mathf.Max(1, Mathf.FloorToInt(Mathf.Min(
+                display.width / 16f, display.height / 9f)));
+            Screen.SetResolution(scale * 16, scale * 9, FullScreenMode.FullScreenWindow);
+#endif
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
-            if (SceneManager.GetActiveScene().name != MenuSceneName) return;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            EnsureMenu(SceneManager.GetActiveScene());
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => EnsureMenu(scene);
+
+        private static void EnsureMenu(Scene scene)
+        {
+            if (scene.name != MenuSceneName) return;
             if (FindAnyObjectByType<MainMenuController>() != null) return;
 
             var root = new GameObject("Main menu");
@@ -82,7 +103,7 @@ namespace AlreadyDead
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame &&
-                Page == MainMenuPage.Settings)
+                Page != MainMenuPage.Main)
             {
                 ShowMain();
             }
@@ -97,7 +118,7 @@ namespace AlreadyDead
 
         public void ContinueGame()
         {
-            StartScene(GameplaySceneName);
+            Page = MainMenuPage.Levels;
         }
 
         public void StartCavemen() => StartScene("SampleScene");
@@ -149,6 +170,8 @@ namespace AlreadyDead
             SetPixelPerfect(assets.background);
             SetPixelPerfect(assets.logo);
             SetPixelPerfect(assets.continueButton);
+            SetPixelPerfect(assets.buttonBackground);
+            SetPixelPerfect(assets.levelButton);
             SetPixelPerfect(assets.settingsButton);
             SetPixelPerfect(assets.exitButton);
             SetPixelPerfect(assets.backButton);
@@ -179,6 +202,7 @@ namespace AlreadyDead
             DrawLogo();
 
             if (Page == MainMenuPage.Main) DrawMainPage();
+            else if (Page == MainMenuPage.Levels) DrawLevelsPage();
             else DrawSettingsPage();
         }
 
@@ -192,31 +216,61 @@ namespace AlreadyDead
 
         private void DrawMainPage()
         {
-            float square = Mathf.Min(Screen.width * 0.17f, Screen.height * 0.25f);
-            float gap = square * 0.18f;
-            float left = (Screen.width - square * 3f - gap * 2f) * 0.5f;
-            float top = Screen.height * 0.47f;
-            var squareStyle = new GUIStyle(GUI.skin.button)
+            float width = Mathf.Min(Screen.width * 0.28f, Screen.height * 0.48f);
+            float height = width * assets.continueButton.height / assets.continueButton.width;
+            float x = Screen.width * 0.12f;
+            float firstY = Screen.height * 0.47f;
+            float gap = height * 0.24f;
+            if (TextureButton(new Rect(x, firstY, width, height), assets.continueButton))
+                ContinueGame();
+            if (TextureButton(new Rect(x, firstY + height + gap, width, height),
+                    assets.settingsButton)) ShowSettings();
+            if (TextureButton(new Rect(x, firstY + (height + gap) * 2f, width, height),
+                    assets.exitButton)) RequestQuit();
+        }
+
+        private void DrawLevelsPage()
+        {
+            float width = Mathf.Min(Screen.width * 0.78f, Screen.height * 1.5f);
+            float height = Mathf.Min(Screen.height * 0.48f, width * 0.48f);
+            Rect panel = new Rect((Screen.width - width) * 0.5f,
+                Screen.height * 0.39f, width, height);
+            GUI.DrawTexture(panel, assets.buttonBackground, ScaleMode.StretchToFill, true);
+
+            float headerWidth = Mathf.Min(width * 0.39f, Screen.height * 0.55f);
+            float headerHeight = headerWidth * assets.continueButton.height /
+                assets.continueButton.width;
+            GUI.DrawTexture(new Rect(panel.center.x - headerWidth * 0.5f,
+                panel.y - headerHeight * 0.55f, headerWidth, headerHeight),
+                assets.continueButton, ScaleMode.StretchToFill, true);
+
+            float square = Mathf.Min(height * 0.57f, width * 0.24f);
+            float gap = square * 0.22f;
+            float left = panel.center.x - (square * 3f + gap * 2f) * 0.5f;
+            float top = panel.center.y - square * 0.38f;
+            var label = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = Mathf.RoundToInt(Mathf.Clamp(square * 0.13f, 18f, 30f)),
+                fontSize = Mathf.RoundToInt(Mathf.Clamp(square * 0.12f, 18f, 34f)),
                 fontStyle = FontStyle.Bold,
-                wordWrap = true
+                normal = { textColor = Color.black }
             };
-            if (GUI.Button(new Rect(left, top, square, square), "ПЕЩЕРНЫЕ", squareStyle))
-                StartCavemen();
-            if (GUI.Button(new Rect(left + square + gap, top, square, square), "БОЛЬНИЦА", squareStyle))
-                StartHospital();
-            if (GUI.Button(new Rect(left + (square + gap) * 2f, top, square, square), "САЛУН", squareStyle))
-                StartSaloon();
+            DrawLevelButton(new Rect(left, top, square, square), "ПЕЩЕРА", label, StartCavemen);
+            DrawLevelButton(new Rect(left + square + gap, top, square, square),
+                "БОЛЬНИЦА", label, StartHospital);
+            DrawLevelButton(new Rect(left + (square + gap) * 2f, top, square, square),
+                "САЛУН", label, StartSaloon);
 
-            float width = Screen.width * 0.20f;
-            float height = width * assets.settingsButton.height / assets.settingsButton.width;
-            float controlsY = Mathf.Min(Screen.height - height - 12f, top + square + gap);
-            if (TextureButton(new Rect(Screen.width * 0.25f - width * 0.5f,
-                    controlsY, width, height), assets.settingsButton)) ShowSettings();
-            if (TextureButton(new Rect(Screen.width * 0.75f - width * 0.5f,
-                    controlsY, width, height), assets.exitButton)) RequestQuit();
+            float backSize = Mathf.Min(Screen.width, Screen.height) * 0.105f;
+            if (TextureButton(new Rect(Screen.width * 0.045f,
+                    Screen.height * 0.79f, backSize, backSize), assets.backButton)) ShowMain();
+        }
+
+        private void DrawLevelButton(Rect rect, string title, GUIStyle style, System.Action start)
+        {
+            GUI.DrawTexture(rect, assets.levelButton, ScaleMode.StretchToFill, true);
+            GUI.Label(rect, title, style);
+            if (GUI.Button(rect, GUIContent.none, invisibleButton)) start();
         }
 
         private void DrawSettingsPage()

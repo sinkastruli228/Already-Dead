@@ -136,6 +136,7 @@ namespace AlreadyDead
                     return;
                 }
 
+                GameAudio.PlayRicochet(hit.point);
                 position += direction * hit.distance;
                 position += normal * (tuning.bulletRadius + 0.02f);
                 travel = Mathf.Max(0f, travel - hit.distance - 0.02f);

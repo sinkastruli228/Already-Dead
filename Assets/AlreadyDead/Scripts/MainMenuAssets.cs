@@ -8,6 +8,8 @@ namespace AlreadyDead
         public Texture2D background;
         public Texture2D logo;
         public Texture2D continueButton;
+        public Texture2D buttonBackground;
+        public Texture2D levelButton;
         public Texture2D settingsButton;
         public Texture2D exitButton;
         public Texture2D backButton;
@@ -15,7 +17,8 @@ namespace AlreadyDead
         public Texture2D soundOff;
 
         public bool IsComplete => background != null && logo != null &&
-            continueButton != null && settingsButton != null && exitButton != null &&
+            continueButton != null && buttonBackground != null && levelButton != null &&
+            settingsButton != null && exitButton != null &&
             backButton != null && soundOn != null && soundOff != null;
     }
 }

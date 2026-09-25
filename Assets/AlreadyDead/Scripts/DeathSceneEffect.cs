@@ -18,19 +18,28 @@ namespace AlreadyDead
         private Color oldBackground;
         private float startedAt;
         private Material characterMaterial;
+        public bool FadeComplete { get; private set; }
 
         public static void Begin(Transform player, Transform killer, Camera camera)
         {
             var root = new GameObject("Death / fading world");
-            root.AddComponent<DeathSceneEffect>().Setup(player, killer, camera);
+            root.AddComponent<DeathSceneEffect>().Setup(player, killer, camera, true);
         }
 
-        private void Setup(Transform player, Transform killer, Camera camera)
+        public static DeathSceneEffect BeginVictory(Transform player, Camera camera)
+        {
+            var root = new GameObject("Victory / fading world");
+            var effect = root.AddComponent<DeathSceneEffect>();
+            effect.Setup(player, null, camera, false);
+            return effect;
+        }
+
+        private void Setup(Transform player, Transform killer, Camera camera, bool focusKiller)
         {
             view = camera;
             oldBackground = view != null ? view.backgroundColor : Color.black;
             startedAt = Time.time;
-            if (view != null) view.GetComponent<AimCamera>()?.FocusOnDeath(killer);
+            if (focusKiller && view != null) view.GetComponent<AimCamera>()?.FocusOnDeath(killer);
 
             Shader unlit = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
             if (unlit == null) unlit = Shader.Find("Sprites/Default");
@@ -91,6 +100,7 @@ namespace AlreadyDead
             if (progress < 1f) return;
             foreach (Renderer renderer in otherRenderers)
                 if (renderer != null) renderer.enabled = false;
+            FadeComplete = true;
             enabled = false;
         }
 

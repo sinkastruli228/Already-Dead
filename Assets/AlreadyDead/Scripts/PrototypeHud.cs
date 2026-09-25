@@ -16,6 +16,7 @@ namespace AlreadyDead
         private void OnGUI()
         {
             if (player == null || PauseMenuController.IsPaused) return;
+            if (VictorySequence.IsFinishing) return;
             GUI.depth = -9000;
             if (!player.IsAlive)
             {
@@ -32,15 +33,20 @@ namespace AlreadyDead
             {
                 deathStyle = new GUIStyle(GUI.skin.label)
                 {
-                    alignment = TextAnchor.MiddleCenter,
+                    alignment = TextAnchor.MiddleRight,
                     fontStyle = FontStyle.Bold,
+                    wordWrap = false,
+                    clipping = TextClipping.Overflow,
+                    padding = new RectOffset(0, 0, 0, 0),
                     normal = { textColor = Color.black }
                 };
                 Font cupe = Resources.Load<Font>("CUPE");
                 if (cupe != null) deathStyle.font = cupe;
                 deadStyle = new GUIStyle(deathStyle);
+                deadStyle.alignment = TextAnchor.MiddleLeft;
                 deadStyle.normal.textColor = new Color(0.82f, 0.08f, 0.09f);
                 restartStyle = new GUIStyle(deathStyle);
+                restartStyle.alignment = TextAnchor.MiddleCenter;
             }
             float appear = Mathf.Clamp01((Time.time - player.Vitality.LastHitTime - 0.45f) / 0.55f);
             Color previous = GUI.color;
@@ -57,14 +63,13 @@ namespace AlreadyDead
             float x = point.x;
             float y = Screen.height - point.y;
             float gap = size * 0.9f;
-            Vector2 youSize = deathStyle.CalcSize(new GUIContent("YOU ARE"));
-            Vector2 deadSize = deadStyle.CalcSize(new GUIContent("DEAD"));
-            GUI.Label(new Rect(x - gap - youSize.x, y - youSize.y * 0.5f,
-                youSize.x, youSize.y), "YOU ARE", deathStyle);
-            GUI.Label(new Rect(x + gap, y - deadSize.y * 0.5f,
-                deadSize.x, deadSize.y), "DEAD", deadStyle);
+            float lineHeight = size * 2.2f;
+            GUI.Label(new Rect(x - gap - size * 9f, y - lineHeight * 0.5f,
+                size * 9f, lineHeight), "YOU ARE", deathStyle);
+            GUI.Label(new Rect(x + gap, y - lineHeight * 0.5f,
+                size * 5f, lineHeight), "DEAD", deadStyle);
             GUI.Label(new Rect(x - size * 2.2f, y + size * 1.45f,
-                size * 4.4f, size * 0.5f), "R - RESTART", restartStyle);
+                size * 4.4f, size * 0.8f), "R - RESTART", restartStyle);
             GUI.color = previous;
         }
 
